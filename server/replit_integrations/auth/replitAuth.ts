@@ -22,7 +22,7 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: (process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || "").replace(/\\n/g, "").trim(),
+    conString: ((process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || "").replace(/\\n/g, "").trim()).replace("pooler.supabase.com:6543", "pooler.supabase.com:5432"),
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",

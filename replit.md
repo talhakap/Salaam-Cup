@@ -76,7 +76,7 @@ The project uses a monorepo layout with three top-level code directories:
 ## External Dependencies
 
 ### Required Services
-- **PostgreSQL Database**: Required. Connection via `DATABASE_URL` environment variable. Used for all data storage and session management.
+- **PostgreSQL Database**: Supabase-hosted PostgreSQL. Connection via `SUPABASE_DATABASE_URL` environment variable (falls back to `DATABASE_URL`). Uses Supabase session-mode pooler (port 5432). The code auto-converts transaction-mode pooler URLs (port 6543) to session mode. Used for all data storage and session management.
 - **Replit Auth (OpenID Connect)**: Authentication provider. Requires `ISSUER_URL` (defaults to `https://replit.com/oidc`), `REPL_ID`, and `SESSION_SECRET` environment variables.
 
 ### Key NPM Packages
