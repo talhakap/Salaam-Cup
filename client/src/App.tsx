@@ -18,6 +18,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AdminTournaments from "@/pages/AdminTournaments";
 import AdminTeams from "@/pages/AdminTeams";
 import AdminPlayers from "@/pages/AdminPlayers";
+import AdminMatches from "@/pages/AdminMatches";
 
 function Router() {
   return (
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/admin/tournaments" component={AdminTournaments} />
       <Route path="/admin/teams" component={AdminTeams} />
       <Route path="/admin/players" component={AdminPlayers} />
+      <Route path="/admin/matches" component={AdminMatches} />
 
       <Route path="/media" component={Home} /> 
       <Route path="/faq" component={About} />

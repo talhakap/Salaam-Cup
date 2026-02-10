@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
+import { apiRequest } from "@/lib/queryClient";
 import type { InsertTournament, Tournament, Division, InsertDivision } from "@shared/schema";
 
 export function useTournaments() {
@@ -59,22 +60,74 @@ export function useDivisions(tournamentId: number) {
   });
 }
 
+export function useUpdateTournament() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertTournament>) => {
+      const url = buildUrl(api.tournamentUpdate.path, { id });
+      const res = await apiRequest("PATCH", url, data);
+      return res.json() as Promise<Tournament>;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [api.tournaments.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.tournaments.get.path, data.id] });
+    },
+  });
+}
+
+export function useDeleteTournament() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.tournamentDelete.path, { id });
+      await apiRequest("DELETE", url);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.tournaments.list.path] });
+    },
+  });
+}
+
 export function useCreateDivision() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: InsertDivision) => {
-      const res = await fetch(api.divisions.create.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to create division");
-      return api.divisions.create.responses[201].parse(await res.json());
+      const res = await apiRequest("POST", api.divisions.create.path, data);
+      return res.json() as Promise<Division>;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.divisions.list.path, variables.tournamentId] });
       queryClient.invalidateQueries({ queryKey: [api.tournaments.get.path, variables.tournamentId] });
+    },
+  });
+}
+
+export function useUpdateDivision() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertDivision>) => {
+      const url = buildUrl(api.divisions.update.path, { id });
+      const res = await apiRequest("PATCH", url, data);
+      return res.json() as Promise<Division>;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [api.divisions.list.path, data.tournamentId] });
+      queryClient.invalidateQueries({ queryKey: [api.tournaments.get.path, data.tournamentId] });
+    },
+  });
+}
+
+export function useDeleteDivision() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, tournamentId }: { id: number; tournamentId: number }) => {
+      const url = buildUrl(api.divisions.delete.path, { id });
+      await apiRequest("DELETE", url);
+      return { tournamentId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [api.divisions.list.path, data.tournamentId] });
+      queryClient.invalidateQueries({ queryKey: [api.tournaments.get.path, data.tournamentId] });
     },
   });
 }

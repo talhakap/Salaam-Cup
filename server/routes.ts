@@ -41,7 +41,7 @@ export async function registerRoutes(
     res.json(tournament);
   });
 
-  app.post(api.tournaments.create.path, async (req, res) => {
+  app.post(api.tournaments.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.tournaments.create.input.parse(req.body);
       const tournament = await storage.createTournament(input);
@@ -52,19 +52,59 @@ export async function registerRoutes(
     }
   });
 
+  app.patch(api.tournamentUpdate.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.tournamentUpdate.input.parse(req.body);
+      const tournament = await storage.updateTournament(Number(req.params.id), input);
+      res.json(tournament);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.tournamentDelete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteTournament(Number(req.params.id));
+      res.json({ message: "Tournament deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === DIVISIONS ===
   app.get(api.divisions.list.path, async (req, res) => {
     const data = await storage.getDivisions(Number(req.params.tournamentId));
     res.json(data);
   });
 
-  app.post(api.divisions.create.path, async (req, res) => {
+  app.post(api.divisions.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.divisions.create.input.parse(req.body);
       const division = await storage.createDivision(input);
       res.status(201).json(division);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.divisions.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.divisions.update.input.parse(req.body);
+      const division = await storage.updateDivision(Number(req.params.id), input);
+      res.json(division);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.divisions.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteDivision(Number(req.params.id));
+      res.json({ message: "Division deleted" });
+    } catch (err) {
       throw err;
     }
   });
@@ -101,6 +141,15 @@ export async function registerRoutes(
       res.json(team);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.teams.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteTeam(Number(req.params.id));
+      res.json({ message: "Team deleted" });
+    } catch (err) {
       throw err;
     }
   });
@@ -185,6 +234,15 @@ export async function registerRoutes(
     }
   });
 
+  app.delete(api.players.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deletePlayer(Number(req.params.id));
+      res.json({ message: "Player deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === MATCHES ===
   app.get(api.matches.list.path, async (req, res) => {
     const data = await storage.getMatches(Number(req.params.tournamentId));
@@ -202,13 +260,22 @@ export async function registerRoutes(
     }
   });
 
-  app.patch(api.matches.update.path, async (req, res) => {
+  app.patch(api.matches.update.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.matches.update.input.parse(req.body);
       const match = await storage.updateMatch(Number(req.params.id), input);
       res.json(match);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.matches.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteMatch(Number(req.params.id));
+      res.json({ message: "Match deleted" });
+    } catch (err) {
       throw err;
     }
   });

@@ -82,6 +82,25 @@ export const api = {
     },
   },
 
+  // === TOURNAMENTS (update/delete) ===
+  tournamentUpdate: {
+    method: 'PATCH' as const,
+    path: '/api/tournaments/:id' as const,
+    input: insertTournamentSchema.partial(),
+    responses: {
+      200: z.custom<typeof tournaments.$inferSelect>(),
+      403: errorSchemas.forbidden,
+    },
+  },
+  tournamentDelete: {
+    method: 'DELETE' as const,
+    path: '/api/tournaments/:id' as const,
+    responses: {
+      200: z.object({ message: z.string() }),
+      403: errorSchemas.forbidden,
+    },
+  },
+
   // === DIVISIONS ===
   divisions: {
     list: {
@@ -97,6 +116,23 @@ export const api = {
       input: insertDivisionSchema,
       responses: {
         201: z.custom<typeof divisions.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/divisions/:id' as const,
+      input: insertDivisionSchema.partial(),
+      responses: {
+        200: z.custom<typeof divisions.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/divisions/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,
       },
     },
@@ -138,6 +174,14 @@ export const api = {
       input: insertTeamSchema.partial(),
       responses: {
         200: z.custom<typeof teams.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/teams/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,
       },
     },
@@ -205,6 +249,14 @@ export const api = {
         403: errorSchemas.forbidden,
       },
     },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/players/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
     bulkCreate: {
       method: 'POST' as const,
       path: '/api/teams/:teamId/players/bulk' as const,
@@ -250,6 +302,14 @@ export const api = {
       input: insertMatchSchema.partial(),
       responses: {
         200: z.custom<typeof matches.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/matches/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,
       },
     },

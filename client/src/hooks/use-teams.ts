@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
+import { apiRequest } from "@/lib/queryClient";
 import type { InsertTeam, Team } from "@shared/schema";
 
 export function useMyTeams() {
@@ -82,20 +83,28 @@ export function useUpdateTeam() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: number } & Partial<InsertTeam>) => {
       const url = buildUrl(api.teams.update.path, { id });
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to update team");
-      return api.teams.update.responses[200].parse(await res.json());
+      const res = await apiRequest("PATCH", url, updates);
+      return res.json() as Promise<Team>;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [api.teams.get.path, data.id] });
       queryClient.invalidateQueries({ queryKey: [api.teams.list.path, data.tournamentId] });
       queryClient.invalidateQueries({ queryKey: [api.allTeams.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.myTeams.list.path] });
+    },
+  });
+}
+
+export function useDeleteTeam() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.teams.delete.path, { id });
+      await apiRequest("DELETE", url);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.allTeams.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.teams.list.path] });
     },
   });
 }

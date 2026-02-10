@@ -28,7 +28,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
+    <div className="min-h-screen bg-muted flex font-sans">
       {/* Sidebar for Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-secondary text-white min-h-screen fixed left-0 top-0 z-20">
         <div className="p-6 border-b border-white/10">

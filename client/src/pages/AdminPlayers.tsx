@@ -1,22 +1,150 @@
 import { AdminLayout } from "@/components/AdminLayout";
-import { useAdminPlayers } from "@/hooks/use-players";
+import { useAdminPlayers, useUpdatePlayer, useDeletePlayer } from "@/hooks/use-players";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Loader2, User, Users } from "lucide-react";
+import { Loader2, User, Users, Pencil, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import type { Player, Team } from "@shared/schema";
 
-const STATUS_FILTERS = ["all", "confirmed", "flagged"] as const;
+const STATUS_FILTERS = ["all", "confirmed", "flagged", "verified", "staging", "rejected"] as const;
+
+type PlayerWithTeam = Player & { team: Team | null };
+
+function EditPlayerDialog({ player, onClose }: { player: PlayerWithTeam; onClose: () => void }) {
+  const updatePlayer = useUpdatePlayer();
+  const { toast } = useToast();
+  const [firstName, setFirstName] = useState(player.firstName);
+  const [lastName, setLastName] = useState(player.lastName);
+  const [email, setEmail] = useState(player.email);
+  const [phone, setPhone] = useState(player.phone || "");
+  const [jerseyNumber, setJerseyNumber] = useState(player.jerseyNumber || 0);
+  const [position, setPosition] = useState(player.position || "");
+  const [status, setStatus] = useState(player.status);
+  const [adminNotes, setAdminNotes] = useState(player.adminNotes || "");
+  const [waiverSigned, setWaiverSigned] = useState(player.waiverSigned || false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updatePlayer.mutateAsync({
+        id: player.id,
+        firstName,
+        lastName,
+        email,
+        phone: phone || undefined,
+        jerseyNumber: jerseyNumber || undefined,
+        position: position || undefined,
+        status: status as any,
+        adminNotes: adminNotes || undefined,
+        waiverSigned,
+      });
+      toast({ title: "Player updated" });
+      onClose();
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Edit Player</DialogTitle>
+        <DialogDescription>Update player details and status.</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">First Name</label>
+            <Input value={firstName} onChange={e => setFirstName(e.target.value)} data-testid="input-edit-player-first" />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Last Name</label>
+            <Input value={lastName} onChange={e => setLastName(e.target.value)} data-testid="input-edit-player-last" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Email</label>
+            <Input value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Phone</label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="text-sm font-medium">Jersey #</label>
+            <Input type="number" value={jerseyNumber} onChange={e => setJerseyNumber(parseInt(e.target.value) || 0)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Position</label>
+            <Input value={position} onChange={e => setPosition(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="staging">Staging</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="flagged">Flagged</SelectItem>
+                <SelectItem value="verified">Verified</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Admin Notes</label>
+          <Textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} className="resize-none" />
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="checkbox" checked={waiverSigned} onChange={e => setWaiverSigned(e.target.checked)} className="h-4 w-4" />
+          <label className="text-sm font-medium">Waiver Signed</label>
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={updatePlayer.isPending} data-testid="button-save-player">
+            {updatePlayer.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Save
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
 
 export default function AdminPlayers() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { data: players, isLoading } = useAdminPlayers(statusFilter === "all" ? undefined : statusFilter);
+  const deletePlayer = useDeletePlayer();
+  const { toast } = useToast();
+  const [editPlayer, setEditPlayer] = useState<PlayerWithTeam | null>(null);
+  const [deletePlayerState, setDeletePlayerState] = useState<PlayerWithTeam | null>(null);
+
+  const handleDelete = async () => {
+    if (!deletePlayerState) return;
+    try {
+      await deletePlayer.mutateAsync(deletePlayerState.id);
+      toast({ title: "Player deleted" });
+      setDeletePlayerState(null);
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
 
   const statusBadgeVariant = (status: string) => {
     switch (status) {
       case "confirmed": return "default" as const;
+      case "verified": return "default" as const;
       case "flagged": return "destructive" as const;
+      case "rejected": return "destructive" as const;
       default: return "secondary" as const;
     }
   };
@@ -88,22 +216,52 @@ export default function AdminPlayers() {
                       <p>
                         {player.team ? `Team: ${player.team.name}` : 'No team (Free Agent)'}
                         {player.dob ? ` | DOB: ${player.dob}` : ''}
+                        {player.jerseyNumber ? ` | #${player.jerseyNumber}` : ''}
+                        {player.position ? ` | ${player.position}` : ''}
                       </p>
+                      {player.adminNotes && <p className="text-xs italic">Notes: {player.adminNotes}</p>}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground flex-shrink-0">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   {player.registeredAt && (
-                    <span data-testid={`text-player-date-${player.id}`}>
-                      {format(new Date(player.registeredAt), "MMM d, yyyy h:mm a")}
+                    <span className="text-xs text-muted-foreground mr-2" data-testid={`text-player-date-${player.id}`}>
+                      {format(new Date(player.registeredAt), "MMM d, yyyy")}
                     </span>
                   )}
+                  <Button size="icon" variant="ghost" onClick={() => setEditPlayer(player)} data-testid={`button-edit-player-${player.id}`}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => setDeletePlayerState(player)} data-testid={`button-delete-player-${player.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <Dialog open={!!editPlayer} onOpenChange={(o) => !o && setEditPlayer(null)}>
+        {editPlayer && <EditPlayerDialog player={editPlayer} onClose={() => setEditPlayer(null)} />}
+      </Dialog>
+
+      <Dialog open={!!deletePlayerState} onOpenChange={(o) => !o && setDeletePlayerState(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Player</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deletePlayerState?.firstName} {deletePlayerState?.lastName}"?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletePlayerState(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deletePlayer.isPending} data-testid="button-confirm-delete-player">
+              {deletePlayer.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

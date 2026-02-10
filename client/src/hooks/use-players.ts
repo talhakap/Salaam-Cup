@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
+import { apiRequest } from "@/lib/queryClient";
 import type { InsertPlayer, Player, Team } from "@shared/schema";
 
 export function usePlayers(teamId: number) {
@@ -94,6 +95,20 @@ export function useRegisterPlayer() {
         queryClient.invalidateQueries({ queryKey: [api.players.list.path, data.teamId] });
       }
       queryClient.invalidateQueries({ queryKey: [api.adminPlayers.list.path] });
+    },
+  });
+}
+
+export function useDeletePlayer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.players.delete.path, { id });
+      await apiRequest("DELETE", url);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.adminPlayers.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.players.list.path] });
     },
   });
 }

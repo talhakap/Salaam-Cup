@@ -19,10 +19,14 @@ export interface IStorage {
   getTournaments(): Promise<Tournament[]>;
   getTournament(id: number): Promise<(Tournament & { divisions: Division[] }) | undefined>;
   createTournament(data: InsertTournament): Promise<Tournament>;
+  updateTournament(id: number, data: Partial<InsertTournament>): Promise<Tournament>;
+  deleteTournament(id: number): Promise<void>;
 
   // Divisions
   getDivisions(tournamentId: number): Promise<Division[]>;
   createDivision(data: InsertDivision): Promise<Division>;
+  updateDivision(id: number, data: Partial<InsertDivision>): Promise<Division>;
+  deleteDivision(id: number): Promise<void>;
 
   // Teams
   getAllTeams(status?: string): Promise<Team[]>;
@@ -32,6 +36,7 @@ export interface IStorage {
   claimTeamsByEmail(email: string, userId: string): Promise<Team[]>;
   createTeam(data: InsertTeam): Promise<Team>;
   updateTeam(id: number, data: UpdateTeamRequest): Promise<Team>;
+  deleteTeam(id: number): Promise<void>;
 
   // Players
   getPlayers(teamId: number): Promise<Player[]>;
@@ -40,12 +45,14 @@ export interface IStorage {
   createPlayer(data: InsertPlayer): Promise<Player>;
   registerPlayerWithMatching(data: InsertPlayer): Promise<Player>;
   updatePlayer(id: number, data: UpdatePlayerRequest): Promise<Player>;
+  deletePlayer(id: number): Promise<void>;
   createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]>;
 
   // Matches
   getMatches(tournamentId: number): Promise<MatchWithTeams[]>;
   createMatch(data: InsertMatch): Promise<Match>;
   updateMatch(id: number, data: Partial<InsertMatch>): Promise<Match>;
+  deleteMatch(id: number): Promise<void>;
 
   // Standings
   getStandings(tournamentId: number): Promise<StandingWithTeam[]>;
@@ -84,6 +91,23 @@ export class DatabaseStorage implements IStorage {
     return tournament;
   }
 
+  async updateTournament(id: number, data: Partial<InsertTournament>): Promise<Tournament> {
+    const [tournament] = await db.update(tournaments).set(data).where(eq(tournaments.id, id)).returning();
+    return tournament;
+  }
+
+  async deleteTournament(id: number): Promise<void> {
+    await db.delete(standings).where(eq(standings.tournamentId, id));
+    await db.delete(matches).where(eq(matches.tournamentId, id));
+    const teamRows = await db.select().from(teams).where(eq(teams.tournamentId, id));
+    for (const t of teamRows) {
+      await db.delete(players).where(eq(players.teamId, t.id));
+    }
+    await db.delete(teams).where(eq(teams.tournamentId, id));
+    await db.delete(divisions).where(eq(divisions.tournamentId, id));
+    await db.delete(tournaments).where(eq(tournaments.id, id));
+  }
+
   // Divisions
   async getDivisions(tournamentId: number): Promise<Division[]> {
     return await db.select().from(divisions).where(eq(divisions.tournamentId, tournamentId));
@@ -92,6 +116,22 @@ export class DatabaseStorage implements IStorage {
   async createDivision(data: InsertDivision): Promise<Division> {
     const [division] = await db.insert(divisions).values(data).returning();
     return division;
+  }
+
+  async updateDivision(id: number, data: Partial<InsertDivision>): Promise<Division> {
+    const [division] = await db.update(divisions).set(data).where(eq(divisions.id, id)).returning();
+    return division;
+  }
+
+  async deleteDivision(id: number): Promise<void> {
+    await db.delete(standings).where(eq(standings.divisionId, id));
+    await db.delete(matches).where(eq(matches.divisionId, id));
+    const teamRows = await db.select().from(teams).where(eq(teams.divisionId, id));
+    for (const t of teamRows) {
+      await db.delete(players).where(eq(players.teamId, t.id));
+    }
+    await db.delete(teams).where(eq(teams.divisionId, id));
+    await db.delete(divisions).where(eq(divisions.id, id));
   }
 
   // Teams
@@ -142,6 +182,15 @@ export class DatabaseStorage implements IStorage {
   async updateTeam(id: number, data: UpdateTeamRequest): Promise<Team> {
     const [team] = await db.update(teams).set(data).where(eq(teams.id, id)).returning();
     return team;
+  }
+
+  async deleteTeam(id: number): Promise<void> {
+    await db.delete(standings).where(eq(standings.teamId, id));
+    await db.delete(players).where(eq(players.teamId, id));
+    await db.delete(matches).where(
+      sql`${matches.homeTeamId} = ${id} OR ${matches.awayTeamId} = ${id}`
+    );
+    await db.delete(teams).where(eq(teams.id, id));
   }
 
   // Players
@@ -243,6 +292,10 @@ export class DatabaseStorage implements IStorage {
     return player;
   }
 
+  async deletePlayer(id: number): Promise<void> {
+    await db.delete(players).where(eq(players.id, id));
+  }
+
   async createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]> {
     const toInsert = data.map(p => ({ ...p, teamId }));
     return await db.insert(players).values(toInsert).returning();
@@ -275,6 +328,10 @@ export class DatabaseStorage implements IStorage {
   async updateMatch(id: number, data: Partial<InsertMatch>): Promise<Match> {
     const [match] = await db.update(matches).set(data).where(eq(matches.id, id)).returning();
     return match;
+  }
+
+  async deleteMatch(id: number): Promise<void> {
+    await db.delete(matches).where(eq(matches.id, id));
   }
 
   // Standings
