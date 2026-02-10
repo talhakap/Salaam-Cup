@@ -8,6 +8,9 @@ import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Tournaments from "@/pages/Tournaments";
 import TournamentDetail from "@/pages/TournamentDetail";
+import TournamentSchedule from "@/pages/TournamentSchedule";
+import TournamentStandings from "@/pages/TournamentStandings";
+import TournamentRules from "@/pages/TournamentRules";
 import TeamDetail from "@/pages/TeamDetail";
 import Register from "@/pages/Register";
 import CaptainDashboard from "@/pages/CaptainDashboard";
@@ -23,6 +26,9 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/tournaments" component={Tournaments} />
       <Route path="/tournaments/:id" component={TournamentDetail} />
+      <Route path="/tournaments/:id/schedule" component={TournamentSchedule} />
+      <Route path="/tournaments/:id/standings" component={TournamentStandings} />
+      <Route path="/tournaments/:id/rules" component={TournamentRules} />
       <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/register" component={Register} />
       

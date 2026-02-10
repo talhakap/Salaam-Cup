@@ -2,23 +2,18 @@ import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
+import { ReadyToCompete } from "@/components/ReadyToCompete";
+import { FAQSection } from "@/components/FAQSection";
 import { useTournament, useDivisions } from "@/hooks/use-tournaments";
 import { useTeams } from "@/hooks/use-teams";
 import { useMatches } from "@/hooks/use-matches";
 import { useStandings } from "@/hooks/use-standings";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Users, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import type { Division, Team, StandingWithTeam, MatchWithTeams } from "@shared/schema";
 
 export default function TournamentDetail() {
@@ -58,18 +53,24 @@ export default function TournamentDetail() {
     );
   }
 
-  const approvedTeams = allTeams?.filter((t: Team) => t.status === "approved");
-  const finalMatches = allMatches?.filter((m: MatchWithTeams) => m.status === "final");
-  const liveMatches = allMatches?.filter((m: MatchWithTeams) => m.status === "live");
-  const scheduledMatches = allMatches?.filter((m: MatchWithTeams) => m.status === "scheduled");
-
   const divisionTabs = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
+
+  const filteredMatches = (allMatches || [])
+    .filter((m: MatchWithTeams) => selectedDivision === "all" || m.divisionId === Number(selectedDivision))
+    .slice(0, 4);
+
+  const filteredStandings = (allStandings || [])
+    .filter((s: StandingWithTeam) => selectedDivision === "all" || s.divisionId === Number(selectedDivision))
+    .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0))
+    .slice(0, 7);
+
+  const approvedTeams = (allTeams || []).filter((t: Team) => t.status === "approved");
 
   return (
     <MainLayout>
-      <HeroSection 
-        title={tournament.name.replace("Salaam Cup ", "").toUpperCase()} 
-        image={tournament.heroImage || undefined} 
+      <HeroSection
+        title={tournament.name.replace("Salaam Cup ", "").toUpperCase()}
+        image={tournament.heroImage || undefined}
       />
       <SponsorBar />
 
@@ -105,178 +106,110 @@ export default function TournamentDetail() {
             </div>
           )}
 
-          {liveMatches && liveMatches.length > 0 && (
-            <div className="mb-6">
-              {liveMatches
-                .filter((m: MatchWithTeams) => selectedDivision === "all" || m.divisionId === Number(selectedDivision))
-                .map((m: MatchWithTeams) => (
-                  <MatchRow key={m.id} match={m} />
-                ))}
+          {filteredMatches.length > 0 ? (
+            <div className="mb-8">
+              {filteredMatches.map((m: MatchWithTeams) => (
+                <MatchRow key={m.id} match={m} divisions={divisions} />
+              ))}
             </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">No matches scheduled yet.</p>
           )}
 
-          {allMatches && allMatches.length > 0 && (
-            <div className="mb-10">
-              {[...(finalMatches || []), ...(scheduledMatches || [])]
-                .filter((m: MatchWithTeams) => selectedDivision === "all" || m.divisionId === Number(selectedDivision))
-                .map((m: MatchWithTeams) => (
-                  <MatchRow key={m.id} match={m} />
-                ))}
-            </div>
-          )}
-
-          {(!allMatches || allMatches.length === 0) && (
-            <p className="text-muted-foreground text-center py-12">No matches scheduled yet.</p>
-          )}
-
-          <div className="text-center mt-6 mb-16">
-            <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-full-schedule">
-              See Full Schedule
-            </Button>
+          <div className="text-center mt-4 mb-16">
+            <Link href={`/tournaments/${tournamentId}/schedule`}>
+              <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8 gap-2" data-testid="button-full-schedule">
+                See Full Schedule <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
 
-          {allStandings && allStandings.length > 0 && (
+          {filteredStandings.length > 0 && (
             <>
-              {divisions?.map((div: Division) => {
-                if (selectedDivision !== "all" && String(div.id) !== selectedDivision) return null;
-                const divStandings = allStandings?.filter((s: StandingWithTeam) => s.divisionId === div.id);
-                if (!divStandings || divStandings.length === 0) return null;
-                return (
-                  <div key={div.id} className="mb-8">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-b-2 border-foreground">
-                          <TableHead className="w-12 font-bold text-foreground">Pos</TableHead>
-                          <TableHead className="font-bold text-foreground">Team</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">GP</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">W</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">L</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">T</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">GF</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">GA</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">GD</TableHead>
-                          <TableHead className="text-center font-bold text-foreground">PTS</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {divStandings
-                          .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0))
-                          .map((s: StandingWithTeam) => (
-                            <TableRow key={s.id} className="border-b" data-testid={`row-standing-${s.id}`}>
-                              <TableCell className="font-bold">{s.position}</TableCell>
-                              <TableCell>
-                                <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline">
-                                  {s.team?.name || `Team #${s.teamId}`}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="text-center">{s.gamesPlayed}</TableCell>
-                              <TableCell className="text-center">{s.wins}</TableCell>
-                              <TableCell className="text-center">{s.losses}</TableCell>
-                              <TableCell className="text-center">{s.ties}</TableCell>
-                              <TableCell className="text-center">{s.goalsFor}</TableCell>
-                              <TableCell className="text-center">{s.goalsAgainst}</TableCell>
-                              <TableCell className="text-center">{s.goalDifference > 0 ? `+${s.goalDifference}` : s.goalDifference}</TableCell>
-                              <TableCell className="text-center font-bold">{s.points}</TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                );
-              })}
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b-2 border-foreground">
+                    <TableHead className="w-12 font-bold text-foreground">Pos</TableHead>
+                    <TableHead className="font-bold text-foreground">Team</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">GP</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">W</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">L</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">T</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">GF</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">GA</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">GD</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">PTS</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredStandings.map((s: StandingWithTeam) => (
+                    <TableRow key={s.id} className="border-b" data-testid={`row-standing-${s.id}`}>
+                      <TableCell className="font-bold">{s.position}</TableCell>
+                      <TableCell>
+                        <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {s.team?.name || `Team #${s.teamId}`}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-center">{s.gamesPlayed}</TableCell>
+                      <TableCell className="text-center">{s.wins}</TableCell>
+                      <TableCell className="text-center">{s.losses}</TableCell>
+                      <TableCell className="text-center">{s.ties}</TableCell>
+                      <TableCell className="text-center">{s.goalsFor}</TableCell>
+                      <TableCell className="text-center">{s.goalsAgainst}</TableCell>
+                      <TableCell className="text-center">{s.goalDifference > 0 ? `+${s.goalDifference}` : s.goalDifference}</TableCell>
+                      <TableCell className="text-center font-bold">{s.points}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
               <div className="text-center mt-6 mb-16">
-                <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-full-standings">
-                  See Full Standings
-                </Button>
+                <Link href={`/tournaments/${tournamentId}/standings`}>
+                  <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8 gap-2" data-testid="button-full-standings">
+                    See Full Standings <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
             </>
           )}
+
+          {approvedTeams.length > 0 && (
+            <div className="mb-16">
+              <h3 className="text-xl font-bold font-display uppercase text-center mb-6">Teams</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                {approvedTeams.slice(0, 8).map((team: Team) => (
+                  <Link key={team.id} href={`/teams/${team.id}`}>
+                    <div className="border border-border rounded-md p-4 text-center hover-elevate cursor-pointer" data-testid={`card-team-${team.id}`}>
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center">
+                        {team.logoUrl ? (
+                          <img src={team.logoUrl} alt={team.name} className="w-10 h-10 object-contain rounded-full" />
+                        ) : (
+                          <Users className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <p className="font-bold text-sm font-display uppercase">{team.name}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="py-20 bg-foreground text-background">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2">Register</p>
-          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-4" data-testid="text-ready-compete">
-            Ready To Compete?
-          </h2>
-          <p className="text-gray-400 max-w-xl mx-auto mb-8 text-sm">
-            Register your team and be part of the next Salaam Cup. Compete, connect, and experience the energy of a true multi-sport tournament.
-          </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <Link href="/register">
-              <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-register-cta">
-                Register Now
-              </Button>
-            </Link>
-            <Link href="/tournaments">
-              <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-tournaments-cta">
-                Tournaments
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12">
-            Frequently Asked Questions
-          </h2>
-          <Accordion type="single" collapsible>
-            <AccordionItem value="q1">
-              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
-                What is Salaam Cup?
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
-                Salaam Cup is a premier community sports organization dedicated to hosting high-quality tournaments that unite athletes through competition, faith, and excellence.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q2">
-              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
-                What makes Salaam Cup different?
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
-                Professional-grade organization, community values, and inclusive approach to sports competition.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q3">
-              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
-                This league looks too good, can a rookie join?
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
-                We welcome players of all skill levels with both competitive and recreational divisions.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q4">
-              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
-                Can I join alone or do I have to have a team?
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
-                You can register as a free agent and we will help connect you with teams looking for players.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q5">
-              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
-                How can I volunteer or sponsor the tournament?
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
-                Please reach out through our Contact page or email info@salaamcup.com.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </section>
+      <ReadyToCompete />
+      <FAQSection />
     </MainLayout>
   );
 }
 
-function MatchRow({ match }: { match: MatchWithTeams }) {
+function MatchRow({ match, divisions }: { match: MatchWithTeams; divisions?: Division[] }) {
   const matchDate = match.startTime ? new Date(match.startTime) : null;
   const isLive = match.status === "live";
   const isFinal = match.status === "final";
   const isScheduled = match.status === "scheduled";
+  const division = divisions?.find(d => d.id === match.divisionId);
 
   return (
     <div className="flex items-center py-4 border-b gap-2 md:gap-4" data-testid={`match-row-${match.id}`}>
@@ -298,7 +231,7 @@ function MatchRow({ match }: { match: MatchWithTeams }) {
       </div>
 
       <div className="flex flex-col items-center shrink-0 px-2 md:px-4">
-        <div className="text-xs text-muted-foreground mb-1">{match.round || ""}</div>
+        {division && <div className="text-xs text-muted-foreground mb-1">{division.name}</div>}
         <div className="flex items-center gap-3">
           <span className="text-2xl md:text-3xl font-bold font-display">{isScheduled ? "-" : match.homeScore}</span>
           <span className="text-2xl md:text-3xl font-bold font-display">{isScheduled ? "-" : match.awayScore}</span>

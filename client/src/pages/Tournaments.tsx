@@ -1,6 +1,7 @@
 import { MainLayout } from "@/components/MainLayout";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
+import { ReadyToCompete } from "@/components/ReadyToCompete";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useTournaments } from "@/hooks/use-tournaments";
@@ -51,29 +52,20 @@ export default function Tournaments() {
             <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
               {tournaments.map((tournament, index) => (
                 <Link key={tournament.id} href={`/tournaments/${tournament.id}`}>
-                  <div 
+                  <div
                     className="relative aspect-[4/3] rounded-md overflow-hidden group cursor-pointer"
                     data-testid={`card-tournament-${tournament.id}`}
                   >
-                    <img 
-                      src={tournament.heroImage || fallbackImages[index % fallbackImages.length]} 
-                      alt={tournament.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    <img
+                      src={tournament.heroImage || fallbackImages[index % fallbackImages.length]}
+                      alt={tournament.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-                    <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-2">
+                    <div className="absolute top-4 left-4 right-4">
                       <h3 className="text-white font-bold font-display text-xl md:text-2xl uppercase">
                         {tournament.name}
                       </h3>
-                      <span className={`text-xs font-bold uppercase px-2 py-1 rounded-sm flex-shrink-0 ${
-                        tournament.status === 'active' 
-                          ? 'bg-green-500 text-white' 
-                          : tournament.status === 'upcoming'
-                          ? 'bg-yellow-500 text-black'
-                          : 'bg-muted text-muted-foreground'
-                      }`} data-testid={`badge-status-${tournament.id}`}>
-                        {tournament.status}
-                      </span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
                       {tournament.description && (
@@ -82,9 +74,7 @@ export default function Tournaments() {
                         </p>
                       )}
                       <p className="text-white/60 text-xs">
-                        {tournament.startDate && tournament.endDate
-                          ? `${tournament.startDate} — ${tournament.endDate}`
-                          : "Dates TBD"}
+                        Upcoming Tournaments: <span className="font-medium text-white/80">{tournament.status === "upcoming" ? "Yes" : tournament.status === "active" ? "Live" : "Completed"}</span>
                       </p>
                     </div>
                   </div>

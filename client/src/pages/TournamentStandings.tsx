@@ -1,0 +1,149 @@
+import { useRoute, Link } from "wouter";
+import { MainLayout } from "@/components/MainLayout";
+import { HeroSection } from "@/components/HeroSection";
+import { SponsorBar } from "@/components/SponsorBar";
+import { ReadyToCompete } from "@/components/ReadyToCompete";
+import { FAQSection } from "@/components/FAQSection";
+import { useTournament, useDivisions } from "@/hooks/use-tournaments";
+import { useStandings } from "@/hooks/use-standings";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
+import { useState } from "react";
+import type { Division, StandingWithTeam } from "@shared/schema";
+
+export default function TournamentStandings() {
+  const [, params] = useRoute("/tournaments/:id/standings");
+  const tournamentId = Number(params?.id);
+
+  const { data: tournament, isLoading } = useTournament(tournamentId);
+  const { data: divisions } = useDivisions(tournamentId);
+  const { data: allStandings } = useStandings(tournamentId);
+
+  const [selectedDivision, setSelectedDivision] = useState<string>("all");
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="h-[45vh] bg-muted animate-pulse" />
+        <div className="container mx-auto px-4 py-12">
+          <Skeleton className="h-12 w-64 mb-4" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!tournament) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="text-3xl font-bold font-display mb-4">Tournament Not Found</h1>
+          <Link href="/tournaments">
+            <Button data-testid="link-back-tournaments">Back to Tournaments</Button>
+          </Link>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const divisionTabs = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
+
+  const filteredStandings = (allStandings || [])
+    .filter((s: StandingWithTeam) => selectedDivision === "all" || s.divisionId === Number(selectedDivision))
+    .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0));
+
+  return (
+    <MainLayout>
+      <HeroSection
+        title={tournament.name.replace("Salaam Cup ", "").toUpperCase()}
+        image={tournament.heroImage || undefined}
+      />
+      <SponsorBar />
+
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-10" data-testid="text-compete-win">
+            Compete And Win.
+          </h2>
+
+          {divisionTabs.length > 0 && (
+            <div className="flex justify-center mb-10">
+              <div className="flex gap-2 flex-wrap justify-center">
+                <Button
+                  variant={selectedDivision === "all" ? "default" : "outline"}
+                  className="rounded-full text-xs font-bold uppercase tracking-wider"
+                  onClick={() => setSelectedDivision("all")}
+                  data-testid="filter-standing-all"
+                >
+                  All
+                </Button>
+                {divisionTabs.map((tab) => (
+                  <Button
+                    key={tab.id}
+                    variant={selectedDivision === tab.id ? "default" : "outline"}
+                    className="rounded-full text-xs font-bold uppercase tracking-wider"
+                    onClick={() => setSelectedDivision(tab.id)}
+                    data-testid={`filter-standing-division-${tab.id}`}
+                  >
+                    {tab.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mb-4">
+            <h3 className="text-sm font-medium text-muted-foreground italic" data-testid="text-standings-label">Standings</h3>
+          </div>
+
+          {filteredStandings.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b-2 border-foreground">
+                  <TableHead className="w-12 font-bold text-foreground">Pos</TableHead>
+                  <TableHead className="font-bold text-foreground">Team</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">GP</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">W</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">L</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">T</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">GF</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">GA</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">GD</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">PTS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStandings.map((s: StandingWithTeam, index: number) => (
+                  <TableRow key={s.id} className="border-b" data-testid={`row-standing-${s.id}`}>
+                    <TableCell className="font-bold">{s.position || index + 1}</TableCell>
+                    <TableCell>
+                      <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        {s.team?.name || `Team #${s.teamId}`}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-center">{s.gamesPlayed}</TableCell>
+                    <TableCell className="text-center">{s.wins}</TableCell>
+                    <TableCell className="text-center">{s.losses}</TableCell>
+                    <TableCell className="text-center">{s.ties}</TableCell>
+                    <TableCell className="text-center">{s.goalsFor}</TableCell>
+                    <TableCell className="text-center">{s.goalsAgainst}</TableCell>
+                    <TableCell className="text-center">{s.goalDifference > 0 ? `+${s.goalDifference}` : s.goalDifference}</TableCell>
+                    <TableCell className="text-center font-bold">{s.points}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-muted-foreground text-center py-12">No standings available yet.</p>
+          )}
+        </div>
+      </section>
+
+      <ReadyToCompete />
+      <FAQSection />
+    </MainLayout>
+  );
+}
