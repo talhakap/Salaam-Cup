@@ -59,6 +59,7 @@ export const divisions = pgTable("divisions", {
   description: text("description"),
   gameFormat: text("game_format"),
   registrationFee: integer("registration_fee"),
+  rulesContent: text("rules_content"),
 });
 
 export const insertDivisionSchema = createInsertSchema(divisions).omit({ id: true });
@@ -151,6 +152,22 @@ export const insertStandingSchema = createInsertSchema(standings).omit({ id: tru
 export type Standing = typeof standings.$inferSelect;
 export type InsertStanding = z.infer<typeof insertStandingSchema>;
 
+// === AWARDS ===
+export const awards = pgTable("awards", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => tournaments.id).notNull(),
+  divisionId: integer("division_id").references(() => divisions.id).notNull(),
+  year: integer("year").notNull(),
+  category: text("category").notNull(),
+  teamName: text("team_name"),
+  playerName: text("player_name"),
+  teamLogoUrl: text("team_logo_url"),
+});
+
+export const insertAwardSchema = createInsertSchema(awards).omit({ id: true });
+export type Award = typeof awards.$inferSelect;
+export type InsertAward = z.infer<typeof insertAwardSchema>;
+
 // === RELATIONS ===
 export const sportsRelations = relations(sports, ({ many }) => ({
   tournaments: many(tournaments),
@@ -165,6 +182,7 @@ export const tournamentsRelations = relations(tournaments, ({ one, many }) => ({
   teams: many(teams),
   matches: many(matches),
   standings: many(standings),
+  awards: many(awards),
 }));
 
 export const divisionsRelations = relations(divisions, ({ one, many }) => ({
@@ -174,6 +192,7 @@ export const divisionsRelations = relations(divisions, ({ one, many }) => ({
   }),
   teams: many(teams),
   standings: many(standings),
+  awards: many(awards),
 }));
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
@@ -236,6 +255,17 @@ export const standingsRelations = relations(standings, ({ one }) => ({
   team: one(teams, {
     fields: [standings.teamId],
     references: [teams.id],
+  }),
+}));
+
+export const awardsRelations = relations(awards, ({ one }) => ({
+  tournament: one(tournaments, {
+    fields: [awards.tournamentId],
+    references: [tournaments.id],
+  }),
+  division: one(divisions, {
+    fields: [awards.divisionId],
+    references: [divisions.id],
   }),
 }));
 

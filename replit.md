@@ -18,7 +18,10 @@ Core features include:
 - Admin players page showing all self-registered players/free agents with confirmed/flagged status filters, sorted by registration date
 - Team detail view with roster tab (shows which roster players have registered) and registrations tab (shows self-registered players with match status)
 - Captain dashboard showing teams linked to their account via /api/my-teams
-- Tournament sub-pages: Schedule (with division/date/status filters), Standings (full table with division tabs), Rules (division-specific rules)
+- Tournament sub-pages: Schedule (with division/date/status filters), Standings (full table with division tabs), Rules (rich text per division, admin-editable via inline Quill editor), Awards (by year/division/category)
+- Tournament sub-navigation bar component (TournamentNav) used on all tournament pages (Home, Schedule, Standings, Rules, Awards)
+- Awards management: awards table with tournamentId, divisionId, year, category (Champions, Runner Up, MVP, etc.), team/player name, logo
+- Admin Awards page for CRUD operations on awards by tournament
 - Reusable ReadyToCompete CTA and FAQSection components used across tournament pages
 
 ## User Preferences

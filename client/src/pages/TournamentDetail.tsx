@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { TournamentNav } from "@/components/TournamentNav";
 import { Users, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import type { Division, Team, StandingWithTeam, MatchWithTeams } from "@shared/schema";
@@ -73,6 +74,7 @@ export default function TournamentDetail() {
         image={tournament.heroImage || undefined}
       />
       <SponsorBar />
+      <TournamentNav tournamentId={tournamentId} />
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">

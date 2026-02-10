@@ -19,6 +19,8 @@ import AdminTournaments from "@/pages/AdminTournaments";
 import AdminTeams from "@/pages/AdminTeams";
 import AdminPlayers from "@/pages/AdminPlayers";
 import AdminMatches from "@/pages/AdminMatches";
+import AdminAwards from "@/pages/AdminAwards";
+import TournamentAwards from "@/pages/TournamentAwards";
 
 function Router() {
   return (
@@ -30,6 +32,7 @@ function Router() {
       <Route path="/tournaments/:id/schedule" component={TournamentSchedule} />
       <Route path="/tournaments/:id/standings" component={TournamentStandings} />
       <Route path="/tournaments/:id/rules" component={TournamentRules} />
+      <Route path="/tournaments/:id/awards" component={TournamentAwards} />
       <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/register" component={Register} />
       
@@ -39,6 +42,7 @@ function Router() {
       <Route path="/admin/teams" component={AdminTeams} />
       <Route path="/admin/players" component={AdminPlayers} />
       <Route path="/admin/matches" component={AdminMatches} />
+      <Route path="/admin/awards" component={AdminAwards} />
 
       <Route path="/media" component={Home} /> 
       <Route path="/faq" component={About} />

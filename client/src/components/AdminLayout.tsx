@@ -9,7 +9,8 @@ import {
   LogOut,
   Settings,
   Menu,
-  X
+  X,
+  Award
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -25,6 +26,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Teams", href: "/admin/teams", icon: Users },
     { label: "Players", href: "/admin/players", icon: Users }, // Reusing Users icon
     { label: "Matches", href: "/admin/matches", icon: Calendar },
+    { label: "Awards", href: "/admin/awards", icon: Award },
   ];
 
   return (

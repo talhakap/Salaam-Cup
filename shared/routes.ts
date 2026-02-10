@@ -8,6 +8,7 @@ import {
   insertVenueSchema,
   insertStandingSchema,
   insertSportSchema,
+  insertAwardSchema,
   teams,
   players,
   tournaments,
@@ -16,6 +17,7 @@ import {
   venues,
   standings,
   sports,
+  awards,
 } from './schema';
 
 export const errorSchemas = {
@@ -329,6 +331,43 @@ export const api = {
       path: '/api/tournaments/:tournamentId/standings/recalculate' as const,
       responses: {
         200: z.object({ message: z.string() }),
+      },
+    },
+  },
+
+  // === AWARDS ===
+  awards: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/tournaments/:tournamentId/awards' as const,
+      responses: {
+        200: z.array(z.custom<typeof awards.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/awards' as const,
+      input: insertAwardSchema,
+      responses: {
+        201: z.custom<typeof awards.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/awards/:id' as const,
+      input: insertAwardSchema.partial(),
+      responses: {
+        200: z.custom<typeof awards.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/awards/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
       },
     },
   },

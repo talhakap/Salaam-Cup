@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TournamentNav } from "@/components/TournamentNav";
 import { Users } from "lucide-react";
 import { useState, useMemo } from "react";
 import type { Division, MatchWithTeams } from "@shared/schema";
@@ -83,6 +84,7 @@ export default function TournamentSchedule() {
     <MainLayout>
       <HeroSection title="Schedule" image={tournament.heroImage || undefined} size="small" />
       <SponsorBar />
+      <TournamentNav tournamentId={tournamentId} />
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 max-w-5xl">

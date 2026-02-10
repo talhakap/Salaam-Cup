@@ -9,6 +9,7 @@ import { useStandings } from "@/hooks/use-standings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { TournamentNav } from "@/components/TournamentNav";
 import { Users } from "lucide-react";
 import { useState } from "react";
 import type { Division, StandingWithTeam } from "@shared/schema";
@@ -61,6 +62,7 @@ export default function TournamentStandings() {
         image={tournament.heroImage || undefined}
       />
       <SponsorBar />
+      <TournamentNav tournamentId={tournamentId} />
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 max-w-5xl">

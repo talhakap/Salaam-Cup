@@ -291,6 +291,43 @@ export async function registerRoutes(
     res.json({ message: "Standings recalculated" });
   });
 
+  // === AWARDS ===
+  app.get(api.awards.list.path, async (req, res) => {
+    const data = await storage.getAwards(Number(req.params.tournamentId));
+    res.json(data);
+  });
+
+  app.post(api.awards.create.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.awards.create.input.parse(req.body);
+      const award = await storage.createAward(input);
+      res.status(201).json(award);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.awards.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.awards.update.input.parse(req.body);
+      const award = await storage.updateAward(Number(req.params.id), input);
+      res.json(award);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.awards.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteAward(Number(req.params.id));
+      res.json({ message: "Award deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === VENUES ===
   app.get(api.venues.list.path, async (_req, res) => {
     const data = await storage.getVenues();
