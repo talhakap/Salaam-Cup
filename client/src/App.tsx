@@ -7,6 +7,8 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Tournaments from "@/pages/Tournaments";
+import TournamentDetail from "@/pages/TournamentDetail";
+import TeamDetail from "@/pages/TeamDetail";
 import Register from "@/pages/Register";
 import CaptainDashboard from "@/pages/CaptainDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
@@ -18,16 +20,16 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/about" component={About} />
       <Route path="/tournaments" component={Tournaments} />
+      <Route path="/tournaments/:id" component={TournamentDetail} />
+      <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/register" component={Register} />
       
-      {/* Protected Routes - In real app, wrap these in auth guard components */}
       <Route path="/captain" component={CaptainDashboard} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/tournaments" component={AdminTournaments} />
-      <Route path="/admin/teams" component={AdminDashboard} /> {/* Reuse for now */}
-      <Route path="/admin/players" component={AdminDashboard} /> {/* Reuse for now */}
+      <Route path="/admin/teams" component={AdminDashboard} />
+      <Route path="/admin/players" component={AdminDashboard} />
 
-      {/* Static Placeholders */}
       <Route path="/media" component={Home} /> 
       <Route path="/faq" component={About} />
 

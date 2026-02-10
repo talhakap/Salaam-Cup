@@ -1,18 +1,21 @@
 import { z } from 'zod';
 import { 
-  insertUserSchema, 
   insertTournamentSchema, 
   insertDivisionSchema, 
   insertTeamSchema, 
   insertPlayerSchema, 
   insertMatchSchema,
   insertVenueSchema,
+  insertStandingSchema,
+  insertSportSchema,
   teams,
   players,
   tournaments,
   divisions,
   matches,
-  venues
+  venues,
+  standings,
+  sports,
 } from './schema';
 
 export const errorSchemas = {
@@ -32,7 +35,26 @@ export const errorSchemas = {
 };
 
 export const api = {
-  // === PUBLIC & ADMIN: Tournaments ===
+  // === SPORTS ===
+  sports: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/sports' as const,
+      responses: {
+        200: z.array(z.custom<typeof sports.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/sports' as const,
+      input: insertSportSchema,
+      responses: {
+        201: z.custom<typeof sports.$inferSelect>(),
+      },
+    },
+  },
+
+  // === TOURNAMENTS ===
   tournaments: {
     list: {
       method: 'GET' as const,
@@ -45,7 +67,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/tournaments/:id' as const,
       responses: {
-        200: z.custom<typeof tournaments.$inferSelect & { divisions: typeof divisions.$inferSelect[] }>(),
+        200: z.custom<typeof tournaments.$inferSelect & { divisions: (typeof divisions.$inferSelect)[] }>(),
         404: errorSchemas.notFound,
       },
     },
@@ -60,7 +82,7 @@ export const api = {
     },
   },
 
-  // === PUBLIC & ADMIN: Divisions ===
+  // === DIVISIONS ===
   divisions: {
     list: {
       method: 'GET' as const,
@@ -80,7 +102,7 @@ export const api = {
     },
   },
 
-  // === TEAMS (Public list, Captain create, Admin approve) ===
+  // === TEAMS ===
   teams: {
     list: {
       method: 'GET' as const,
@@ -97,7 +119,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/teams/:id' as const,
       responses: {
-        200: z.custom<typeof teams.$inferSelect & { players?: typeof players.$inferSelect[] }>(),
+        200: z.custom<typeof teams.$inferSelect & { players?: (typeof players.$inferSelect)[] }>(),
         404: errorSchemas.notFound,
       },
     },
@@ -121,7 +143,7 @@ export const api = {
     },
   },
 
-  // === PLAYERS (Captain manage, Admin verify) ===
+  // === PLAYERS ===
   players: {
     list: {
       method: 'GET' as const,
@@ -158,13 +180,13 @@ export const api = {
     },
   },
 
-  // === MATCHES & STANDINGS ===
+  // === MATCHES ===
   matches: {
     list: {
       method: 'GET' as const,
       path: '/api/tournaments/:tournamentId/matches' as const,
       responses: {
-        200: z.array(z.custom<typeof matches.$inferSelect & { homeTeam: typeof teams.$inferSelect, awayTeam: typeof teams.$inferSelect }>()),
+        200: z.array(z.custom<typeof matches.$inferSelect & { homeTeam: typeof teams.$inferSelect | null, awayTeam: typeof teams.$inferSelect | null }>()),
       },
     },
     create: {
@@ -186,25 +208,44 @@ export const api = {
       },
     },
   },
-  
+
+  // === STANDINGS ===
+  standings: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/tournaments/:tournamentId/standings' as const,
+      responses: {
+        200: z.array(z.custom<typeof standings.$inferSelect & { team: typeof teams.$inferSelect }>()),
+      },
+    },
+    recalculate: {
+      method: 'POST' as const,
+      path: '/api/tournaments/:tournamentId/standings/recalculate' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+      },
+    },
+  },
+
+  // === VENUES ===
   venues: {
-     list: {
-        method: 'GET' as const,
-        path: '/api/venues' as const,
-        responses: {
-           200: z.array(z.custom<typeof venues.$inferSelect>()),
-        }
-     },
-     create: {
-        method: 'POST' as const,
-        path: '/api/venues' as const,
-        input: insertVenueSchema,
-        responses: {
-           201: z.custom<typeof venues.$inferSelect>(),
-           403: errorSchemas.forbidden
-        }
-     }
-  }
+    list: {
+      method: 'GET' as const,
+      path: '/api/venues' as const,
+      responses: {
+        200: z.array(z.custom<typeof venues.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/venues' as const,
+      input: insertVenueSchema,
+      responses: {
+        201: z.custom<typeof venues.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {

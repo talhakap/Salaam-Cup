@@ -9,47 +9,53 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Auth Setup
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  // === SPORTS ===
+  app.get(api.sports.list.path, async (_req, res) => {
+    const data = await storage.getSports();
+    res.json(data);
+  });
+
+  app.post(api.sports.create.path, async (req, res) => {
+    try {
+      const input = api.sports.create.input.parse(req.body);
+      const sport = await storage.createSport(input);
+      res.status(201).json(sport);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
   // === TOURNAMENTS ===
-  app.get(api.tournaments.list.path, async (req, res) => {
-    const tournaments = await storage.getTournaments();
-    res.json(tournaments);
+  app.get(api.tournaments.list.path, async (_req, res) => {
+    const data = await storage.getTournaments();
+    res.json(data);
   });
 
   app.get(api.tournaments.get.path, async (req, res) => {
     const tournament = await storage.getTournament(Number(req.params.id));
-    if (!tournament) {
-      return res.status(404).json({ message: "Tournament not found" });
-    }
+    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
     res.json(tournament);
   });
 
   app.post(api.tournaments.create.path, async (req, res) => {
-    // Check admin
-    if (!req.user || !(req.user as any).claims?.isAdmin) {
-       // TODO: Implement proper admin check via roles
-       // For now, allow logged in users to create for demo or check specific emails
-    }
     try {
       const input = api.tournaments.create.input.parse(req.body);
       const tournament = await storage.createTournament(input);
       res.status(201).json(tournament);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-         res.status(400).json({ message: err.errors[0].message });
-         return;
-      }
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
   });
 
   // === DIVISIONS ===
   app.get(api.divisions.list.path, async (req, res) => {
-    const divisions = await storage.getDivisions(Number(req.params.tournamentId));
-    res.json(divisions);
+    const data = await storage.getDivisions(Number(req.params.tournamentId));
+    res.json(data);
   });
 
   app.post(api.divisions.create.path, async (req, res) => {
@@ -58,10 +64,7 @@ export async function registerRoutes(
       const division = await storage.createDivision(input);
       res.status(201).json(division);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-         res.status(400).json({ message: err.errors[0].message });
-         return;
-      }
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
   });
@@ -70,19 +73,13 @@ export async function registerRoutes(
   app.get(api.teams.list.path, async (req, res) => {
     const tournamentId = Number(req.params.tournamentId);
     const { status, divisionId } = req.query;
-    const teams = await storage.getTeams(
-        tournamentId, 
-        status as string, 
-        divisionId ? Number(divisionId) : undefined
-    );
-    res.json(teams);
+    const data = await storage.getTeams(tournamentId, status as string, divisionId ? Number(divisionId) : undefined);
+    res.json(data);
   });
 
   app.get(api.teams.get.path, async (req, res) => {
     const team = await storage.getTeam(Number(req.params.id));
-    if (!team) {
-      return res.status(404).json({ message: "Team not found" });
-    }
+    if (!team) return res.status(404).json({ message: "Team not found" });
     res.json(team);
   });
 
@@ -92,10 +89,7 @@ export async function registerRoutes(
       const team = await storage.createTeam(input);
       res.status(201).json(team);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-         res.status(400).json({ message: err.errors[0].message });
-         return;
-      }
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
   });
@@ -106,18 +100,15 @@ export async function registerRoutes(
       const team = await storage.updateTeam(Number(req.params.id), input);
       res.json(team);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-         res.status(400).json({ message: err.errors[0].message });
-         return;
-      }
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
   });
 
   // === PLAYERS ===
   app.get(api.players.list.path, async (req, res) => {
-    const players = await storage.getPlayers(Number(req.params.teamId));
-    res.json(players);
+    const data = await storage.getPlayers(Number(req.params.teamId));
+    res.json(data);
   });
 
   app.post(api.players.create.path, async (req, res) => {
@@ -126,10 +117,7 @@ export async function registerRoutes(
       const player = await storage.createPlayer(input);
       res.status(201).json(player);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-         res.status(400).json({ message: err.errors[0].message });
-         return;
-      }
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
   });
@@ -137,86 +125,82 @@ export async function registerRoutes(
   app.post(api.players.bulkCreate.path, async (req, res) => {
     try {
       const input = api.players.bulkCreate.input.parse(req.body);
-      const players = await storage.createPlayersBulk(input, Number(req.params.teamId));
-      res.status(201).json(players);
+      const data = await storage.createPlayersBulk(input, Number(req.params.teamId));
+      res.status(201).json(data);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-         res.status(400).json({ message: err.errors[0].message });
-         return;
-      }
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
   });
-  
+
   app.patch(api.players.update.path, async (req, res) => {
     try {
       const input = api.players.update.input.parse(req.body);
       const player = await storage.updatePlayer(Number(req.params.id), input);
       res.json(player);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-         res.status(400).json({ message: err.errors[0].message });
-         return;
-      }
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
   });
 
   // === MATCHES ===
   app.get(api.matches.list.path, async (req, res) => {
-    const matches = await storage.getMatches(Number(req.params.tournamentId));
-    res.json(matches);
+    const data = await storage.getMatches(Number(req.params.tournamentId));
+    res.json(data);
   });
-  
+
   app.post(api.matches.create.path, async (req, res) => {
     try {
-       const input = api.matches.create.input.parse(req.body);
-       const match = await storage.createMatch(input);
-       res.status(201).json(match);
+      const input = api.matches.create.input.parse(req.body);
+      const match = await storage.createMatch(input);
+      res.status(201).json(match);
     } catch (err) {
-       if (err instanceof z.ZodError) {
-          res.status(400).json({ message: err.errors[0].message });
-          return;
-       }
-       throw err;
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
     }
   });
 
   app.patch(api.matches.update.path, async (req, res) => {
     try {
-       const input = api.matches.update.input.parse(req.body);
-       const match = await storage.updateMatch(Number(req.params.id), input);
-       res.json(match);
+      const input = api.matches.update.input.parse(req.body);
+      const match = await storage.updateMatch(Number(req.params.id), input);
+      res.json(match);
     } catch (err) {
-       if (err instanceof z.ZodError) {
-          res.status(400).json({ message: err.errors[0].message });
-          return;
-       }
-       throw err;
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
     }
   });
-  
-  // === VENUES ===
-  app.get(api.venues.list.path, async (req, res) => {
-     const venues = await storage.getVenues();
-     res.json(venues);
-  });
-  
-  app.post(api.venues.create.path, async (req, res) => {
-     try {
-        const input = api.venues.create.input.parse(req.body);
-        const venue = await storage.createVenue(input);
-        res.status(201).json(venue);
-     } catch (err) {
-        if (err instanceof z.ZodError) {
-           res.status(400).json({ message: err.errors[0].message });
-           return;
-        }
-        throw err;
-     }
+
+  // === STANDINGS ===
+  app.get(api.standings.list.path, async (req, res) => {
+    const data = await storage.getStandings(Number(req.params.tournamentId));
+    res.json(data);
   });
 
-  // Seed Data
+  app.post(api.standings.recalculate.path, async (req, res) => {
+    await storage.recalculateStandings(Number(req.params.tournamentId));
+    res.json({ message: "Standings recalculated" });
+  });
+
+  // === VENUES ===
+  app.get(api.venues.list.path, async (_req, res) => {
+    const data = await storage.getVenues();
+    res.json(data);
+  });
+
+  app.post(api.venues.create.path, async (req, res) => {
+    try {
+      const input = api.venues.create.input.parse(req.body);
+      const venue = await storage.createVenue(input);
+      res.status(201).json(venue);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  // Seed database on startup
   seedDatabase();
 
   return httpServer;
@@ -226,71 +210,228 @@ async function seedDatabase() {
   const existing = await storage.getTournaments();
   if (existing.length > 0) return;
 
-  const tournament = await storage.createTournament({
+  // Create sports
+  const hockey = await storage.createSport({ name: "Ball Hockey", icon: "hockey", description: "Street ball hockey" });
+  const basketball = await storage.createSport({ name: "Basketball", icon: "basketball", description: "5v5 basketball" });
+  const soccer = await storage.createSport({ name: "Soccer", icon: "soccer", description: "11v11 outdoor soccer" });
+
+  // Create venue
+  const venue = await storage.createVenue({ name: "Mississauga Community Centre", address: "100 City Centre Dr, Mississauga, ON" });
+
+  // Create tournament
+  const t = await storage.createTournament({
     name: "Salaam Cup 2025",
     slug: "salaam-cup-2025",
     year: 2025,
-    startDate: "2025-06-01",
-    endDate: "2025-06-02",
+    sportId: hockey.id,
+    startDate: "2025-07-12",
+    endDate: "2025-07-13",
     status: "active",
-    description: "The premier community sports tournament.",
+    description: "The premier community ball hockey tournament bringing together athletes from across the GTA.",
     isFeatured: true,
   });
 
-  const divA = await storage.createDivision({
-    tournamentId: tournament.id,
-    name: "Men's A",
+  // Create a second tournament
+  const t2 = await storage.createTournament({
+    name: "Salaam Cup Basketball 2025",
+    slug: "salaam-cup-basketball-2025",
+    year: 2025,
+    sportId: basketball.id,
+    startDate: "2025-08-16",
+    endDate: "2025-08-17",
+    status: "upcoming",
+    description: "5v5 basketball tournament for the community.",
+    isFeatured: true,
+  });
+
+  // Divisions for hockey
+  const poolA = await storage.createDivision({
+    tournamentId: t.id,
+    name: "Pool A",
     category: "Men",
-    description: "Competitive division for experienced players.",
+    description: "Competitive men's division",
+    gameFormat: "3v3 + goalie",
   });
-  
-  const divB = await storage.createDivision({
-    tournamentId: tournament.id,
-    name: "Men's B",
+
+  const poolB = await storage.createDivision({
+    tournamentId: t.id,
+    name: "Pool B",
     category: "Men",
-    description: "Recreational division.",
+    description: "Recreational men's division",
+    gameFormat: "3v3 + goalie",
   });
-  
-  const team1 = await storage.createTeam({
-     tournamentId: tournament.id,
-     divisionId: divA.id,
-     name: "Dirty Clan",
-     captainName: "John Doe",
-     captainEmail: "john@example.com",
-     captainPhone: "555-0123",
-     status: "approved",
-     description: "Returning champions.",
-     logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Nashville_Predators_Logo_%282011%29.svg/1200px-Nashville_Predators_Logo_%282011%29.svg.png" 
+
+  const juniorDiv = await storage.createDivision({
+    tournamentId: t.id,
+    name: "Junior A",
+    category: "Youth",
+    description: "Youth under 16 division",
+    gameFormat: "4v4",
   });
-  
-  const team2 = await storage.createTeam({
-     tournamentId: tournament.id,
-     divisionId: divA.id,
-     name: "The Mafia",
-     captainName: "Jane Smith",
-     captainEmail: "jane@example.com",
-     captainPhone: "555-0124",
-     status: "approved",
-     description: "New contenders."
+
+  // Division for basketball
+  const bbDiv = await storage.createDivision({
+    tournamentId: t2.id,
+    name: "Open Division",
+    category: "Men",
+    description: "Open 5v5 basketball",
+    gameFormat: "5v5",
   });
-  
-  await storage.createPlayer({
-     teamId: team1.id,
-     firstName: "Ali",
-     lastName: "Hassan",
-     email: "ali@example.com",
-     dob: "1995-05-15",
-     jerseyNumber: 10,
-     status: "verified"
+
+  // Teams
+  const dirtyClan = await storage.createTeam({
+    tournamentId: t.id,
+    divisionId: poolA.id,
+    name: "Dirty Clan",
+    captainName: "Ahmed Khan",
+    captainEmail: "ahmed@example.com",
+    captainPhone: "416-555-0101",
+    status: "approved",
+    teamColor: "#1a1a1a",
+    description: "Returning champions from 2024.",
   });
-  
+
+  const mafia = await storage.createTeam({
+    tournamentId: t.id,
+    divisionId: poolA.id,
+    name: "The Mafia",
+    captainName: "Omar Syed",
+    captainEmail: "omar@example.com",
+    captainPhone: "416-555-0102",
+    status: "approved",
+    description: "Strong contenders for the title.",
+  });
+
+  const stoughton = await storage.createTeam({
+    tournamentId: t.id,
+    divisionId: poolA.id,
+    name: "Stoughton FC",
+    captainName: "Bilal Hussain",
+    captainEmail: "bilal@example.com",
+    captainPhone: "416-555-0103",
+    status: "approved",
+    description: "First year in the tournament.",
+  });
+
+  const daneBerros = await storage.createTeam({
+    tournamentId: t.id,
+    divisionId: poolA.id,
+    name: "Dane Berros BC",
+    captainName: "Yusuf Ali",
+    captainEmail: "yusuf@example.com",
+    captainPhone: "416-555-0104",
+    status: "approved",
+    description: "Known for defensive play.",
+  });
+
+  const teamPending = await storage.createTeam({
+    tournamentId: t.id,
+    divisionId: poolB.id,
+    name: "Brampton Lions",
+    captainName: "Hassan Mahmood",
+    captainEmail: "hassan@example.com",
+    captainPhone: "416-555-0105",
+    status: "pending",
+    description: "New team from Brampton area.",
+  });
+
+  const wolves = await storage.createTeam({
+    tournamentId: t.id,
+    divisionId: poolB.id,
+    name: "Scarborough Wolves",
+    captainName: "Tariq Patel",
+    captainEmail: "tariq@example.com",
+    captainPhone: "416-555-0106",
+    status: "approved",
+    description: "Experienced recreational team.",
+  });
+
+  // Players for Dirty Clan
+  const dcPlayers = [
+    { firstName: "Ali", lastName: "Hassan", email: "ali@example.com", dob: "1995-05-15", jerseyNumber: 10, status: "verified" as const, position: "Forward" },
+    { firstName: "Zain", lastName: "Malik", email: "zain@example.com", dob: "1997-03-22", jerseyNumber: 7, status: "verified" as const, position: "Defense" },
+    { firstName: "Hamza", lastName: "Sheikh", email: "hamza@example.com", dob: "1996-11-08", jerseyNumber: 4, status: "verified" as const, position: "Goalie" },
+    { firstName: "Usman", lastName: "Farooq", email: "usman@example.com", dob: "1998-01-30", jerseyNumber: 11, status: "verified" as const, position: "Forward" },
+    { firstName: "Kareem", lastName: "Noor", email: "kareem@example.com", dob: "1994-07-12", jerseyNumber: 22, status: "staging" as const, position: "Defense" },
+    { firstName: "Faisal", lastName: "Qureshi", email: "faisal@example.com", dob: "1999-09-05", jerseyNumber: 15, status: "staging" as const, position: "Forward", adminNotes: "Missing waiver signature" },
+  ];
+  for (const p of dcPlayers) {
+    await storage.createPlayer({ ...p, teamId: dirtyClan.id, waiverSigned: p.status === "verified" });
+  }
+
+  // Players for The Mafia
+  const mafiaPlayers = [
+    { firstName: "Ibrahim", lastName: "Ahmed", email: "ibrahim@example.com", dob: "1996-02-14", jerseyNumber: 9, status: "verified" as const, position: "Forward" },
+    { firstName: "Saad", lastName: "Khan", email: "saad@example.com", dob: "1997-08-21", jerseyNumber: 3, status: "verified" as const, position: "Defense" },
+    { firstName: "Amir", lastName: "Raza", email: "amir@example.com", dob: "1995-12-03", jerseyNumber: 1, status: "verified" as const, position: "Goalie" },
+    { firstName: "Nabil", lastName: "Younis", email: "nabil@example.com", dob: "1998-06-17", jerseyNumber: 18, status: "rejected" as const, position: "Forward", adminNotes: "Age eligibility issue" },
+  ];
+  for (const p of mafiaPlayers) {
+    await storage.createPlayer({ ...p, teamId: mafia.id, waiverSigned: p.status === "verified" });
+  }
+
+  // Players for Stoughton
+  const stoughtonPlayers = [
+    { firstName: "Jamal", lastName: "Hassan", email: "jamal@example.com", dob: "1997-04-09", jerseyNumber: 5, status: "verified" as const, position: "Forward" },
+    { firstName: "Khalid", lastName: "Osman", email: "khalid@example.com", dob: "1996-10-28", jerseyNumber: 8, status: "verified" as const, position: "Defense" },
+    { firstName: "Rashid", lastName: "Ali", email: "rashid@example.com", dob: "1998-07-02", jerseyNumber: 12, status: "staging" as const, position: "Goalie" },
+  ];
+  for (const p of stoughtonPlayers) {
+    await storage.createPlayer({ ...p, teamId: stoughton.id, waiverSigned: p.status === "verified" });
+  }
+
+  // Matches - Pool A round robin (all final to generate standings)
   await storage.createMatch({
-     tournamentId: tournament.id,
-     divisionId: divA.id,
-     homeTeamId: team1.id,
-     awayTeamId: team2.id,
-     startTime: new Date("2025-06-01T10:00:00Z"),
-     status: "scheduled",
-     round: "Group A"
+    tournamentId: t.id, divisionId: poolA.id,
+    homeTeamId: dirtyClan.id, awayTeamId: mafia.id,
+    venueId: venue.id,
+    startTime: new Date("2025-07-12T10:00:00"),
+    homeScore: 5, awayScore: 3, status: "final", round: "Pool A", matchNumber: 1,
   });
+  await storage.createMatch({
+    tournamentId: t.id, divisionId: poolA.id,
+    homeTeamId: stoughton.id, awayTeamId: daneBerros.id,
+    venueId: venue.id,
+    startTime: new Date("2025-07-12T11:00:00"),
+    homeScore: 2, awayScore: 2, status: "final", round: "Pool A", matchNumber: 2,
+  });
+  await storage.createMatch({
+    tournamentId: t.id, divisionId: poolA.id,
+    homeTeamId: dirtyClan.id, awayTeamId: stoughton.id,
+    venueId: venue.id,
+    startTime: new Date("2025-07-12T14:00:00"),
+    homeScore: 4, awayScore: 1, status: "final", round: "Pool A", matchNumber: 3,
+  });
+  await storage.createMatch({
+    tournamentId: t.id, divisionId: poolA.id,
+    homeTeamId: mafia.id, awayTeamId: daneBerros.id,
+    venueId: venue.id,
+    startTime: new Date("2025-07-12T15:00:00"),
+    homeScore: 3, awayScore: 1, status: "final", round: "Pool A", matchNumber: 4,
+  });
+  await storage.createMatch({
+    tournamentId: t.id, divisionId: poolA.id,
+    homeTeamId: dirtyClan.id, awayTeamId: daneBerros.id,
+    venueId: venue.id,
+    startTime: new Date("2025-07-13T09:00:00"),
+    homeScore: 6, awayScore: 0, status: "final", round: "Pool A", matchNumber: 5,
+  });
+  await storage.createMatch({
+    tournamentId: t.id, divisionId: poolA.id,
+    homeTeamId: mafia.id, awayTeamId: stoughton.id,
+    venueId: venue.id,
+    startTime: new Date("2025-07-13T10:00:00"),
+    homeScore: 4, awayScore: 2, status: "live", round: "Pool A", matchNumber: 6,
+  });
+  // Scheduled match
+  await storage.createMatch({
+    tournamentId: t.id, divisionId: poolA.id,
+    homeTeamId: dirtyClan.id, awayTeamId: null,
+    venueId: venue.id,
+    startTime: new Date("2025-07-13T14:00:00"),
+    status: "scheduled", round: "Semi Final", matchNumber: 7,
+  });
+
+  // Recalculate standings
+  await storage.recalculateStandings(t.id);
 }

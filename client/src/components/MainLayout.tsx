@@ -71,34 +71,31 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8 border-2 border-primary/20">
-                      <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.username} />
-                      <AvatarFallback>{user?.username?.substring(0,2).toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "User"} />
+                      <AvatarFallback>{(user?.firstName?.[0] || "")}{(user?.lastName?.[0] || "")}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.username}</p>
+                      <p className="text-sm font-medium leading-none">{user?.firstName} {user?.lastName}</p>
                       <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {user?.isAdmin ? (
-                    <Link href="/admin">
-                      <DropdownMenuItem className="cursor-pointer">
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        <span>Admin Portal</span>
-                      </DropdownMenuItem>
-                    </Link>
-                  ) : (
-                    <Link href="/captain">
-                      <DropdownMenuItem className="cursor-pointer">
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        <span>Captain's Dashboard</span>
-                      </DropdownMenuItem>
-                    </Link>
-                  )}
+                  <Link href="/captain">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Captain's Dashboard</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/admin">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      <span>Admin Portal</span>
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuItem onClick={() => logout()} className="text-destructive cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>

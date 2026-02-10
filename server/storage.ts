@@ -1,13 +1,20 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues,
-  type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, type InsertMatch, type InsertVenue,
-  type Tournament, type Division, type Team, type Player, type Match, type Venue,
-  type UpdateTeamRequest, type UpdatePlayerRequest
+  tournaments, divisions, teams, players, matches, venues, standings, sports,
+  type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
+  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport,
+  type Tournament, type Division, type Team, type Player, type Match, type Venue, 
+  type Standing, type Sport,
+  type UpdateTeamRequest, type UpdatePlayerRequest,
+  type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export interface IStorage {
+  // Sports
+  getSports(): Promise<Sport[]>;
+  createSport(data: InsertSport): Promise<Sport>;
+
   // Tournaments
   getTournaments(): Promise<Tournament[]>;
   getTournament(id: number): Promise<(Tournament & { divisions: Division[] }) | undefined>;
@@ -19,7 +26,7 @@ export interface IStorage {
 
   // Teams
   getTeams(tournamentId: number, status?: string, divisionId?: number): Promise<Team[]>;
-  getTeam(id: number): Promise<(Team & { players?: Player[] }) | undefined>;
+  getTeam(id: number): Promise<(Team & { players: Player[] }) | undefined>;
   createTeam(data: InsertTeam): Promise<Team>;
   updateTeam(id: number, data: UpdateTeamRequest): Promise<Team>;
 
@@ -30,9 +37,13 @@ export interface IStorage {
   createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]>;
 
   // Matches
-  getMatches(tournamentId: number): Promise<(Match & { homeTeam: Team | null, awayTeam: Team | null })[]>;
+  getMatches(tournamentId: number): Promise<MatchWithTeams[]>;
   createMatch(data: InsertMatch): Promise<Match>;
   updateMatch(id: number, data: Partial<InsertMatch>): Promise<Match>;
+
+  // Standings
+  getStandings(tournamentId: number): Promise<StandingWithTeam[]>;
+  recalculateStandings(tournamentId: number): Promise<void>;
 
   // Venues
   getVenues(): Promise<Venue[]>;
@@ -40,6 +51,16 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Sports
+  async getSports(): Promise<Sport[]> {
+    return await db.select().from(sports);
+  }
+
+  async createSport(data: InsertSport): Promise<Sport> {
+    const [sport] = await db.insert(sports).values(data).returning();
+    return sport;
+  }
+
   // Tournaments
   async getTournaments(): Promise<Tournament[]> {
     return await db.select().from(tournaments);
@@ -48,9 +69,8 @@ export class DatabaseStorage implements IStorage {
   async getTournament(id: number): Promise<(Tournament & { divisions: Division[] }) | undefined> {
     const [tournament] = await db.select().from(tournaments).where(eq(tournaments.id, id));
     if (!tournament) return undefined;
-    
-    const tournamentDivisions = await db.select().from(divisions).where(eq(divisions.tournamentId, id));
-    return { ...tournament, divisions: tournamentDivisions };
+    const divs = await db.select().from(divisions).where(eq(divisions.tournamentId, id));
+    return { ...tournament, divisions: divs };
   }
 
   async createTournament(data: InsertTournament): Promise<Tournament> {
@@ -70,22 +90,15 @@ export class DatabaseStorage implements IStorage {
 
   // Teams
   async getTeams(tournamentId: number, status?: string, divisionId?: number): Promise<Team[]> {
-    let query = db.select().from(teams).where(eq(teams.tournamentId, tournamentId));
-    
-    if (status) {
-      query = query.where(eq(teams.status, status as any)) as any;
-    }
-    if (divisionId) {
-       query = query.where(eq(teams.divisionId, divisionId)) as any;
-    }
-    
-    return await query;
+    const conditions = [eq(teams.tournamentId, tournamentId)];
+    if (status) conditions.push(eq(teams.status, status as any));
+    if (divisionId) conditions.push(eq(teams.divisionId, divisionId));
+    return await db.select().from(teams).where(and(...conditions));
   }
 
-  async getTeam(id: number): Promise<(Team & { players?: Player[] }) | undefined> {
+  async getTeam(id: number): Promise<(Team & { players: Player[] }) | undefined> {
     const [team] = await db.select().from(teams).where(eq(teams.id, id));
     if (!team) return undefined;
-    
     const teamPlayers = await db.select().from(players).where(eq(players.teamId, id));
     return { ...team, players: teamPlayers };
   }
@@ -116,30 +129,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]> {
-    const playersToInsert = data.map(p => ({ ...p, teamId }));
-    return await db.insert(players).values(playersToInsert).returning();
+    const toInsert = data.map(p => ({ ...p, teamId }));
+    return await db.insert(players).values(toInsert).returning();
   }
 
   // Matches
-  async getMatches(tournamentId: number): Promise<(Match & { homeTeam: Team | null, awayTeam: Team | null })[]> {
-    const matchesData = await db.select().from(matches).where(eq(matches.tournamentId, tournamentId));
-    
-    // Enrich with team names (simplified for now, ideally use joins or Drizzle with...)
-    const enrichedMatches = await Promise.all(matchesData.map(async (match) => {
-       let homeTeam: Team | null = null;
-       let awayTeam: Team | null = null;
-       
-       if (match.homeTeamId) {
-          [homeTeam] = await db.select().from(teams).where(eq(teams.id, match.homeTeamId));
-       }
-       if (match.awayTeamId) {
-          [awayTeam] = await db.select().from(teams).where(eq(teams.id, match.awayTeamId));
-       }
-
-       return { ...match, homeTeam: homeTeam || null, awayTeam: awayTeam || null };
+  async getMatches(tournamentId: number): Promise<MatchWithTeams[]> {
+    const matchRows = await db.select().from(matches).where(eq(matches.tournamentId, tournamentId));
+    const enriched = await Promise.all(matchRows.map(async (m) => {
+      let homeTeam: Team | null = null;
+      let awayTeam: Team | null = null;
+      if (m.homeTeamId) {
+        const [ht] = await db.select().from(teams).where(eq(teams.id, m.homeTeamId));
+        homeTeam = ht || null;
+      }
+      if (m.awayTeamId) {
+        const [at] = await db.select().from(teams).where(eq(teams.id, m.awayTeamId));
+        awayTeam = at || null;
+      }
+      return { ...m, homeTeam, awayTeam };
     }));
-    
-    return enrichedMatches;
+    return enriched;
   }
 
   async createMatch(data: InsertMatch): Promise<Match> {
@@ -150,6 +160,102 @@ export class DatabaseStorage implements IStorage {
   async updateMatch(id: number, data: Partial<InsertMatch>): Promise<Match> {
     const [match] = await db.update(matches).set(data).where(eq(matches.id, id)).returning();
     return match;
+  }
+
+  // Standings
+  async getStandings(tournamentId: number): Promise<StandingWithTeam[]> {
+    const rows = await db.select().from(standings).where(eq(standings.tournamentId, tournamentId));
+    const enriched = await Promise.all(rows.map(async (s) => {
+      const [team] = await db.select().from(teams).where(eq(teams.id, s.teamId));
+      return { ...s, team };
+    }));
+    return enriched.sort((a, b) => (b.points - a.points) || (b.goalDifference - a.goalDifference));
+  }
+
+  async recalculateStandings(tournamentId: number): Promise<void> {
+    // Get all final matches for this tournament
+    const finalMatches = await db.select().from(matches)
+      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final")));
+
+    // Get all approved teams
+    const allTeams = await db.select().from(teams)
+      .where(and(eq(teams.tournamentId, tournamentId), eq(teams.status, "approved")));
+
+    // Clear existing standings
+    await db.delete(standings).where(eq(standings.tournamentId, tournamentId));
+
+    // Build standings map
+    const statsMap = new Map<number, InsertStanding>();
+    for (const team of allTeams) {
+      statsMap.set(team.id, {
+        tournamentId,
+        divisionId: team.divisionId,
+        teamId: team.id,
+        gamesPlayed: 0,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+        points: 0,
+        position: 0,
+      });
+    }
+
+    for (const m of finalMatches) {
+      if (!m.homeTeamId || !m.awayTeamId) continue;
+      const home = statsMap.get(m.homeTeamId);
+      const away = statsMap.get(m.awayTeamId);
+      if (!home || !away) continue;
+
+      const hs = m.homeScore ?? 0;
+      const as = m.awayScore ?? 0;
+
+      home.gamesPlayed!++;
+      away.gamesPlayed!++;
+      home.goalsFor! += hs;
+      home.goalsAgainst! += as;
+      away.goalsFor! += as;
+      away.goalsAgainst! += hs;
+
+      if (hs > as) {
+        home.wins!++;
+        away.losses!++;
+        home.points! += 3;
+      } else if (hs < as) {
+        away.wins!++;
+        home.losses!++;
+        away.points! += 3;
+      } else {
+        home.ties!++;
+        away.ties!++;
+        home.points! += 1;
+        away.points! += 1;
+      }
+
+      home.goalDifference = home.goalsFor! - home.goalsAgainst!;
+      away.goalDifference = away.goalsFor! - away.goalsAgainst!;
+    }
+
+    // Insert all standings
+    const standingsArr = Array.from(statsMap.values());
+    // Sort by points then GD for position
+    standingsArr.sort((a, b) => (b.points! - a.points!) || (b.goalDifference! - a.goalDifference!));
+    
+    // Group by division for per-division positions
+    const byDiv = new Map<number, InsertStanding[]>();
+    for (const s of standingsArr) {
+      if (!byDiv.has(s.divisionId)) byDiv.set(s.divisionId, []);
+      byDiv.get(s.divisionId)!.push(s);
+    }
+    for (const divStandings of byDiv.values()) {
+      divStandings.forEach((s, i) => { s.position = i + 1; });
+    }
+
+    if (standingsArr.length > 0) {
+      await db.insert(standings).values(standingsArr);
+    }
   }
 
   // Venues
