@@ -1,18 +1,24 @@
 import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
+import { HeroSection } from "@/components/HeroSection";
+import { SponsorBar } from "@/components/SponsorBar";
 import { useTournament, useDivisions } from "@/hooks/use-tournaments";
 import { useTeams } from "@/hooks/use-teams";
 import { useMatches } from "@/hooks/use-matches";
 import { useStandings } from "@/hooks/use-standings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Users, Trophy, Clock, ArrowRight } from "lucide-react";
+import { Users, ArrowRight } from "lucide-react";
 import { useState } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import type { Division, Team, StandingWithTeam, MatchWithTeams } from "@shared/schema";
 
 export default function TournamentDetail() {
@@ -30,9 +36,9 @@ export default function TournamentDetail() {
   if (isLoading) {
     return (
       <MainLayout>
+        <div className="h-[45vh] bg-muted animate-pulse" />
         <div className="container mx-auto px-4 py-12">
           <Skeleton className="h-12 w-64 mb-4" />
-          <Skeleton className="h-6 w-96 mb-8" />
           <Skeleton className="h-96 w-full" />
         </div>
       </MainLayout>
@@ -52,164 +58,114 @@ export default function TournamentDetail() {
     );
   }
 
-  const statusColors: Record<string, string> = {
-    upcoming: "bg-blue-500 text-white",
-    active: "bg-green-500 text-white",
-    completed: "bg-muted text-muted-foreground",
-  };
+  const approvedTeams = allTeams?.filter((t: Team) => t.status === "approved");
+  const finalMatches = allMatches?.filter((m: MatchWithTeams) => m.status === "final");
+  const liveMatches = allMatches?.filter((m: MatchWithTeams) => m.status === "live");
+  const scheduledMatches = allMatches?.filter((m: MatchWithTeams) => m.status === "scheduled");
 
-  const filteredTeams = selectedDivision === "all" 
-    ? allTeams 
-    : allTeams?.filter((t: Team) => t.divisionId === Number(selectedDivision));
-
-  const filteredMatches = selectedDivision === "all"
-    ? allMatches
-    : allMatches?.filter((m: MatchWithTeams) => m.divisionId === Number(selectedDivision));
-
-  const filteredStandings = selectedDivision === "all"
-    ? allStandings
-    : allStandings?.filter((s: StandingWithTeam) => s.divisionId === Number(selectedDivision));
-
-  const approvedTeams = filteredTeams?.filter((t: Team) => t.status === "approved");
-  const finalMatches = filteredMatches?.filter((m: MatchWithTeams) => m.status === "final");
-  const liveMatches = filteredMatches?.filter((m: MatchWithTeams) => m.status === "live");
-  const scheduledMatches = filteredMatches?.filter((m: MatchWithTeams) => m.status === "scheduled");
+  const divisionTabs = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
 
   return (
     <MainLayout>
-      {/* Hero */}
-      <section className="relative h-[35vh] min-h-[280px] flex items-center justify-center overflow-hidden bg-secondary">
-        {tournament.heroImage && (
-          <img src={tournament.heroImage} alt={tournament.name} className="absolute inset-0 w-full h-full object-cover opacity-40" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-secondary/60 to-secondary/90" />
-        <div className="container relative z-10 px-4 text-center">
-          <Badge className={statusColors[tournament.status] || ""} data-testid="badge-tournament-status">
-            {tournament.status.toUpperCase()}
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold font-display text-white mt-3 text-shadow-lg" data-testid="text-tournament-name">
-            {tournament.name}
-          </h1>
-          <div className="flex items-center justify-center gap-4 mt-4 text-white/80 flex-wrap">
-            <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {tournament.startDate} - {tournament.endDate}</span>
-            <span className="flex items-center gap-1"><Trophy className="h-4 w-4" /> {tournament.year}</span>
-          </div>
-          {tournament.description && (
-            <p className="mt-4 text-white/70 max-w-2xl mx-auto">{tournament.description}</p>
+      <HeroSection 
+        title={tournament.name.replace("Salaam Cup ", "").toUpperCase()} 
+        image={tournament.heroImage || undefined} 
+      />
+      <SponsorBar />
+
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-10" data-testid="text-compete-win">
+            Compete And Win.
+          </h2>
+
+          {divisionTabs.length > 0 && (
+            <div className="flex justify-center mb-10">
+              <div className="flex gap-2 flex-wrap justify-center">
+                <Button
+                  variant={selectedDivision === "all" ? "default" : "outline"}
+                  className="rounded-full text-xs font-bold uppercase tracking-wider"
+                  onClick={() => setSelectedDivision("all")}
+                  data-testid="filter-all"
+                >
+                  All
+                </Button>
+                {divisionTabs.map((tab) => (
+                  <Button
+                    key={tab.id}
+                    variant={selectedDivision === tab.id ? "default" : "outline"}
+                    className="rounded-full text-xs font-bold uppercase tracking-wider"
+                    onClick={() => setSelectedDivision(tab.id)}
+                    data-testid={`filter-division-${tab.id}`}
+                  >
+                    {tab.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
           )}
-        </div>
-      </section>
 
-      {/* Division Filter */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center gap-4 flex-wrap">
-          <span className="text-sm font-medium text-muted-foreground">Filter by Division:</span>
-          <Select value={selectedDivision} onValueChange={setSelectedDivision}>
-            <SelectTrigger className="w-[200px]" data-testid="select-division-filter">
-              <SelectValue placeholder="All Divisions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Divisions</SelectItem>
-              {divisions?.map((d: Division) => (
-                <SelectItem key={d.id} value={String(d.id)}>{d.name} ({d.category})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+          {liveMatches && liveMatches.length > 0 && (
+            <div className="mb-6">
+              {liveMatches
+                .filter((m: MatchWithTeams) => selectedDivision === "all" || m.divisionId === Number(selectedDivision))
+                .map((m: MatchWithTeams) => (
+                  <MatchRow key={m.id} match={m} />
+                ))}
+            </div>
+          )}
 
-      {/* Tabs */}
-      <div className="container mx-auto px-4 pb-12">
-        <Tabs defaultValue="schedule" className="w-full">
-          <TabsList className="w-full justify-start flex-wrap gap-1 h-auto p-1 bg-muted" data-testid="tabs-tournament">
-            <TabsTrigger value="schedule" data-testid="tab-schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="standings" data-testid="tab-standings">Standings</TabsTrigger>
-            <TabsTrigger value="teams" data-testid="tab-teams">Teams</TabsTrigger>
-            <TabsTrigger value="divisions" data-testid="tab-divisions">Divisions</TabsTrigger>
-            <TabsTrigger value="stats" data-testid="tab-stats">Stats</TabsTrigger>
-          </TabsList>
+          {allMatches && allMatches.length > 0 && (
+            <div className="mb-10">
+              {[...(finalMatches || []), ...(scheduledMatches || [])]
+                .filter((m: MatchWithTeams) => selectedDivision === "all" || m.divisionId === Number(selectedDivision))
+                .map((m: MatchWithTeams) => (
+                  <MatchRow key={m.id} match={m} />
+                ))}
+            </div>
+          )}
 
-          {/* SCHEDULE TAB */}
-          <TabsContent value="schedule" className="mt-6">
-            <h2 className="text-2xl font-bold font-display mb-6">Schedule & Results</h2>
+          {(!allMatches || allMatches.length === 0) && (
+            <p className="text-muted-foreground text-center py-12">No matches scheduled yet.</p>
+          )}
 
-            {/* Live matches */}
-            {liveMatches && liveMatches.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-destructive mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                  Live Now
-                </h3>
-                <div className="space-y-3">
-                  {liveMatches.map((m: MatchWithTeams) => (
-                    <MatchCard key={m.id} match={m} />
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="text-center mt-6 mb-16">
+            <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-full-schedule">
+              See Full Schedule
+            </Button>
+          </div>
 
-            {/* Scheduled */}
-            {scheduledMatches && scheduledMatches.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-3">Upcoming</h3>
-                <div className="space-y-3">
-                  {scheduledMatches.map((m: MatchWithTeams) => (
-                    <MatchCard key={m.id} match={m} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Results */}
-            {finalMatches && finalMatches.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Results</h3>
-                <div className="space-y-3">
-                  {finalMatches.map((m: MatchWithTeams) => (
-                    <MatchCard key={m.id} match={m} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {(!allMatches || allMatches.length === 0) && (
-              <p className="text-muted-foreground text-center py-12">No matches scheduled yet.</p>
-            )}
-          </TabsContent>
-
-          {/* STANDINGS TAB */}
-          <TabsContent value="standings" className="mt-6">
-            <h2 className="text-2xl font-bold font-display mb-6">Standings</h2>
-            {divisions?.map((div: Division) => {
-              const divStandings = allStandings?.filter((s: StandingWithTeam) => s.divisionId === div.id);
-              if (selectedDivision !== "all" && String(div.id) !== selectedDivision) return null;
-              if (!divStandings || divStandings.length === 0) return null;
-              return (
-                <div key={div.id} className="mb-8">
-                  <h3 className="text-lg font-semibold mb-3">{div.name}</h3>
-                  <Card>
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-secondary text-secondary-foreground">
-                            <TableHead className="text-secondary-foreground w-12">Pos</TableHead>
-                            <TableHead className="text-secondary-foreground">Team</TableHead>
-                            <TableHead className="text-secondary-foreground text-center">GP</TableHead>
-                            <TableHead className="text-secondary-foreground text-center">W</TableHead>
-                            <TableHead className="text-secondary-foreground text-center">L</TableHead>
-                            <TableHead className="text-secondary-foreground text-center">T</TableHead>
-                            <TableHead className="text-secondary-foreground text-center">GF</TableHead>
-                            <TableHead className="text-secondary-foreground text-center">GA</TableHead>
-                            <TableHead className="text-secondary-foreground text-center">GD</TableHead>
-                            <TableHead className="text-secondary-foreground text-center font-bold">PTS</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {divStandings.sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0)).map((s: StandingWithTeam) => (
-                            <TableRow key={s.id} data-testid={`row-standing-${s.id}`}>
+          {allStandings && allStandings.length > 0 && (
+            <>
+              {divisions?.map((div: Division) => {
+                if (selectedDivision !== "all" && String(div.id) !== selectedDivision) return null;
+                const divStandings = allStandings?.filter((s: StandingWithTeam) => s.divisionId === div.id);
+                if (!divStandings || divStandings.length === 0) return null;
+                return (
+                  <div key={div.id} className="mb-8">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b-2 border-foreground">
+                          <TableHead className="w-12 font-bold text-foreground">Pos</TableHead>
+                          <TableHead className="font-bold text-foreground">Team</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">GP</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">W</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">L</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">T</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">GF</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">GA</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">GD</TableHead>
+                          <TableHead className="text-center font-bold text-foreground">PTS</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {divStandings
+                          .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0))
+                          .map((s: StandingWithTeam) => (
+                            <TableRow key={s.id} className="border-b" data-testid={`row-standing-${s.id}`}>
                               <TableCell className="font-bold">{s.position}</TableCell>
                               <TableCell>
-                                <Link href={`/teams/${s.teamId}`} className="font-medium hover:text-primary transition-colors">
+                                <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline">
                                   {s.team?.name || `Team #${s.teamId}`}
                                 </Link>
                               </TableCell>
@@ -220,220 +176,145 @@ export default function TournamentDetail() {
                               <TableCell className="text-center">{s.goalsFor}</TableCell>
                               <TableCell className="text-center">{s.goalsAgainst}</TableCell>
                               <TableCell className="text-center">{s.goalDifference > 0 ? `+${s.goalDifference}` : s.goalDifference}</TableCell>
-                              <TableCell className="text-center font-bold text-lg">{s.points}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </div>
-              );
-            })}
-            {(!allStandings || allStandings.length === 0) && (
-              <p className="text-muted-foreground text-center py-12">Standings will appear after matches are completed.</p>
-            )}
-          </TabsContent>
-
-          {/* TEAMS TAB */}
-          <TabsContent value="teams" className="mt-6">
-            <h2 className="text-2xl font-bold font-display mb-6">Teams</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {approvedTeams?.map((team: Team) => {
-                const division = divisions?.find((d: Division) => d.id === team.divisionId);
-                return (
-                  <Link key={team.id} href={`/teams/${team.id}`}>
-                    <Card className="hover-elevate cursor-pointer h-full" data-testid={`card-team-${team.id}`}>
-                      <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                        {team.logoUrl ? (
-                          <img src={team.logoUrl} alt={team.name} className="w-12 h-12 object-contain rounded-md" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-md bg-secondary flex items-center justify-center">
-                            <Users className="h-6 w-6 text-secondary-foreground" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg truncate">{team.name}</CardTitle>
-                          {division && (
-                            <Badge variant="outline" className="mt-1">{division.name}</Badge>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <p className="text-sm text-muted-foreground">Captain: {team.captainName}</p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-            {(!approvedTeams || approvedTeams.length === 0) && (
-              <p className="text-muted-foreground text-center py-12">No teams registered yet.</p>
-            )}
-          </TabsContent>
-
-          {/* DIVISIONS TAB */}
-          <TabsContent value="divisions" className="mt-6">
-            <h2 className="text-2xl font-bold font-display mb-6">Divisions</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {divisions?.map((div: Division) => {
-                const divTeams = allTeams?.filter((t: Team) => t.divisionId === div.id && t.status === "approved");
-                return (
-                  <Card key={div.id} data-testid={`card-division-${div.id}`}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <CardTitle className="text-xl">{div.name}</CardTitle>
-                        <Badge variant="secondary">{div.category}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {div.description && <p className="text-sm text-muted-foreground mb-3">{div.description}</p>}
-                      {div.gameFormat && <p className="text-sm"><span className="font-medium">Format:</span> {div.gameFormat}</p>}
-                      <p className="text-sm mt-1"><span className="font-medium">Teams:</span> {divTeams?.length || 0}</p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </TabsContent>
-
-          {/* STATS TAB */}
-          <TabsContent value="stats" className="mt-6">
-            <h2 className="text-2xl font-bold font-display mb-6">Tournament Stats</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatCard label="Total Teams" value={approvedTeams?.length || 0} icon={<Users className="h-5 w-5" />} />
-              <StatCard label="Total Matches" value={allMatches?.length || 0} icon={<Calendar className="h-5 w-5" />} />
-              <StatCard label="Completed" value={finalMatches?.length || 0} icon={<Trophy className="h-5 w-5" />} />
-              <StatCard label="Divisions" value={divisions?.length || 0} icon={<ArrowRight className="h-5 w-5" />} />
-            </div>
-
-            {/* Top Scoring Teams */}
-            {allStandings && allStandings.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-3">Top Scoring Teams</h3>
-                <Card>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted">
-                          <TableHead>Team</TableHead>
-                          <TableHead className="text-center">Goals For</TableHead>
-                          <TableHead className="text-center">Goals Against</TableHead>
-                          <TableHead className="text-center">Goal Difference</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {[...allStandings]
-                          .sort((a: StandingWithTeam, b: StandingWithTeam) => b.goalsFor - a.goalsFor)
-                          .slice(0, 5)
-                          .map((s: StandingWithTeam) => (
-                            <TableRow key={s.id}>
-                              <TableCell className="font-medium">{s.team?.name || "Unknown"}</TableCell>
-                              <TableCell className="text-center font-bold">{s.goalsFor}</TableCell>
-                              <TableCell className="text-center">{s.goalsAgainst}</TableCell>
-                              <TableCell className="text-center">{s.goalDifference > 0 ? `+${s.goalDifference}` : s.goalDifference}</TableCell>
+                              <TableCell className="text-center font-bold">{s.points}</TableCell>
                             </TableRow>
                           ))}
                       </TableBody>
                     </Table>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                  </div>
+                );
+              })}
 
-            {/* Undefeated Teams */}
-            {allStandings && allStandings.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Undefeated Teams</h3>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {allStandings
-                    .filter((s: StandingWithTeam) => s.losses === 0 && s.gamesPlayed > 0)
-                    .map((s: StandingWithTeam) => (
-                      <Card key={s.id}>
-                        <CardContent className="p-4 flex items-center justify-between gap-2">
-                          <span className="font-medium">{s.team?.name}</span>
-                          <Badge>{s.wins}W - {s.ties}T</Badge>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  {allStandings.filter((s: StandingWithTeam) => s.losses === 0 && s.gamesPlayed > 0).length === 0 && (
-                    <p className="text-muted-foreground text-sm col-span-full">No undefeated teams.</p>
-                  )}
-                </div>
+              <div className="text-center mt-6 mb-16">
+                <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-full-standings">
+                  See Full Standings
+                </Button>
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="py-20 bg-foreground text-background">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2">Register</p>
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-4" data-testid="text-ready-compete">
+            Ready To Compete?
+          </h2>
+          <p className="text-gray-400 max-w-xl mx-auto mb-8 text-sm">
+            Register your team and be part of the next Salaam Cup. Compete, connect, and experience the energy of a true multi-sport tournament.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link href="/register">
+              <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-register-cta">
+                Register Now
+              </Button>
+            </Link>
+            <Link href="/tournaments">
+              <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-tournaments-cta">
+                Tournaments
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12">
+            Frequently Asked Questions
+          </h2>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="q1">
+              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
+                What is Salaam Cup?
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+                Salaam Cup is a premier community sports organization dedicated to hosting high-quality tournaments that unite athletes through competition, faith, and excellence.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q2">
+              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
+                What makes Salaam Cup different?
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+                Professional-grade organization, community values, and inclusive approach to sports competition.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q3">
+              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
+                This league looks too good, can a rookie join?
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+                We welcome players of all skill levels with both competitive and recreational divisions.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q4">
+              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
+                Can I join alone or do I have to have a team?
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+                You can register as a free agent and we will help connect you with teams looking for players.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q5">
+              <AccordionTrigger className="text-left font-bold uppercase text-sm tracking-wide py-5 hover:no-underline">
+                How can I volunteer or sponsor the tournament?
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+                Please reach out through our Contact page or email info@salaamcup.com.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </section>
     </MainLayout>
   );
 }
 
-function MatchCard({ match }: { match: MatchWithTeams }) {
+function MatchRow({ match }: { match: MatchWithTeams }) {
   const matchDate = match.startTime ? new Date(match.startTime) : null;
-  const statusBadge: Record<string, string> = {
-    scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    live: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-    final: "bg-muted text-muted-foreground",
-    cancelled: "bg-gray-100 text-gray-500",
-  };
+  const isLive = match.status === "live";
+  const isFinal = match.status === "final";
+  const isScheduled = match.status === "scheduled";
 
   return (
-    <Card data-testid={`card-match-${match.id}`}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Date/Time */}
-          <div className="text-sm text-muted-foreground w-28 shrink-0">
-            {matchDate && (
-              <>
-                <div className="font-medium">{matchDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</div>
-                <div className="flex items-center gap-1"><Clock className="h-3 w-3" />{matchDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</div>
-              </>
-            )}
-          </div>
+    <div className="flex items-center py-4 border-b gap-2 md:gap-4" data-testid={`match-row-${match.id}`}>
+      <div className="w-24 md:w-32 shrink-0 text-xs text-muted-foreground">
+        {matchDate && (
+          <>
+            <div>{matchDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+            <div className="text-lg md:text-xl font-bold font-display text-foreground">
+              {matchDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+            </div>
+          </>
+        )}
+      </div>
 
-          {/* Home Team */}
-          <div className="flex-1 text-right min-w-0">
-            <Link href={match.homeTeam ? `/teams/${match.homeTeamId}` : "#"}>
-              <span className="font-semibold hover:text-primary transition-colors truncate block">{match.homeTeam?.name || "TBD"}</span>
-            </Link>
-          </div>
+      <div className="flex-1 text-right min-w-0">
+        <Link href={match.homeTeam ? `/teams/${match.homeTeamId}` : "#"}>
+          <span className="font-bold text-sm md:text-base hover:underline">{match.homeTeam?.name || "TBD"}</span>
+        </Link>
+      </div>
 
-          {/* Score */}
-          <div className="flex items-center gap-2 px-3 shrink-0">
-            <span className="text-2xl font-bold font-display">{match.status === "scheduled" ? "-" : match.homeScore}</span>
-            <span className="text-muted-foreground text-sm">vs</span>
-            <span className="text-2xl font-bold font-display">{match.status === "scheduled" ? "-" : match.awayScore}</span>
-          </div>
-
-          {/* Away Team */}
-          <div className="flex-1 min-w-0">
-            <Link href={match.awayTeam ? `/teams/${match.awayTeamId}` : "#"}>
-              <span className="font-semibold hover:text-primary transition-colors truncate block">{match.awayTeam?.name || "TBD"}</span>
-            </Link>
-          </div>
-
-          {/* Status & Round */}
-          <div className="text-right shrink-0 text-sm">
-            <Badge className={statusBadge[match.status] || ""}>{match.status.toUpperCase()}</Badge>
-            {match.round && <div className="text-xs text-muted-foreground mt-1">{match.round}</div>}
-          </div>
+      <div className="flex flex-col items-center shrink-0 px-2 md:px-4">
+        <div className="text-xs text-muted-foreground mb-1">{match.round || ""}</div>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl md:text-3xl font-bold font-display">{isScheduled ? "-" : match.homeScore}</span>
+          <span className="text-2xl md:text-3xl font-bold font-display">{isScheduled ? "-" : match.awayScore}</span>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
-  return (
-    <Card>
-      <CardContent className="p-4 flex items-center gap-4">
-        <div className="p-2 rounded-md bg-primary/10 text-primary">{icon}</div>
-        <div>
-          <p className="text-2xl font-bold font-display">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
+        <div className="mt-1">
+          {isLive && <span className="text-xs font-bold text-red-500 uppercase">Live</span>}
+          {isFinal && <span className="text-xs text-muted-foreground uppercase">Final</span>}
+          {isScheduled && <span className="text-xs text-muted-foreground uppercase">Scheduled</span>}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <Link href={match.awayTeam ? `/teams/${match.awayTeamId}` : "#"}>
+          <span className="font-bold text-sm md:text-base hover:underline">{match.awayTeam?.name || "TBD"}</span>
+        </Link>
+      </div>
+    </div>
   );
 }

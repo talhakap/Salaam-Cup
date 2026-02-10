@@ -4,13 +4,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { 
   Menu, 
   X, 
-  Trophy, 
-  Users, 
-  Calendar, 
-  ShieldCheck, 
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  ShieldCheck,
+  Instagram,
+  Facebook,
+  Linkedin,
+  Mail,
 } from "lucide-react";
+import { SiTiktok } from "react-icons/si";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import {
@@ -30,49 +32,50 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { label: "Home", href: "/" },
-    { label: "Tournaments", href: "/tournaments" },
     { label: "About", href: "/about" },
+    { label: "Tournaments", href: "/tournaments" },
     { label: "Media", href: "/media" },
-    { label: "FAQ", href: "/faq" },
+    { label: "Contact", href: "/contact" },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col font-sans">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <Trophy className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold font-display tracking-tight text-foreground hidden sm:block">
+    <div className="min-h-screen flex flex-col font-body">
+      <header className="sticky top-0 z-50 w-full bg-background border-b border-border">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-2 shrink-0" data-testid="link-logo">
+            <span className="text-2xl font-bold font-display tracking-tight text-foreground">
               SALAAM CUP
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
               <Link 
                 key={item.href} 
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary uppercase tracking-wide",
-                  location === item.href ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+                  "text-sm font-medium transition-colors uppercase tracking-wide",
+                  location === item.href 
+                    ? "text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
                 )}
+                data-testid={`nav-${item.label.toLowerCase()}`}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          {/* User / Mobile Menu Toggle */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {isAuthenticated ? (
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8 border-2 border-primary/20">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="button-user-menu">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "User"} />
-                      <AvatarFallback>{(user?.firstName?.[0] || "")}{(user?.lastName?.[0] || "")}</AvatarFallback>
+                      <AvatarFallback className="bg-foreground text-background text-xs font-bold">
+                        {(user?.firstName?.[0] || "")}{(user?.lastName?.[0] || "")}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
@@ -85,67 +88,67 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <Link href="/captain">
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="menu-captain">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Captain's Dashboard</span>
+                      <span>Captain Dashboard</span>
                     </DropdownMenuItem>
                   </Link>
                   <Link href="/admin">
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="menu-admin">
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       <span>Admin Portal</span>
                     </DropdownMenuItem>
                   </Link>
-                  <DropdownMenuItem onClick={() => logout()} className="text-destructive cursor-pointer">
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logout()} className="text-destructive cursor-pointer" data-testid="button-logout">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="hidden md:flex gap-2">
-                 <a href="/api/login">
-                  <Button variant="ghost" size="sm" data-testid="button-login">Login</Button>
-                </a>
-                <Link href="/register">
-                  <Button size="sm" className="bg-primary text-white hover:bg-primary/90" data-testid="button-register">Register Team</Button>
-                </Link>
-              </div>
+              <a href="/api/login" className="hidden md:block">
+                <Button className="rounded-full font-bold uppercase text-xs tracking-wider px-6" data-testid="button-login">
+                  Register Now
+                </Button>
+              </a>
             )}
 
             <button
               className="md:hidden p-2"
               onClick={() => setIsOpen(!isOpen)}
+              data-testid="button-mobile-menu"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Nav */}
         {isOpen && (
-          <div className="md:hidden border-t bg-background p-4 flex flex-col gap-4 animate-in slide-in-from-top-2">
+          <div className="md:hidden border-t bg-background p-4 flex flex-col gap-1 animate-in slide-in-from-top-2">
             {navItems.map((item) => (
               <Link 
                 key={item.href} 
                 href={item.href}
                 className={cn(
-                  "text-base font-medium p-2 rounded-md hover:bg-muted transition-colors",
-                  location === item.href && "text-primary bg-primary/10"
+                  "text-sm font-medium p-3 rounded-md transition-colors uppercase tracking-wide",
+                  location === item.href 
+                    ? "text-foreground bg-muted" 
+                    : "text-muted-foreground"
                 )}
                 onClick={() => setIsOpen(false)}
+                data-testid={`nav-mobile-${item.label.toLowerCase()}`}
               >
                 {item.label}
               </Link>
             ))}
-             {!isAuthenticated && (
-              <div className="flex flex-col gap-2 mt-4 pt-4 border-t">
-                 <a href="/api/login" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full justify-start" data-testid="button-login-mobile">Login</Button>
+            {!isAuthenticated && (
+              <div className="mt-4 pt-4 border-t">
+                <a href="/api/login" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full rounded-full font-bold uppercase text-xs tracking-wider" data-testid="button-login-mobile">
+                    Register Now
+                  </Button>
                 </a>
-                <Link href="/register" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full justify-start bg-primary" data-testid="button-register-mobile">Register Team</Button>
-                </Link>
               </div>
             )}
           </div>
@@ -156,51 +159,62 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <footer className="bg-secondary text-secondary-foreground py-12 border-t border-white/10">
+      <footer className="bg-foreground text-background py-16" data-testid="footer">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center gap-2 mb-4">
-                <Trophy className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold font-display">SALAAM CUP</span>
-              </div>
-              <p className="text-sm text-gray-400">
-                Organizing elite community sports tournaments since 2025. 
-                Bringing communities together through competition.
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+            <div className="col-span-1">
+              <span className="text-2xl font-bold font-display tracking-tight block mb-4">
+                SALAAM CUP
+              </span>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Salaam Cup is a premier sports organization uniting athletes through competition, faith, and community.
               </p>
             </div>
             
             <div className="col-span-1">
-              <h4 className="font-bold mb-4 text-primary">Links</h4>
+              <h4 className="font-bold mb-4 text-sm tracking-wider">Information</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="/tournaments" className="hover:text-white transition-colors">Tournaments</Link></li>
-                <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
-                <li><Link href="/media" className="hover:text-white transition-colors">Media</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors" data-testid="footer-home">HOME</Link></li>
+                <li><Link href="/about" className="hover:text-white transition-colors" data-testid="footer-about">ABOUT</Link></li>
+                <li><Link href="/media" className="hover:text-white transition-colors" data-testid="footer-media">MEDIA</Link></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors" data-testid="footer-contact">CONTACT</Link></li>
               </ul>
             </div>
 
             <div className="col-span-1">
-              <h4 className="font-bold mb-4 text-primary">Contact</h4>
+              <h4 className="font-bold mb-4 text-sm tracking-wider">Sports</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li>info@salaamcup.com</li>
-                <li>+1 (555) 123-4567</li>
-                <li>Toronto, ON</li>
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">HOCKEY</Link></li>
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">BASKETBALL</Link></li>
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">SOCCER</Link></li>
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">SOFTBALL</Link></li>
               </ul>
             </div>
 
             <div className="col-span-1">
-              <h4 className="font-bold mb-4 text-primary">Follow Us</h4>
-              <div className="flex gap-4">
-                {/* Social icons placeholder */}
-                <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors cursor-pointer">IG</div>
-                <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors cursor-pointer">FB</div>
-                <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors cursor-pointer">X</div>
+              <h4 className="font-bold mb-4 text-sm tracking-wider">Connect With Us</h4>
+              <div className="flex gap-3 mb-4">
+                <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-instagram">
+                  <Instagram className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-facebook">
+                  <Facebook className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-linkedin">
+                  <Linkedin className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-tiktok">
+                  <SiTiktok className="h-4 w-4" />
+                </a>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Mail className="h-4 w-4" />
+                <span>info@salaamcup.com</span>
               </div>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-white/10 text-center text-sm text-gray-500">
-            © 2025 Salaam Cup. All rights reserved.
+          <div className="mt-12 pt-8 border-t border-white/10 text-center text-xs text-gray-500">
+            Copyright &copy;2025 Salaam Cup. Created by Aeth Digital.
           </div>
         </div>
       </footer>

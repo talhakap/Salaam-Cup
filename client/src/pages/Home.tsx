@@ -1,159 +1,194 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SponsorBar } from "@/components/SponsorBar";
 import { useTournaments } from "@/hooks/use-tournaments";
-import { TournamentCard } from "@/components/TournamentCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Trophy, Users, Shield } from "lucide-react";
 import { Link } from "wouter";
 import heroImg from "/images/hero-landing.png";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+const valueCards = [
+  { title: "Amazing Community", image: "/images/hero-about.png" },
+  { title: "Real Competition", image: "/images/hero-tournaments.png" },
+  { title: "Content Media Team", image: "/images/hero-media.png" },
+  { title: "Professional Staff", image: "/images/hero-register.png" },
+];
+
+const divisions = [
+  { name: "Hockey Mens", pools: ["Pool A", "Pool B", "Pool C"] },
+  { name: "Hockey Boys", pools: ["Pool A"] },
+  { name: "Hockey Girls", pools: ["Pool A"] },
+  { name: "Softball Womens", pools: ["Pool A"] },
+  { name: "Softball Mens", pools: ["Pool A"] },
+  { name: "Soccer Mens", pools: ["Pool A"] },
+  { name: "Basketball Mens", pools: ["Pool A", "Pool B"] },
+];
+
+const faqItems = [
+  {
+    q: "What is Salaam Cup?",
+    a: "Salaam Cup is a premier community sports organization dedicated to hosting high-quality tournaments that unite athletes through competition, faith, and excellence. We aim to foster an environment where sportsmanship, teamwork, and community pride come together on and off the field.",
+  },
+  {
+    q: "What makes Salaam Cup different?",
+    a: "Salaam Cup stands out for its professional-grade tournament organization, commitment to community values, and inclusive approach to sports. We combine competitive excellence with a welcoming environment for athletes of all skill levels.",
+  },
+  {
+    q: "This league looks too good, can a rookie join?",
+    a: "We welcome players of all skill levels. We have divisions designed for competitive play as well as recreational divisions where newer players can develop their skills in a supportive environment.",
+  },
+  {
+    q: "Can I join alone or do I have to have a team?",
+    a: "You can register as a free agent and we will help connect you with teams that are looking for players. Alternatively, you can form your own team and register together.",
+  },
+  {
+    q: "How can I volunteer or sponsor the tournament?",
+    a: "We are always looking for volunteers and sponsors. Please reach out to us through the Contact page or email info@salaamcup.com to learn about opportunities.",
+  },
+];
 
 export default function Home() {
-  const { data: tournaments, isLoading } = useTournaments();
-  
-  const featuredTournaments = tournaments?.filter(t => t.isFeatured || t.status === 'upcoming').slice(0, 3);
+  const { data: tournaments } = useTournaments();
+
+  const upcomingTournaments = tournaments?.filter(t => t.status === 'active' || t.status === 'upcoming').slice(0, 2);
 
   return (
     <MainLayout>
-      {/* Hero Section */}
-      <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-        {/* Descriptive alt for Unsplash backup */}
-        {/* athletic sports team huddle stadium lights */}
+      <section className="relative h-[80vh] min-h-[550px] flex items-center justify-center overflow-hidden" data-testid="hero-landing">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImg} 
-            alt="Sports Stadium" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-secondary/90 via-secondary/70 to-transparent" />
+          <img src={heroImg} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/55" />
         </div>
-
-        <div className="container relative z-10 px-4 pt-20">
-          <div className="max-w-2xl text-white">
-            <h1 className="text-5xl md:text-7xl font-bold font-display uppercase leading-none mb-6 text-shadow-lg">
-              Forge Your <br/> <span className="text-primary">Legacy</span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-lg font-light">
-              The premier platform for community sports leagues. Register your team, manage your roster, and compete for glory.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/register">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-white text-lg px-8 h-14 uppercase tracking-wide font-bold">
-                  Register Now
-                </Button>
-              </Link>
-              <Link href="/tournaments">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-secondary text-lg px-8 h-14 uppercase tracking-wide font-bold">
-                  View Tournaments
-                </Button>
-              </Link>
-            </div>
-          </div>
+        <div className="relative z-10 text-center px-4">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display text-white uppercase leading-none tracking-tight max-w-4xl mx-auto" data-testid="text-hero-title">
+            Best Muslim Tournaments In The World
+          </h1>
+          <p className="mt-4 text-base md:text-lg text-gray-300 max-w-xl mx-auto">
+            For those with integrity, patience, heart
+          </p>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-12 bg-primary text-white">
+      <SponsorBar />
+
+      <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold font-display mb-2">50+</div>
-              <div className="text-sm opacity-80 uppercase tracking-wider">Teams</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold font-display mb-2">1000+</div>
-              <div className="text-sm opacity-80 uppercase tracking-wider">Players</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold font-display mb-2">12</div>
-              <div className="text-sm opacity-80 uppercase tracking-wider">Tournaments</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold font-display mb-2">$5k</div>
-              <div className="text-sm opacity-80 uppercase tracking-wider">Prizes</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Tournaments */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold font-display text-secondary uppercase mb-2">
-                Featured Tournaments
-              </h2>
-              <p className="text-muted-foreground">Join the action in our upcoming events.</p>
-            </div>
-            <Link href="/tournaments">
-              <Button variant="ghost" className="hidden md:flex gap-2 text-primary hover:text-primary/80">
-                View All <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="grid md:grid-cols-3 gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-96 bg-gray-200 animate-pulse rounded-xl" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-8">
-              {featuredTournaments?.map((tournament) => (
-                <TournamentCard key={tournament.id} tournament={tournament} />
-              ))}
-            </div>
-          )}
-
-          <div className="mt-8 md:hidden">
-            <Link href="/tournaments">
-              <Button className="w-full">View All Tournaments</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features / Value Prop */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold font-display text-secondary uppercase mb-4">
-              Why Choose Salaam Cup?
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-4" data-testid="text-values-title">
+              Anyone Can Play. Few Compete.
             </h2>
             <p className="text-muted-foreground">
-              We provide a professional league experience for every player.
+              Join athletes who don't just show up to play. They show up to dominate and build legacy.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="text-center px-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
-                <Trophy className="h-8 w-8" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {valueCards.map((card) => (
+              <div key={card.title} className="relative aspect-[4/3] rounded-md overflow-hidden group" data-testid={`card-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                <img src={card.image} alt={card.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="text-white font-bold font-display text-sm md:text-base uppercase underline decoration-1 underline-offset-4">
+                    {card.title}
+                  </h3>
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-3">Professional Management</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                From live stats to professional referees, we treat every game like a final.
-              </p>
-            </div>
-            <div className="text-center px-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
-                <Users className="h-8 w-8" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-background border-t">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-play-with-us">
+            Play With Us
+          </h2>
+
+          <div className="max-w-4xl mx-auto">
+            <Accordion type="single" collapsible>
+              {divisions.map((div) => (
+                <AccordionItem key={div.name} value={div.name} className="border-b">
+                  <AccordionTrigger className="text-xl md:text-2xl font-bold font-display uppercase py-5 hover:no-underline" data-testid={`accordion-${div.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                    {div.name}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-3 gap-4 pb-4">
+                      {div.pools.map((pool) => (
+                        <div key={pool} className="aspect-video bg-muted rounded-md flex items-center justify-center">
+                          <span className="text-sm font-medium text-muted-foreground">{pool}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-background border-t">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-legacy">
+            Where Stories Become Legacy.
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="relative aspect-video rounded-md overflow-hidden group" data-testid={`card-story-${i}`}>
+                <img src="/images/hero-landing.png" alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <p className="text-white/70 text-xs uppercase tracking-wider mb-1">08 March on the field</p>
+                  <h3 className="text-white font-bold text-sm">Our Experience at the First Championship</h3>
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-3">Community First</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Building brotherhood and sisterhood through healthy competition.
-              </p>
-            </div>
-            <div className="text-center px-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
-                <Shield className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Fair Play</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Strict adherence to rules and sportsmanship ensures a safe environment.
-              </p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {upcomingTournaments && upcomingTournaments.length > 0 && (
+        <section className="py-20 bg-foreground text-background">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-4">Upcoming Events</p>
+            <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-8" data-testid="text-upcoming">
+              {upcomingTournaments[0].name.replace('Salaam Cup ', '').toUpperCase()}
+            </h2>
+            <p className="text-gray-400 mb-2 text-sm">
+              Tournament will take place {upcomingTournaments[0].startDate} - {upcomingTournaments[0].endDate}
+            </p>
+            <div className="mt-8">
+              <Link href="/tournaments">
+                <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-upcoming-tournaments">
+                  Upcoming Tournaments
+                </Button>
+              </Link>
             </div>
           </div>
+        </section>
+      )}
+
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-faq">
+            Frequently Asked Questions
+          </h2>
+          <Accordion type="single" collapsible className="w-full">
+            {faqItems.map((item, i) => (
+              <AccordionItem key={i} value={`faq-${i}`}>
+                <AccordionTrigger className="text-left font-bold uppercase text-sm md:text-base tracking-wide py-5 hover:no-underline" data-testid={`faq-trigger-${i}`}>
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
     </MainLayout>
