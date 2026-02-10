@@ -187,6 +187,15 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    register: {
+      method: 'POST' as const,
+      path: '/api/players/register' as const,
+      input: insertPlayerSchema,
+      responses: {
+        201: z.custom<typeof players.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
     update: {
       method: 'PATCH' as const,
       path: '/api/players/:id' as const,
@@ -202,6 +211,17 @@ export const api = {
       input: z.array(insertPlayerSchema.omit({ teamId: true })),
       responses: {
         201: z.array(z.custom<typeof players.$inferSelect>()),
+      },
+    },
+  },
+
+  // === ADMIN PLAYERS ===
+  adminPlayers: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/admin/players' as const,
+      responses: {
+        200: z.array(z.custom<typeof players.$inferSelect & { team: typeof teams.$inferSelect | null }>()),
       },
     },
   },

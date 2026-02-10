@@ -90,7 +90,7 @@ export type InsertTeam = z.infer<typeof insertTeamSchema>;
 // === PLAYERS ===
 export const players = pgTable("players", {
   id: serial("id").primaryKey(),
-  teamId: integer("team_id").references(() => teams.id).notNull(),
+  teamId: integer("team_id").references(() => teams.id),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull(),
@@ -98,13 +98,15 @@ export const players = pgTable("players", {
   dob: date("dob", { mode: "string" }).notNull(),
   jerseyNumber: integer("jersey_number"),
   position: text("position"),
-  status: text("status", { enum: ["staging", "verified", "rejected"] }).default("staging").notNull(),
+  status: text("status", { enum: ["staging", "confirmed", "flagged", "verified", "rejected"] }).default("staging").notNull(),
+  registrationType: text("registration_type", { enum: ["roster", "player", "free_agent"] }).default("roster").notNull(),
   photoUrl: text("photo_url"),
   waiverSigned: boolean("waiver_signed").default(false),
   adminNotes: text("admin_notes"),
+  registeredAt: timestamp("registered_at").defaultNow(),
 });
 
-export const insertPlayerSchema = createInsertSchema(players).omit({ id: true });
+export const insertPlayerSchema = createInsertSchema(players).omit({ id: true, registeredAt: true });
 export type Player = typeof players.$inferSelect;
 export type InsertPlayer = z.infer<typeof insertPlayerSchema>;
 

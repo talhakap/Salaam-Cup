@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ArrowLeft, Mail, Phone, ShieldCheck, AlertCircle, Clock } from "lucide-react";
+import { Users, ArrowLeft, Mail, Phone, ShieldCheck, AlertCircle, Clock, UserCheck, UserX } from "lucide-react";
 import type { Player } from "@shared/schema";
 
 export default function TeamDetail() {
@@ -43,19 +43,24 @@ export default function TeamDetail() {
     );
   }
 
+  const rosterPlayers = players?.filter((p: Player) => p.registrationType === "roster") || [];
+  const selfRegistered = players?.filter((p: Player) => p.registrationType === "player" || p.registrationType === "free_agent") || [];
+  const confirmedRoster = rosterPlayers.filter(p => p.status === "confirmed");
+  const unregisteredRoster = rosterPlayers.filter(p => p.status === "staging");
   const verifiedPlayers = players?.filter((p: Player) => p.status === "verified") || [];
-  const stagingPlayers = players?.filter((p: Player) => p.status === "staging") || [];
-  const rejectedPlayers = players?.filter((p: Player) => p.status === "rejected") || [];
+  const flaggedPlayers = selfRegistered.filter(p => p.status === "flagged");
+  const confirmedPlayers = selfRegistered.filter(p => p.status === "confirmed");
 
   const statusColor: Record<string, string> = {
     verified: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    confirmed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
     staging: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+    flagged: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
     rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   };
 
   return (
     <MainLayout>
-      {/* Header */}
       <section className="bg-secondary py-12">
         <div className="container mx-auto px-4">
           <Link href={`/tournaments/${team.tournamentId}`}>
@@ -83,7 +88,6 @@ export default function TeamDetail() {
             </div>
           </div>
 
-          {/* Captain Info */}
           <div className="mt-6 flex items-center gap-6 text-white/80 text-sm flex-wrap">
             <span className="flex items-center gap-1"><Users className="h-4 w-4" /> Captain: {team.captainName}</span>
             <span className="flex items-center gap-1"><Mail className="h-4 w-4" /> {team.captainEmail}</span>
@@ -92,25 +96,22 @@ export default function TeamDetail() {
         </div>
       </section>
 
-      {/* Roster */}
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="roster">
           <TabsList className="mb-6" data-testid="tabs-team">
-            <TabsTrigger value="roster" data-testid="tab-roster">Roster ({players?.length || 0})</TabsTrigger>
+            <TabsTrigger value="roster" data-testid="tab-roster">Roster ({rosterPlayers.length})</TabsTrigger>
+            <TabsTrigger value="registrations" data-testid="tab-registrations">Player Registrations ({selfRegistered.length})</TabsTrigger>
             <TabsTrigger value="info" data-testid="tab-info">Team Info</TabsTrigger>
           </TabsList>
 
           <TabsContent value="roster">
-            {/* Summary Badges */}
             <div className="flex items-center gap-3 mb-6 flex-wrap">
+              <Badge variant="outline" className="gap-1"><UserCheck className="h-3 w-3" /> {confirmedRoster.length} Registered</Badge>
+              <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" /> {unregisteredRoster.length} Not Yet Registered</Badge>
               <Badge variant="outline" className="gap-1"><ShieldCheck className="h-3 w-3" /> {verifiedPlayers.length} Verified</Badge>
-              <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" /> {stagingPlayers.length} Pending Review</Badge>
-              {rejectedPlayers.length > 0 && (
-                <Badge variant="outline" className="gap-1 text-destructive border-destructive"><AlertCircle className="h-3 w-3" /> {rejectedPlayers.length} Rejected</Badge>
-              )}
             </div>
 
-            {players && players.length > 0 ? (
+            {rosterPlayers.length > 0 ? (
               <Card>
                 <CardContent className="p-0">
                   <Table>
@@ -121,21 +122,80 @@ export default function TeamDetail() {
                         <TableHead className="text-secondary-foreground">Position</TableHead>
                         <TableHead className="text-secondary-foreground">DOB</TableHead>
                         <TableHead className="text-secondary-foreground">Status</TableHead>
-                        <TableHead className="text-secondary-foreground">Notes</TableHead>
+                        <TableHead className="text-secondary-foreground">Registered</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {players.map((player: Player) => (
-                        <TableRow key={player.id} data-testid={`row-player-${player.id}`}>
-                          <TableCell className="font-bold text-lg">{player.jerseyNumber ?? "-"}</TableCell>
+                      {rosterPlayers.map((player: Player) => {
+                        const isRegistered = player.status === "confirmed" || player.status === "verified";
+                        return (
+                          <TableRow key={player.id} data-testid={`row-roster-player-${player.id}`}>
+                            <TableCell className="font-bold text-lg">{player.jerseyNumber ?? "-"}</TableCell>
+                            <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
+                            <TableCell>{player.position || "-"}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{player.dob}</TableCell>
+                            <TableCell>
+                              <Badge className={statusColor[player.status] || ""} data-testid={`badge-roster-status-${player.id}`}>
+                                {player.status.toUpperCase()}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {isRegistered ? (
+                                <span className="flex items-center gap-1 text-green-600 text-sm" data-testid={`text-registered-${player.id}`}>
+                                  <UserCheck className="h-4 w-4" /> Yes
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-muted-foreground text-sm" data-testid={`text-not-registered-${player.id}`}>
+                                  <UserX className="h-4 w-4" /> No
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              <p className="text-muted-foreground text-center py-12">No roster submitted yet. The captain needs to add players.</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="registrations">
+            <div className="flex items-center gap-3 mb-6 flex-wrap">
+              <Badge variant="outline" className="gap-1"><UserCheck className="h-3 w-3" /> {confirmedPlayers.length} Confirmed</Badge>
+              <Badge variant="outline" className="gap-1"><AlertCircle className="h-3 w-3" /> {flaggedPlayers.length} Flagged</Badge>
+            </div>
+
+            {selfRegistered.length > 0 ? (
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-secondary text-secondary-foreground">
+                        <TableHead className="text-secondary-foreground">Name</TableHead>
+                        <TableHead className="text-secondary-foreground">Email</TableHead>
+                        <TableHead className="text-secondary-foreground">DOB</TableHead>
+                        <TableHead className="text-secondary-foreground">Type</TableHead>
+                        <TableHead className="text-secondary-foreground">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selfRegistered.map((player: Player) => (
+                        <TableRow key={player.id} data-testid={`row-registered-player-${player.id}`}>
                           <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
-                          <TableCell>{player.position || "-"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{player.email}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{player.dob}</TableCell>
                           <TableCell>
-                            <Badge className={statusColor[player.status]}>{player.status.toUpperCase()}</Badge>
+                            <Badge variant="outline">
+                              {player.registrationType === 'free_agent' ? 'Free Agent' : 'Player'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                            {player.adminNotes || "-"}
+                          <TableCell>
+                            <Badge className={statusColor[player.status] || ""} data-testid={`badge-reg-status-${player.id}`}>
+                              {player.status.toUpperCase()}
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -144,7 +204,7 @@ export default function TeamDetail() {
                 </CardContent>
               </Card>
             ) : (
-              <p className="text-muted-foreground text-center py-12">No players on the roster yet.</p>
+              <p className="text-muted-foreground text-center py-12">No players have self-registered for this team yet.</p>
             )}
           </TabsContent>
 

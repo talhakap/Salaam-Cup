@@ -145,6 +145,24 @@ export async function registerRoutes(
     }
   });
 
+  app.post(api.players.register.path, async (req, res) => {
+    try {
+      const input = api.players.register.input.parse(req.body);
+      const player = await storage.registerPlayerWithMatching(input);
+      res.status(201).json(player);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  // === ADMIN PLAYERS ===
+  app.get(api.adminPlayers.list.path, isAuthenticated, async (req, res) => {
+    const { status } = req.query;
+    const data = await storage.getAllRegisteredPlayers(status as string | undefined);
+    res.json(data);
+  });
+
   app.post(api.players.bulkCreate.path, async (req, res) => {
     try {
       const input = api.players.bulkCreate.input.parse(req.body);

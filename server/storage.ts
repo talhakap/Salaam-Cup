@@ -8,7 +8,7 @@ import {
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Sports
@@ -35,8 +35,10 @@ export interface IStorage {
 
   // Players
   getPlayers(teamId: number): Promise<Player[]>;
-  getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team })[]>;
+  getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team | null })[]>;
+  getAllRegisteredPlayers(status?: string): Promise<(Player & { team: Team | null })[]>;
   createPlayer(data: InsertPlayer): Promise<Player>;
+  registerPlayerWithMatching(data: InsertPlayer): Promise<Player>;
   updatePlayer(id: number, data: UpdatePlayerRequest): Promise<Player>;
   createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]>;
 
@@ -152,16 +154,88 @@ export class DatabaseStorage implements IStorage {
     return player;
   }
 
-  async getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team })[]> {
+  async getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team | null })[]> {
     const conditions = status ? [eq(players.status, status as any)] : [];
     const allPlayers = conditions.length > 0
       ? await db.select().from(players).where(and(...conditions))
       : await db.select().from(players);
     const enriched = await Promise.all(allPlayers.map(async (p) => {
-      const [team] = await db.select().from(teams).where(eq(teams.id, p.teamId));
+      let team: Team | null = null;
+      if (p.teamId) {
+        const [t] = await db.select().from(teams).where(eq(teams.id, p.teamId));
+        team = t || null;
+      }
       return { ...p, team };
     }));
     return enriched;
+  }
+
+  async getAllRegisteredPlayers(status?: string): Promise<(Player & { team: Team | null })[]> {
+    const conditions: any[] = [
+      sql`${players.registrationType} IN ('player', 'free_agent')`
+    ];
+    if (status) conditions.push(eq(players.status, status as any));
+    const allPlayers = await db.select().from(players)
+      .where(and(...conditions))
+      .orderBy(desc(players.registeredAt));
+    const enriched = await Promise.all(allPlayers.map(async (p) => {
+      let team: Team | null = null;
+      if (p.teamId) {
+        const [t] = await db.select().from(teams).where(eq(teams.id, p.teamId));
+        team = t || null;
+      }
+      return { ...p, team };
+    }));
+    return enriched;
+  }
+
+  async registerPlayerWithMatching(data: InsertPlayer): Promise<Player> {
+    if (data.registrationType === 'free_agent') {
+      const [player] = await db.insert(players).values({
+        ...data,
+        status: 'flagged',
+        registrationType: 'free_agent',
+      }).returning();
+      return player;
+    }
+
+    const normalizedFirst = data.firstName.trim().toLowerCase();
+    const normalizedLast = data.lastName.trim().toLowerCase();
+    const normalizedDob = data.dob;
+
+    let matched = false;
+    if (data.teamId) {
+      const rosterPlayers = await db.select().from(players).where(
+        and(
+          eq(players.teamId, data.teamId),
+          eq(players.registrationType, 'roster')
+        )
+      );
+
+      matched = rosterPlayers.some(rp => {
+        return rp.firstName.trim().toLowerCase() === normalizedFirst
+          && rp.lastName.trim().toLowerCase() === normalizedLast
+          && rp.dob === normalizedDob;
+      });
+
+      if (matched) {
+        const matchedRoster = rosterPlayers.find(rp =>
+          rp.firstName.trim().toLowerCase() === normalizedFirst
+          && rp.lastName.trim().toLowerCase() === normalizedLast
+          && rp.dob === normalizedDob
+        );
+        if (matchedRoster) {
+          await db.update(players).set({ status: 'confirmed' }).where(eq(players.id, matchedRoster.id));
+        }
+      }
+    }
+
+    const [player] = await db.insert(players).values({
+      ...data,
+      status: matched ? 'confirmed' : 'flagged',
+      registrationType: 'player',
+    }).returning();
+    return player;
   }
 
   async updatePlayer(id: number, data: UpdatePlayerRequest): Promise<Player> {

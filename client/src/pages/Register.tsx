@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertTeamSchema } from "@shared/schema";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
-import { useCreateTeam } from "@/hooks/use-teams";
+import { useCreateTeam, useTeams } from "@/hooks/use-teams";
+import { useRegisterPlayer } from "@/hooks/use-players";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -29,7 +31,9 @@ import {
 import { Loader2, CheckCircle } from "lucide-react";
 import heroImg from "/images/hero-register.png";
 
-const registrationSchema = insertTeamSchema.pick({
+type RegistrationType = "team" | "player" | "free_agent";
+
+const teamRegistrationSchema = insertTeamSchema.pick({
   name: true,
   captainName: true,
   captainEmail: true,
@@ -45,22 +49,37 @@ const registrationSchema = insertTeamSchema.pick({
   captainEmail: z.string().email("Valid email is required"),
   captainPhone: z.string().min(10, "Valid phone number required"),
   name: z.string().min(2, "Team name is required"),
+  waiverAgreed: z.boolean().refine(val => val, "You must agree to the waiver"),
 });
 
-type RegistrationFormValues = z.infer<typeof registrationSchema>;
+const playerRegistrationSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
+  email: z.string().email("Valid email is required"),
+  dob: z.string().min(1, "Date of birth is required"),
+  tournamentId: z.coerce.number().min(1, "Tournament is required"),
+  divisionId: z.coerce.number().min(1, "Division is required"),
+  teamId: z.coerce.number().min(1, "Team is required"),
+  waiverAgreed: z.boolean().refine(val => val, "You must agree to the waiver"),
+});
 
-export default function Register() {
+const freeAgentRegistrationSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
+  email: z.string().email("Valid email is required"),
+  dob: z.string().min(1, "Date of birth is required"),
+  tournamentId: z.coerce.number().min(1, "Tournament is required"),
+  divisionId: z.coerce.number().min(1, "Division is required"),
+  waiverAgreed: z.boolean().refine(val => val, "You must agree to the waiver"),
+});
+
+function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
   const { toast } = useToast();
-  const [submitted, setSubmitted] = useState(false);
-  
   const { data: tournaments } = useTournaments();
   const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
   const { data: divisions } = useDivisions(selectedTournament || 0);
-  
   const createTeam = useCreateTeam();
 
-  const form = useForm<RegistrationFormValues>({
-    resolver: zodResolver(registrationSchema),
+  const form = useForm<z.infer<typeof teamRegistrationSchema>>({
+    resolver: zodResolver(teamRegistrationSchema),
     defaultValues: {
       name: "",
       captainName: "",
@@ -68,24 +87,386 @@ export default function Register() {
       captainPhone: "",
       logoUrl: "",
       description: "",
+      waiverAgreed: false,
     },
   });
 
-  async function onSubmit(data: RegistrationFormValues) {
+  async function onSubmit(data: z.infer<typeof teamRegistrationSchema>) {
     try {
-      await createTeam.mutateAsync({
-        ...data,
-        status: "pending",
-      });
-      setSubmitted(true);
+      const { waiverAgreed, ...teamData } = data;
+      await createTeam.mutateAsync({ ...teamData, status: "pending" });
+      onSuccess();
     } catch (error) {
-      toast({
-        title: "Registration Failed",
-        description: (error as Error).message,
-        variant: "destructive",
-      });
+      toast({ title: "Registration Failed", description: (error as Error).message, variant: "destructive" });
     }
   }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <FormField control={form.control} name="captainName" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name*</FormLabel>
+              <FormControl><Input placeholder="Your full name" {...field} data-testid="input-captain-name" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="captainEmail" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email Address*</FormLabel>
+              <FormControl><Input type="email" placeholder="captain@email.com" {...field} data-testid="input-captain-email" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="captainPhone" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Phone Number*</FormLabel>
+            <FormControl><Input placeholder="(555) 555-5555" {...field} data-testid="input-captain-phone" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="name" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Team Name*</FormLabel>
+            <FormControl><Input placeholder="e.g. Toronto Eagles" {...field} data-testid="input-team-name" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="tournamentId" render={({ field }) => (
+          <FormItem>
+            <FormLabel>What tournament are you registering for?*</FormLabel>
+            <Select onValueChange={(val) => { field.onChange(Number(val)); setSelectedTournament(Number(val)); form.setValue("divisionId", 0); }} defaultValue={field.value?.toString()}>
+              <FormControl>
+                <SelectTrigger data-testid="select-tournament"><SelectValue placeholder="Select tournament..." /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {tournaments?.filter(t => t.status !== 'completed').map((t) => (
+                  <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="divisionId" render={({ field }) => (
+          <FormItem>
+            <FormLabel>What division are you registering for?*</FormLabel>
+            <Select onValueChange={(val) => field.onChange(Number(val))} defaultValue={field.value?.toString()} disabled={!selectedTournament}>
+              <FormControl>
+                <SelectTrigger data-testid="select-division"><SelectValue placeholder="Select one..." /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {divisions?.map((d) => (
+                  <SelectItem key={d.id} value={d.id.toString()}>{d.name} {d.category ? `(${d.category})` : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="waiverAgreed" render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormControl>
+              <Checkbox checked={field.value} onCheckedChange={field.onChange} data-testid="checkbox-waiver" />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel>I have read and agree to the <span className="underline cursor-pointer">waiver and terms</span>*</FormLabel>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <div className="flex justify-end">
+          <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={createTeam.isPending} data-testid="button-submit-registration">
+            {createTeam.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            Register Team
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+function PlayerRegistrationForm({ onSuccess }: { onSuccess: (status: string) => void }) {
+  const { toast } = useToast();
+  const { data: tournaments } = useTournaments();
+  const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
+  const [selectedDivision, setSelectedDivision] = useState<number | null>(null);
+  const { data: divisions } = useDivisions(selectedTournament || 0);
+  const { data: availableTeams } = useTeams(selectedTournament || 0, selectedDivision ? { status: "approved", divisionId: selectedDivision.toString() } : { status: "approved" });
+  const registerPlayer = useRegisterPlayer();
+
+  const form = useForm<z.infer<typeof playerRegistrationSchema>>({
+    resolver: zodResolver(playerRegistrationSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      dob: "",
+      waiverAgreed: false,
+    },
+  });
+
+  async function onSubmit(data: z.infer<typeof playerRegistrationSchema>) {
+    try {
+      const nameParts = data.fullName.trim().split(/\s+/);
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || nameParts[0];
+
+      const result = await registerPlayer.mutateAsync({
+        firstName,
+        lastName,
+        email: data.email,
+        dob: data.dob,
+        teamId: data.teamId,
+        registrationType: "player",
+      });
+      onSuccess(result.status);
+    } catch (error) {
+      toast({ title: "Registration Failed", description: (error as Error).message, variant: "destructive" });
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <FormField control={form.control} name="fullName" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name*</FormLabel>
+              <FormControl><Input placeholder="Your full name" {...field} data-testid="input-player-fullname" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="email" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email Address*</FormLabel>
+              <FormControl><Input type="email" placeholder="player@email.com" {...field} data-testid="input-player-email" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="dob" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Date of birth*</FormLabel>
+            <FormControl><Input type="date" {...field} data-testid="input-player-dob" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="tournamentId" render={({ field }) => (
+          <FormItem>
+            <FormLabel>What tournament are you registering for?*</FormLabel>
+            <Select onValueChange={(val) => { field.onChange(Number(val)); setSelectedTournament(Number(val)); setSelectedDivision(null); form.setValue("divisionId", 0); form.setValue("teamId", 0); }} defaultValue={field.value?.toString()}>
+              <FormControl>
+                <SelectTrigger data-testid="select-player-tournament"><SelectValue placeholder="Select tournament..." /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {tournaments?.filter(t => t.status !== 'completed').map((t) => (
+                  <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="divisionId" render={({ field }) => (
+          <FormItem>
+            <FormLabel>What division are you registering for?*</FormLabel>
+            <Select onValueChange={(val) => { field.onChange(Number(val)); setSelectedDivision(Number(val)); form.setValue("teamId", 0); }} defaultValue={field.value?.toString()} disabled={!selectedTournament}>
+              <FormControl>
+                <SelectTrigger data-testid="select-player-division"><SelectValue placeholder="Select one..." /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {divisions?.map((d) => (
+                  <SelectItem key={d.id} value={d.id.toString()}>{d.name} {d.category ? `(${d.category})` : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="teamId" render={({ field }) => (
+          <FormItem>
+            <FormLabel>What team are you registering for?*</FormLabel>
+            <Select onValueChange={(val) => field.onChange(Number(val))} defaultValue={field.value?.toString()} disabled={!selectedTournament}>
+              <FormControl>
+                <SelectTrigger data-testid="select-player-team"><SelectValue placeholder="Select one..." /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {availableTeams?.map((team) => (
+                  <SelectItem key={team.id} value={team.id.toString()}>{team.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="waiverAgreed" render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormControl>
+              <Checkbox checked={field.value} onCheckedChange={field.onChange} data-testid="checkbox-player-waiver" />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel>I have read and agree to the <span className="underline cursor-pointer">waiver and terms</span>*</FormLabel>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <div className="flex justify-end">
+          <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-player-registration">
+            {registerPlayer.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            Register Now
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) => void }) {
+  const { toast } = useToast();
+  const { data: tournaments } = useTournaments();
+  const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
+  const { data: divisions } = useDivisions(selectedTournament || 0);
+  const registerPlayer = useRegisterPlayer();
+
+  const form = useForm<z.infer<typeof freeAgentRegistrationSchema>>({
+    resolver: zodResolver(freeAgentRegistrationSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      dob: "",
+      waiverAgreed: false,
+    },
+  });
+
+  async function onSubmit(data: z.infer<typeof freeAgentRegistrationSchema>) {
+    try {
+      const nameParts = data.fullName.trim().split(/\s+/);
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || nameParts[0];
+
+      const result = await registerPlayer.mutateAsync({
+        firstName,
+        lastName,
+        email: data.email,
+        dob: data.dob,
+        teamId: null,
+        registrationType: "free_agent",
+      });
+      onSuccess(result.status);
+    } catch (error) {
+      toast({ title: "Registration Failed", description: (error as Error).message, variant: "destructive" });
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <FormField control={form.control} name="fullName" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full name*</FormLabel>
+              <FormControl><Input placeholder="Your full name" {...field} data-testid="input-freeagent-fullname" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="email" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email Address*</FormLabel>
+              <FormControl><Input type="email" placeholder="player@email.com" {...field} data-testid="input-freeagent-email" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="dob" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Date of birth*</FormLabel>
+            <FormControl><Input type="date" {...field} data-testid="input-freeagent-dob" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="tournamentId" render={({ field }) => (
+          <FormItem>
+            <FormLabel>What tournament are you registering for?*</FormLabel>
+            <Select onValueChange={(val) => { field.onChange(Number(val)); setSelectedTournament(Number(val)); form.setValue("divisionId", 0); }} defaultValue={field.value?.toString()}>
+              <FormControl>
+                <SelectTrigger data-testid="select-freeagent-tournament"><SelectValue placeholder="Select tournament..." /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {tournaments?.filter(t => t.status !== 'completed').map((t) => (
+                  <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="divisionId" render={({ field }) => (
+          <FormItem>
+            <FormLabel>What division are you registering for?*</FormLabel>
+            <Select onValueChange={(val) => field.onChange(Number(val))} defaultValue={field.value?.toString()} disabled={!selectedTournament}>
+              <FormControl>
+                <SelectTrigger data-testid="select-freeagent-division"><SelectValue placeholder="Select one..." /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {divisions?.map((d) => (
+                  <SelectItem key={d.id} value={d.id.toString()}>{d.name} {d.category ? `(${d.category})` : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="waiverAgreed" render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormControl>
+              <Checkbox checked={field.value} onCheckedChange={field.onChange} data-testid="checkbox-freeagent-waiver" />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel>I have read and agree to the <span className="underline cursor-pointer">waiver and terms</span>*</FormLabel>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <div className="flex justify-end">
+          <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-freeagent-registration">
+            {registerPlayer.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            Register Now
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+export default function Register() {
+  const [registrationType, setRegistrationType] = useState<RegistrationType>("team");
+  const [submitted, setSubmitted] = useState(false);
+  const [playerStatus, setPlayerStatus] = useState<string>("");
+
+  const registrationTypes: { key: RegistrationType; label: string }[] = [
+    { key: "team", label: "Team" },
+    { key: "player", label: "Player" },
+    { key: "free_agent", label: "Free Agent" },
+  ];
 
   if (submitted) {
     return (
@@ -100,14 +481,24 @@ export default function Register() {
             <h2 className="text-3xl font-bold font-display uppercase mb-4" data-testid="text-registration-success">
               Registration Submitted
             </h2>
-            <p className="text-muted-foreground mb-2">
-              Your team has been submitted for review. An admin will review your registration shortly.
-            </p>
-            <p className="text-muted-foreground mb-8 text-sm">
-              Once approved, you will be able to create an account and manage your team roster.
-            </p>
-            <Button onClick={() => setSubmitted(false)} variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-register-another">
-              Register Another Team
+            {registrationType === "team" ? (
+              <>
+                <p className="text-muted-foreground mb-2">Your team has been submitted for review. An admin will review your registration shortly.</p>
+                <p className="text-muted-foreground mb-8 text-sm">Once approved, you will be able to create an account and manage your team roster.</p>
+              </>
+            ) : playerStatus === "confirmed" ? (
+              <>
+                <p className="text-muted-foreground mb-2">Your registration has been matched against the team roster.</p>
+                <p className="text-foreground font-medium mb-8">Status: Confirmed</p>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground mb-2">Your registration has been submitted. However, we could not find a matching roster entry.</p>
+                <p className="text-foreground font-medium mb-8">Status: Flagged for admin review</p>
+              </>
+            )}
+            <Button onClick={() => { setSubmitted(false); setPlayerStatus(""); }} variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-register-another">
+              Register Again
             </Button>
           </div>
         </section>
@@ -117,183 +508,45 @@ export default function Register() {
 
   return (
     <MainLayout>
-      <HeroSection title="Registration" image={heroImg} />
+      <HeroSection title="Register" image={heroImg} />
       <SponsorBar />
-      
+
       <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 max-w-2xl">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold font-display uppercase mb-3" data-testid="text-register-title">
-              Register Your Team
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Complete the form below to enter the league. No account needed yet — you can create one after your team is approved.
-            </p>
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="grid md:grid-cols-[280px_1fr] gap-12">
+            <div>
+              <h3 className="font-bold text-sm mb-1" data-testid="text-registration-type-label">What are you registering?</h3>
+              <p className="text-muted-foreground text-xs mb-6">
+                Below you can find three types of registration. By default option "Team" is chosen, please choose one.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {registrationTypes.map((type) => (
+                  <Button
+                    key={type.key}
+                    variant={registrationType === type.key ? "default" : "outline"}
+                    className="rounded-full font-bold uppercase text-xs tracking-wider px-6"
+                    onClick={() => setRegistrationType(type.key)}
+                    data-testid={`button-reg-type-${type.key}`}
+                  >
+                    {type.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-bold text-lg mb-6" data-testid="text-personal-info-title">Personal information</h3>
+              {registrationType === "team" && (
+                <TeamRegistrationForm onSuccess={() => setSubmitted(true)} />
+              )}
+              {registrationType === "player" && (
+                <PlayerRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
+              )}
+              {registrationType === "free_agent" && (
+                <FreeAgentRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
+              )}
+            </div>
           </div>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              
-              <div>
-                <h3 className="text-lg font-bold font-display uppercase mb-4 border-b pb-2">Tournament & Division</h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="tournamentId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tournament</FormLabel>
-                        <Select 
-                          onValueChange={(val) => {
-                            field.onChange(Number(val));
-                            setSelectedTournament(Number(val));
-                            form.setValue("divisionId", 0);
-                          }}
-                          defaultValue={field.value?.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger data-testid="select-tournament">
-                              <SelectValue placeholder="Select Tournament" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {tournaments?.filter(t => t.status !== 'completed').map((t) => (
-                              <SelectItem key={t.id} value={t.id.toString()}>
-                                {t.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="divisionId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Division</FormLabel>
-                        <Select 
-                          onValueChange={(val) => field.onChange(Number(val))}
-                          defaultValue={field.value?.toString()}
-                          disabled={!selectedTournament}
-                        >
-                          <FormControl>
-                            <SelectTrigger data-testid="select-division">
-                              <SelectValue placeholder="Select Division" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {divisions?.map((d) => (
-                              <SelectItem key={d.id} value={d.id.toString()}>
-                                {d.name} ({d.category})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold font-display uppercase mb-4 border-b pb-2">Team Details</h3>
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Team Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. Toronto Eagles" {...field} data-testid="input-team-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Team Description (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Brief description of your team" {...field} value={field.value || ''} data-testid="input-team-description" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold font-display uppercase mb-4 border-b pb-2">Captain Information</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="captainName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your full name" {...field} data-testid="input-captain-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="captainEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="captain@email.com" {...field} data-testid="input-captain-email" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="captainPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="(555) 555-5555" {...field} data-testid="input-captain-phone" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  className="w-full rounded-full font-bold uppercase tracking-wider"
-                  disabled={createTeam.isPending}
-                  data-testid="button-submit-registration"
-                >
-                  {createTeam.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                  Submit Registration
-                </Button>
-                <p className="text-xs text-muted-foreground text-center mt-4">
-                  By submitting, you agree to the league rules and waiver.
-                </p>
-              </div>
-            </form>
-          </Form>
         </div>
       </section>
     </MainLayout>

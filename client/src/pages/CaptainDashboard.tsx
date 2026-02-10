@@ -128,7 +128,7 @@ function RosterList({ teamId }: { teamId: number }) {
               <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
               <TableCell>{player.jerseyNumber}</TableCell>
               <TableCell>
-                <Badge variant={player.status === 'verified' ? 'default' : 'secondary'} data-testid={`badge-player-status-${player.id}`}>
+                <Badge variant={player.status === 'verified' || player.status === 'confirmed' ? 'default' : player.status === 'flagged' || player.status === 'rejected' ? 'destructive' : 'secondary'} data-testid={`badge-player-status-${player.id}`}>
                   {player.status}
                 </Badge>
               </TableCell>

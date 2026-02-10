@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
-import type { InsertPlayer, Player } from "@shared/schema";
+import type { InsertPlayer, Player, Team } from "@shared/schema";
 
 export function usePlayers(teamId: number) {
   return useQuery({
@@ -73,6 +73,40 @@ export function useBulkCreatePlayers() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.players.list.path, variables.teamId] });
       queryClient.invalidateQueries({ queryKey: [api.teams.get.path, variables.teamId] });
+    },
+  });
+}
+
+export function useRegisterPlayer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: InsertPlayer) => {
+      const res = await fetch(api.players.register.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to register player");
+      return res.json() as Promise<Player>;
+    },
+    onSuccess: (data) => {
+      if (data.teamId) {
+        queryClient.invalidateQueries({ queryKey: [api.players.list.path, data.teamId] });
+      }
+      queryClient.invalidateQueries({ queryKey: [api.adminPlayers.list.path] });
+    },
+  });
+}
+
+export function useAdminPlayers(status?: string) {
+  return useQuery<(Player & { team: Team | null })[]>({
+    queryKey: [api.adminPlayers.list.path, status],
+    queryFn: async () => {
+      let url = api.adminPlayers.list.path;
+      if (status) url += `?status=${status}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch players");
+      return res.json();
     },
   });
 }
