@@ -6,11 +6,13 @@ Salaam Cup is a multi-tournament sports competition platform for managing commun
 
 Core features include:
 - Tournament creation and management with divisions
-- Team registration with approval workflows
+- Public team registration (no login required) with admin approval workflows
+- Captain auto-linking: when a captain logs in, their email is matched against approved teams to auto-assign ownership
 - Player roster management with eligibility verification
 - Match scheduling and standings tracking
-- Admin dashboard for oversight
-- Captain dashboard for team management
+- Admin dashboard with real data (pending teams count, approved teams, quick approve actions)
+- Admin team management page with status filtering (all/pending/approved/rejected) and approve/reject buttons
+- Captain dashboard showing teams linked to their account via /api/my-teams
 
 ## User Preferences
 
