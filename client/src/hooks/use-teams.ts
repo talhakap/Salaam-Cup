@@ -2,6 +2,30 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { InsertTeam, Team } from "@shared/schema";
 
+export function useMyTeams() {
+  return useQuery<Team[]>({
+    queryKey: [api.myTeams.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.myTeams.list.path, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch my teams");
+      return res.json();
+    },
+  });
+}
+
+export function useAllTeams(status?: string) {
+  return useQuery<Team[]>({
+    queryKey: [api.allTeams.list.path, status],
+    queryFn: async () => {
+      let url = api.allTeams.list.path;
+      if (status) url += `?status=${status}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch all teams");
+      return res.json();
+    },
+  });
+}
+
 export function useTeams(tournamentId: number, params?: { status?: string, divisionId?: string }) {
   return useQuery({
     queryKey: [api.teams.list.path, tournamentId, params],
@@ -70,6 +94,8 @@ export function useUpdateTeam() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [api.teams.get.path, data.id] });
       queryClient.invalidateQueries({ queryKey: [api.teams.list.path, data.tournamentId] });
+      queryClient.invalidateQueries({ queryKey: [api.allTeams.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.myTeams.list.path] });
     },
   });
 }

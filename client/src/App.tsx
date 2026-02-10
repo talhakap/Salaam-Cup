@@ -13,6 +13,7 @@ import Register from "@/pages/Register";
 import CaptainDashboard from "@/pages/CaptainDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminTournaments from "@/pages/AdminTournaments";
+import AdminTeams from "@/pages/AdminTeams";
 
 function Router() {
   return (
@@ -27,7 +28,7 @@ function Router() {
       <Route path="/captain" component={CaptainDashboard} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/tournaments" component={AdminTournaments} />
-      <Route path="/admin/teams" component={AdminDashboard} />
+      <Route path="/admin/teams" component={AdminTeams} />
       <Route path="/admin/players" component={AdminDashboard} />
 
       <Route path="/media" component={Home} /> 

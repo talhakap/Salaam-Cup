@@ -1,8 +1,7 @@
 import { MainLayout } from "@/components/MainLayout";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
-import { Team, Player, insertPlayerSchema } from "@shared/schema";
+import { useMyTeams } from "@/hooks/use-teams";
+import { Team, insertPlayerSchema } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,18 +16,16 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { usePlayers, useCreatePlayer } from "@/hooks/use-players";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, Users, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, LogIn } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import heroImg from "/images/team-detail.png";
+import { Link } from "wouter";
 
-// Schema for adding a player
 const addPlayerFormSchema = insertPlayerSchema.omit({ teamId: true, status: true, waiverSigned: true, adminNotes: true });
 
 function AddPlayerDialog({ teamId }: { teamId: number }) {
@@ -51,7 +48,7 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
   const onSubmit = async (data: any) => {
     try {
       await createPlayer.mutateAsync({ ...data, teamId });
-      toast({ title: "Player added!", description: "They are now in staging." });
+      toast({ title: "Player added!", description: "They will need admin verification." });
       setOpen(false);
       form.reset();
     } catch (err) {
@@ -62,7 +59,7 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2"><UserPlus className="h-4 w-4" /> Add Player</Button>
+        <Button className="gap-2" data-testid="button-add-player"><UserPlus className="h-4 w-4" /> Add Player</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -75,25 +72,25 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
              <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="firstName" render={({field}) => (
-                  <FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage/></FormItem>
+                  <FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} data-testid="input-player-first-name" /></FormControl><FormMessage/></FormItem>
                 )} />
                 <FormField control={form.control} name="lastName" render={({field}) => (
-                  <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage/></FormItem>
+                  <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} data-testid="input-player-last-name" /></FormControl><FormMessage/></FormItem>
                 )} />
              </div>
              <FormField control={form.control} name="email" render={({field}) => (
-                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage/></FormItem>
+                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} data-testid="input-player-email" /></FormControl><FormMessage/></FormItem>
              )} />
              <div className="grid grid-cols-2 gap-4">
                <FormField control={form.control} name="dob" render={({field}) => (
-                    <FormItem><FormLabel>Date of Birth</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage/></FormItem>
+                    <FormItem><FormLabel>Date of Birth</FormLabel><FormControl><Input type="date" {...field} data-testid="input-player-dob" /></FormControl><FormMessage/></FormItem>
                )} />
                <FormField control={form.control} name="jerseyNumber" render={({field}) => (
-                    <FormItem><FormLabel>Jersey #</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} /></FormControl><FormMessage/></FormItem>
+                    <FormItem><FormLabel>Jersey #</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} data-testid="input-player-jersey" /></FormControl><FormMessage/></FormItem>
                )} />
              </div>
              <DialogFooter>
-               <Button type="submit" disabled={createPlayer.isPending}>
+               <Button type="submit" disabled={createPlayer.isPending} data-testid="button-submit-player">
                  {createPlayer.isPending ? <Loader2 className="animate-spin h-4 w-4" /> : "Add Player"}
                </Button>
              </DialogFooter>
@@ -104,92 +101,10 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
   );
 }
 
-export default function CaptainDashboard() {
-  const { user } = useAuth();
-  // Fetch teams where captainId matches current user
-  // Since we don't have a direct "my-teams" endpoint in the minimal schema, we filter via list
-  // Ideally, backend should have /api/my-teams. We'll use the tournament list or assume we just show one.
-  // Workaround: We will fetch all teams and filter in frontend (not performant but fine for demo)
-  // OR: If schema allowed filtering by captainId.
-  // For this generator, I'll fetch a specific tournament's teams or mocking the "My Team" fetch
-  // Let's assume the user has one team.
-  // Real implementation: API should support ?captainId=...
-  
-  // MOCK: Fetch teams for tournament 1 and find the one matching the user email or name if ID doesn't work
-  // In a real app, strict relation is needed.
-  // I will just show a "Select your team" or assume ID=1 for demo purposes if not found.
-  
-  // NOTE: I'll use a placeholder UI if no team is found.
-  
-  return (
-    <MainLayout>
-      <div className="bg-secondary text-white py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold font-display uppercase">Captain's Dashboard</h1>
-          <p className="opacity-80">Manage your team and roster.</p>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">
-         <Alert className="mb-8 border-primary/20 bg-primary/5">
-           <AlertCircle className="h-4 w-4 text-primary" />
-           <AlertTitle>Registration Status</AlertTitle>
-           <AlertDescription>
-             Your team is currently <strong>Pending</strong>. Roster submissions are open but players will be in staging until verified.
-           </AlertDescription>
-         </Alert>
-
-         <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-               <Card>
-                 <CardHeader className="flex flex-row items-center justify-between">
-                   <div>
-                     <CardTitle>Roster Management</CardTitle>
-                     <CardDescription>Add and manage your players.</CardDescription>
-                   </div>
-                   <AddPlayerDialog teamId={1} /> {/* Hardcoded ID for demo, usually dynamic */}
-                 </CardHeader>
-                 <CardContent>
-                   <RosterList teamId={1} />
-                 </CardContent>
-               </Card>
-            </div>
-
-            <div className="space-y-8">
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Team Info</CardTitle>
-                 </CardHeader>
-                 <CardContent className="space-y-4">
-                   <div className="flex justify-between border-b pb-2">
-                     <span className="text-muted-foreground">Team Name</span>
-                     <span className="font-medium">Toronto Eagles</span>
-                   </div>
-                   <div className="flex justify-between border-b pb-2">
-                     <span className="text-muted-foreground">Division</span>
-                     <span className="font-medium">Men's A</span>
-                   </div>
-                   <div className="flex justify-between border-b pb-2">
-                     <span className="text-muted-foreground">Season</span>
-                     <span className="font-medium">Summer 2025</span>
-                   </div>
-                   <div className="flex justify-between items-center pt-2">
-                     <span className="text-muted-foreground">Status</span>
-                     <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pending</Badge>
-                   </div>
-                 </CardContent>
-               </Card>
-            </div>
-         </div>
-      </div>
-    </MainLayout>
-  );
-}
-
 function RosterList({ teamId }: { teamId: number }) {
   const { data: players, isLoading } = usePlayers(teamId);
 
-  if (isLoading) return <div className="p-4 text-center">Loading roster...</div>;
+  if (isLoading) return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>;
 
   return (
     <Table>
@@ -198,37 +113,155 @@ function RosterList({ teamId }: { teamId: number }) {
           <TableHead>Name</TableHead>
           <TableHead>#</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {players?.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-              No players added yet.
+            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+              No players added yet. Use the "Add Player" button to get started.
             </TableCell>
           </TableRow>
         ) : (
           players?.map((player) => (
-            <TableRow key={player.id}>
+            <TableRow key={player.id} data-testid={`row-player-${player.id}`}>
               <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
               <TableCell>{player.jerseyNumber}</TableCell>
               <TableCell>
-                <Badge variant={player.status === 'verified' ? 'default' : 'secondary'} className={
-                  player.status === 'verified' ? 'bg-green-600 hover:bg-green-700' : 
-                  player.status === 'rejected' ? 'bg-red-100 text-red-700 hover:bg-red-200' : 
-                  'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                }>
+                <Badge variant={player.status === 'verified' ? 'default' : 'secondary'} data-testid={`badge-player-status-${player.id}`}>
                   {player.status}
                 </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="sm">Edit</Button>
               </TableCell>
             </TableRow>
           ))
         )}
       </TableBody>
     </Table>
+  );
+}
+
+function TeamCard({ team }: { team: Team }) {
+  const statusVariant = team.status === "approved" ? "default" : team.status === "rejected" ? "destructive" : "secondary";
+
+  return (
+    <div className="space-y-8" data-testid={`section-team-${team.id}`}>
+      <Alert className={team.status === "approved" ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}>
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Team Status: {team.status.charAt(0).toUpperCase() + team.status.slice(1)}</AlertTitle>
+        <AlertDescription>
+          {team.status === "approved"
+            ? "Your team is approved! You can now manage your roster."
+            : team.status === "pending"
+            ? "Your team registration is under review. You can still add players."
+            : "Your team registration was not approved. Contact admin for details."}
+        </AlertDescription>
+      </Alert>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
+              <div>
+                <CardTitle>Roster Management</CardTitle>
+                <CardDescription>Add and manage your players.</CardDescription>
+              </div>
+              {team.status !== "rejected" && <AddPlayerDialog teamId={team.id} />}
+            </CardHeader>
+            <CardContent>
+              <RosterList teamId={team.id} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Team Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-muted-foreground">Team Name</span>
+                <span className="font-medium" data-testid="text-team-name">{team.name}</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-muted-foreground">Captain</span>
+                <span className="font-medium">{team.captainName}</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-muted-foreground">Email</span>
+                <span className="font-medium text-sm">{team.captainEmail}</span>
+              </div>
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant={statusVariant} data-testid="badge-team-status">{team.status}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CaptainDashboard() {
+  const { user } = useAuth();
+  const { data: myTeams, isLoading, error } = useMyTeams();
+
+  if (!user) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <LogIn className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Sign In Required</h1>
+          <p className="text-muted-foreground mb-6">
+            Please sign in with the same email you used during registration to access your team dashboard.
+          </p>
+          <Button asChild>
+            <a href="/api/login" data-testid="link-login">Sign In with Replit</a>
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <div className="bg-secondary text-white py-12">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl font-bold font-display uppercase" data-testid="text-captain-title">Captain's Dashboard</h1>
+          <p className="opacity-80">Manage your teams and rosters.</p>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Failed to load your teams. Please try again later.</AlertDescription>
+          </Alert>
+        ) : !myTeams || myTeams.length === 0 ? (
+          <div className="text-center py-20">
+            <h2 className="text-xl font-bold mb-2">No Teams Found</h2>
+            <p className="text-muted-foreground mb-6">
+              No teams are linked to your account yet. If you registered a team, make sure you're signed in with the same email you used during registration. Your team must also be approved by an admin before it appears here.
+            </p>
+            <Link href="/register">
+              <Button data-testid="link-register">Register a Team</Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {myTeams.map((team) => (
+              <TeamCard key={team.id} team={team} />
+            ))}
+          </div>
+        )}
+      </div>
+    </MainLayout>
   );
 }

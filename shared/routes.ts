@@ -143,6 +143,32 @@ export const api = {
     },
   },
 
+  // === MY TEAMS (captain) ===
+  myTeams: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/my-teams' as const,
+      responses: {
+        200: z.array(z.custom<typeof teams.$inferSelect>()),
+        401: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === ALL TEAMS (admin) ===
+  allTeams: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/admin/teams' as const,
+      input: z.object({
+        status: z.enum(['pending', 'approved', 'rejected']).optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.custom<typeof teams.$inferSelect>()),
+      },
+    },
+  },
+
   // === PLAYERS ===
   players: {
     list: {

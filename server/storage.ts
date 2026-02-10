@@ -25,13 +25,17 @@ export interface IStorage {
   createDivision(data: InsertDivision): Promise<Division>;
 
   // Teams
+  getAllTeams(status?: string): Promise<Team[]>;
   getTeams(tournamentId: number, status?: string, divisionId?: number): Promise<Team[]>;
   getTeam(id: number): Promise<(Team & { players: Player[] }) | undefined>;
+  getTeamsByCaptainUserId(userId: string): Promise<Team[]>;
+  claimTeamsByEmail(email: string, userId: string): Promise<Team[]>;
   createTeam(data: InsertTeam): Promise<Team>;
   updateTeam(id: number, data: UpdateTeamRequest): Promise<Team>;
 
   // Players
   getPlayers(teamId: number): Promise<Player[]>;
+  getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team })[]>;
   createPlayer(data: InsertPlayer): Promise<Player>;
   updatePlayer(id: number, data: UpdatePlayerRequest): Promise<Player>;
   createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]>;
@@ -89,6 +93,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Teams
+  async getAllTeams(status?: string): Promise<Team[]> {
+    if (status) {
+      return await db.select().from(teams).where(eq(teams.status, status as any));
+    }
+    return await db.select().from(teams);
+  }
+
   async getTeams(tournamentId: number, status?: string, divisionId?: number): Promise<Team[]> {
     const conditions = [eq(teams.tournamentId, tournamentId)];
     if (status) conditions.push(eq(teams.status, status as any));
@@ -101,6 +112,24 @@ export class DatabaseStorage implements IStorage {
     if (!team) return undefined;
     const teamPlayers = await db.select().from(players).where(eq(players.teamId, id));
     return { ...team, players: teamPlayers };
+  }
+
+  async getTeamsByCaptainUserId(userId: string): Promise<Team[]> {
+    return await db.select().from(teams).where(eq(teams.captainUserId, userId));
+  }
+
+  async claimTeamsByEmail(email: string, userId: string): Promise<Team[]> {
+    const claimed = await db.update(teams)
+      .set({ captainUserId: userId })
+      .where(
+        and(
+          eq(teams.captainEmail, email),
+          eq(teams.status, "approved"),
+          sql`${teams.captainUserId} IS NULL`
+        )
+      )
+      .returning();
+    return claimed;
   }
 
   async createTeam(data: InsertTeam): Promise<Team> {
@@ -121,6 +150,18 @@ export class DatabaseStorage implements IStorage {
   async createPlayer(data: InsertPlayer): Promise<Player> {
     const [player] = await db.insert(players).values(data).returning();
     return player;
+  }
+
+  async getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team })[]> {
+    const conditions = status ? [eq(players.status, status as any)] : [];
+    const allPlayers = conditions.length > 0
+      ? await db.select().from(players).where(and(...conditions))
+      : await db.select().from(players);
+    const enriched = await Promise.all(allPlayers.map(async (p) => {
+      const [team] = await db.select().from(teams).where(eq(teams.id, p.teamId));
+      return { ...p, team };
+    }));
+    return enriched;
   }
 
   async updatePlayer(id: number, data: UpdatePlayerRequest): Promise<Player> {

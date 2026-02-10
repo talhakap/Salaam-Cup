@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
@@ -103,6 +103,29 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;
     }
+  });
+
+  // === MY TEAMS (captain - requires auth) ===
+  app.get(api.myTeams.list.path, isAuthenticated, async (req, res) => {
+    const user = req.user as any;
+    const userId = user.claims?.sub;
+    const email = user.claims?.email;
+    
+    if (!userId) return res.status(401).json({ message: "Not authenticated" });
+    
+    if (email) {
+      await storage.claimTeamsByEmail(email, userId);
+    }
+    
+    const myTeams = await storage.getTeamsByCaptainUserId(userId);
+    res.json(myTeams);
+  });
+
+  // === ALL TEAMS (admin - requires auth) ===
+  app.get(api.allTeams.list.path, isAuthenticated, async (req, res) => {
+    const { status } = req.query;
+    const data = await storage.getAllTeams(status as string | undefined);
+    res.json(data);
   });
 
   // === PLAYERS ===
