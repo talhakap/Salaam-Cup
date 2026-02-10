@@ -130,7 +130,9 @@ export default function TournamentAwards() {
                           </div>
                           <p className="text-xs text-muted-foreground mb-1">{award.year}</p>
                           <p className="text-sm font-bold font-display uppercase leading-tight">
-                            {award.teamName || award.playerName || "TBD"}
+                            {category === "Champions" || category === "Runner Up"
+                              ? (award.teamName || "TBD")
+                              : (award.playerName || "TBD")}
                           </p>
                         </div>
                       ))}

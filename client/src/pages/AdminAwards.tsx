@@ -286,7 +286,11 @@ export default function AdminAwards() {
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-sm truncate">{award.teamName || award.playerName || "TBD"}</span>
+                      <span className="font-bold text-sm truncate">
+                        {award.category === "Champions" || award.category === "Runner Up"
+                          ? (award.teamName || "TBD")
+                          : (award.playerName || "TBD")}
+                      </span>
                       <Badge variant="secondary" className="text-xs">{award.category}</Badge>
                       <Badge variant="outline" className="text-xs">{award.year}</Badge>
                     </div>
