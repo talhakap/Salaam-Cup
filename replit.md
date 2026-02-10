@@ -18,6 +18,8 @@ Core features include:
 - Admin players page showing all self-registered players/free agents with confirmed/flagged status filters, sorted by registration date
 - Team detail view with roster tab (shows which roster players have registered) and registrations tab (shows self-registered players with match status)
 - Captain dashboard showing teams linked to their account via /api/my-teams
+- Tournament sub-pages: Schedule (with division/date/status filters), Standings (full table with division tabs), Rules (division-specific rules)
+- Reusable ReadyToCompete CTA and FAQSection components used across tournament pages
 
 ## User Preferences
 
