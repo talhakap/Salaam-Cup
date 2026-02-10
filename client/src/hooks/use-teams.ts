@@ -19,7 +19,7 @@ export function useAllTeams(status?: string) {
     queryFn: async () => {
       let url = api.allTeams.list.path;
       if (status) url += `?status=${status}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch all teams");
       return res.json();
     },
