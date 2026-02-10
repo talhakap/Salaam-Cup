@@ -104,11 +104,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenu>
             ) : (
               <div className="hidden md:flex gap-2">
-                 <Link href="/api/login">
-                  <Button variant="ghost" size="sm">Login</Button>
-                </Link>
+                 <a href="/api/login">
+                  <Button variant="ghost" size="sm" data-testid="button-login">Login</Button>
+                </a>
                 <Link href="/register">
-                  <Button size="sm" className="bg-primary text-white hover:bg-primary/90">Register Team</Button>
+                  <Button size="sm" className="bg-primary text-white hover:bg-primary/90" data-testid="button-register">Register Team</Button>
                 </Link>
               </div>
             )}
@@ -140,11 +140,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             ))}
              {!isAuthenticated && (
               <div className="flex flex-col gap-2 mt-4 pt-4 border-t">
-                 <Link href="/api/login" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full justify-start">Login</Button>
-                </Link>
+                 <a href="/api/login" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full justify-start" data-testid="button-login-mobile">Login</Button>
+                </a>
                 <Link href="/register" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full justify-start bg-primary">Register Team</Button>
+                  <Button className="w-full justify-start bg-primary" data-testid="button-register-mobile">Register Team</Button>
                 </Link>
               </div>
             )}
