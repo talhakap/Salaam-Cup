@@ -4,7 +4,7 @@ import * as schema from "@shared/schema";
 
 const { Pool } = pg;
 
-const databaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+const databaseUrl = (process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || "").replace(/\\n/g, "").trim();
 
 if (!databaseUrl) {
   throw new Error(
