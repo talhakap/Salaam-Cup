@@ -76,7 +76,7 @@ export async function registerRoutes(
       let password: string | null = null;
       let isNewAccount = false;
 
-      if (existingUser && existingUser.role === "captain") {
+      if (existingUser) {
         userId = existingUser.id;
       } else {
         password = generatePassword();
