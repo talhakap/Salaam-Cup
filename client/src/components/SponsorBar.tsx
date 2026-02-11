@@ -8,7 +8,7 @@ export function SponsorBar() {
   const doubled = [...sponsorsList, ...sponsorsList];
 
   return (
-    <section className="bg-foreground py-6 overflow-hidden" data-testid="sponsor-bar">
+    <section className="bg-foreground py-8 overflow-hidden" data-testid="sponsor-bar">
       <p className="text-center text-xs uppercase tracking-[0.2em] text-background/60 mb-4 font-medium">
         Sponsors
       </p>
@@ -25,7 +25,7 @@ export function SponsorBar() {
                   <img
                     src={sponsor.logoUrl}
                     alt={sponsor.name}
-                    className="h-12 md:h-16 w-auto max-w-[2000px] object-contain"
+                    className="h-16 md:h-24 w-auto max-w-[2000px] object-contain"
                     data-testid={`img-sponsor-${sponsor.id}`}
                   />
                 </a>
@@ -33,7 +33,7 @@ export function SponsorBar() {
                 <img
                   src={sponsor.logoUrl}
                   alt={sponsor.name}
-                  className="h-12 md:h-16 w-auto max-w-[2000px] object-contain"
+                  className="h-16 md:h-24 w-auto max-w-[2000px] object-contain"
                   data-testid={`img-sponsor-${sponsor.id}`}
                 />
               )}
