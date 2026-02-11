@@ -43,44 +43,64 @@ const faqItems = [
   },
 ];
 
+const divisionImages = [
+  "/images/hero-landing.png",
+  "/images/hero-about.png",
+  "/images/hero-tournaments.png",
+  "/images/hero-media.png",
+  "/images/hero-register.png",
+];
+
 function TournamentAccordionItem({ tournament }: { tournament: Tournament }) {
   const { data: divisions } = useDivisions(tournament.id);
 
   return (
-    <AccordionItem value={String(tournament.id)} className="border-b">
+    <AccordionItem value={String(tournament.id)} className="border-b border-gray-800">
+      <div className="pt-4 pb-1">
+        <span className="text-xs text-gray-500 uppercase tracking-wider">Tournaments</span>
+      </div>
       <AccordionTrigger
-        className="text-xl md:text-2xl font-bold font-display uppercase py-5 hover:no-underline"
+        className="text-2xl md:text-4xl font-bold font-display uppercase py-4 hover:no-underline text-white [&>svg]:text-white"
         data-testid={`accordion-tournament-${tournament.id}`}
       >
         {tournament.name}
       </AccordionTrigger>
       <AccordionContent>
-        <div className="pb-4 space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-6 pt-2">
           {divisions && divisions.length > 0 ? (
-            divisions.map((div: Division) => (
-              <Link
-                key={div.id}
-                href={`/tournaments/${tournament.id}`}
-                className="block bg-muted rounded-md px-4 py-3"
-                data-testid={`link-division-${div.id}`}
-              >
-                <span className="text-sm font-bold font-display uppercase">{div.name}</span>
-                {div.category && (
-                  <span className="text-xs text-muted-foreground ml-2">{div.category}</span>
-                )}
-                {div.gameFormat && (
-                  <span className="text-xs text-muted-foreground ml-2">({div.gameFormat})</span>
-                )}
-              </Link>
+            divisions.map((div: Division, idx: number) => (
+              <div key={div.id} className="flex flex-col" data-testid={`card-division-${div.id}`}>
+                <div className="aspect-[4/3] rounded-md overflow-hidden mb-3">
+                  <img
+                    src={divisionImages[idx % divisionImages.length]}
+                    alt={div.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex items-end justify-between gap-2 flex-wrap">
+                  <div>
+                    <p className="text-xs text-gray-500">Location</p>
+                    <h3 className="text-base md:text-xl font-bold font-display text-white">{div.name}</h3>
+                  </div>
+                  <Link
+                    href={`/register?tournament=${tournament.id}&division=${div.id}`}
+                    className="shrink-0"
+                    data-testid={`button-register-division-${div.id}`}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full border-gray-600 text-white bg-transparent text-xs font-medium tracking-wide"
+                    >
+                      Register Now
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">Divisions coming soon.</p>
+            <p className="text-sm text-gray-500 col-span-3">Divisions coming soon.</p>
           )}
-          <Link href={`/tournaments/${tournament.id}`}>
-            <Button variant="outline" size="sm" className="mt-2 text-xs font-bold uppercase tracking-wider" data-testid={`button-view-tournament-${tournament.id}`}>
-              View Tournament
-            </Button>
-          </Link>
         </div>
       </AccordionContent>
     </AccordionItem>
@@ -138,13 +158,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-background border-t">
+      <section className="py-20 bg-black text-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-play-with-us">
             Play With Us
           </h2>
 
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             {tournaments && tournaments.length > 0 ? (
               <Accordion type="single" collapsible>
                 {tournaments.map((t: Tournament) => (
@@ -152,7 +172,7 @@ export default function Home() {
                 ))}
               </Accordion>
             ) : (
-              <p className="text-center text-muted-foreground">No tournaments available yet.</p>
+              <p className="text-center text-gray-500">No tournaments available yet.</p>
             )}
           </div>
         </div>
