@@ -86,8 +86,8 @@ export default {
         sans: ["var(--font-sans)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
-        display: ["'Oswald'", "sans-serif"],
-        body: ["'Inter'", "sans-serif"],
+        display: ["'Montserrat'", "sans-serif"],
+        body: ["'Nunito Sans'", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
