@@ -1,6 +1,7 @@
 import { MainLayout } from "@/components/MainLayout";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
+import { useNews } from "@/hooks/use-news";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import heroImg from "/images/hero-landing.png";
@@ -10,7 +11,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import type { Tournament, Division } from "@shared/schema";
+import { useState } from "react";
+import { format, parseISO } from "date-fns";
+import type { Tournament, Division, News } from "@shared/schema";
 
 const valueCards = [
   { title: "Amazing Community", image: "/images/hero-about.png" },
@@ -107,8 +110,55 @@ function TournamentAccordionItem({ tournament }: { tournament: Tournament }) {
   );
 }
 
+const ITEMS_PER_PAGE = 3;
+
+function NewsCarousel({ newsItems }: { newsItems: News[] }) {
+  const totalPages = Math.ceil(newsItems.length / ITEMS_PER_PAGE);
+  const [page, setPage] = useState(0);
+  const visible = newsItems.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
+
+  return (
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {visible.map((item) => (
+          <div key={item.id} className="flex flex-col" data-testid={`card-news-home-${item.id}`}>
+            <div className="aspect-[4/3] rounded-md overflow-hidden mb-3">
+              <img
+                src={item.imageUrl}
+                alt={item.headline}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mb-1">
+              {(() => { try { return format(parseISO(item.publishedDate), "dd/MM/yyyy"); } catch { return item.publishedDate; } })()}
+            </p>
+            <h3 className="text-sm font-bold font-display uppercase leading-snug" data-testid={`text-news-home-headline-${item.id}`}>
+              {item.headline}
+            </h3>
+          </div>
+        ))}
+      </div>
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-8">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i)}
+              className={`w-3 h-3 rounded-full transition-colors ${
+                i === page ? "bg-foreground" : "bg-muted-foreground/30"
+              }`}
+              data-testid={`button-news-page-${i}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const { data: tournaments } = useTournaments();
+  const { data: newsItems, isLoading: newsLoading } = useNews();
 
   const upcomingTournaments = tournaments?.filter(t => t.status === 'active' || t.status === 'upcoming').slice(0, 2);
 
@@ -183,17 +233,26 @@ export default function Home() {
           <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-legacy">
             Where Stories Become Legacy.
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="relative aspect-video rounded-md overflow-hidden group" data-testid={`card-story-${i}`}>
-                <img src="/images/hero-landing.png" alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <p className="text-white/70 text-xs uppercase tracking-wider mb-1">08 March on the field</p>
-                  <h3 className="text-white font-bold text-sm">Our Experience at the First Championship</h3>
-                </div>
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-6">
+              <span className="text-xs text-muted-foreground uppercase tracking-wider border-b pb-2 inline-block">News</span>
+              <div className="border-b" />
+            </div>
+            {newsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex flex-col">
+                    <div className="aspect-[4/3] rounded-md bg-muted animate-pulse mb-3" />
+                    <div className="h-3 w-20 bg-muted rounded animate-pulse mb-2" />
+                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : newsItems && newsItems.length > 0 ? (
+              <NewsCarousel newsItems={newsItems} />
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No news yet.</p>
+            )}
           </div>
         </div>
       </section>

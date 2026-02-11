@@ -22,6 +22,8 @@ Core features include:
 - Tournament sub-navigation bar component (TournamentNav) used on all tournament pages (Home, Schedule, Standings, Rules, Awards)
 - Awards management: awards table with tournamentId, divisionId, year, category (Champions, Runner Up, MVP, etc.), team/player name, logo
 - Admin Awards page for CRUD operations on awards by tournament
+- News system: admin can create news items (headline, image URL, date, optional tournament link); displayed on home page in "Where Stories Become Legacy" section with 3-column card grid and pagination dots
+- Admin News page for CRUD operations on news items
 - Reusable ReadyToCompete CTA and FAQSection components used across tournament pages
 
 ## User Preferences

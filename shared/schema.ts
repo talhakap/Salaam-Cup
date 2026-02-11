@@ -168,6 +168,20 @@ export const insertAwardSchema = createInsertSchema(awards).omit({ id: true });
 export type Award = typeof awards.$inferSelect;
 export type InsertAward = z.infer<typeof insertAwardSchema>;
 
+// === NEWS ===
+export const news = pgTable("news", {
+  id: serial("id").primaryKey(),
+  headline: text("headline").notNull(),
+  imageUrl: text("image_url").notNull(),
+  publishedDate: date("published_date", { mode: "string" }).notNull(),
+  tournamentId: integer("tournament_id").references(() => tournaments.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertNewsSchema = createInsertSchema(news).omit({ id: true, createdAt: true });
+export type News = typeof news.$inferSelect;
+export type InsertNews = z.infer<typeof insertNewsSchema>;
+
 // === RELATIONS ===
 export const sportsRelations = relations(sports, ({ many }) => ({
   tournaments: many(tournaments),
@@ -183,6 +197,14 @@ export const tournamentsRelations = relations(tournaments, ({ one, many }) => ({
   matches: many(matches),
   standings: many(standings),
   awards: many(awards),
+  news: many(news),
+}));
+
+export const newsRelations = relations(news, ({ one }) => ({
+  tournament: one(tournaments, {
+    fields: [news.tournamentId],
+    references: [tournaments.id],
+  }),
 }));
 
 export const divisionsRelations = relations(divisions, ({ one, many }) => ({

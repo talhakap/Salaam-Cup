@@ -1,10 +1,10 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards,
+  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
-  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward,
+  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
-  type Standing, type Sport, type Award,
+  type Standing, type Sport, type Award, type News,
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
@@ -63,6 +63,12 @@ export interface IStorage {
   createAward(data: InsertAward): Promise<Award>;
   updateAward(id: number, data: Partial<InsertAward>): Promise<Award>;
   deleteAward(id: number): Promise<void>;
+
+  // News
+  getNews(): Promise<News[]>;
+  createNews(data: InsertNews): Promise<News>;
+  updateNews(id: number, data: Partial<InsertNews>): Promise<News>;
+  deleteNews(id: number): Promise<void>;
 
   // Venues
   getVenues(): Promise<Venue[]>;
@@ -453,6 +459,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAward(id: number): Promise<void> {
     await db.delete(awards).where(eq(awards.id, id));
+  }
+
+  // News
+  async getNews(): Promise<News[]> {
+    return await db.select().from(news).orderBy(desc(news.publishedDate));
+  }
+
+  async createNews(data: InsertNews): Promise<News> {
+    const [item] = await db.insert(news).values(data).returning();
+    return item;
+  }
+
+  async updateNews(id: number, data: Partial<InsertNews>): Promise<News> {
+    const [item] = await db.update(news).set(data).where(eq(news.id, id)).returning();
+    return item;
+  }
+
+  async deleteNews(id: number): Promise<void> {
+    await db.delete(news).where(eq(news.id, id));
   }
 
   // Venues

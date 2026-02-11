@@ -328,6 +328,43 @@ export async function registerRoutes(
     }
   });
 
+  // === NEWS ===
+  app.get(api.news.list.path, async (_req, res) => {
+    const data = await storage.getNews();
+    res.json(data);
+  });
+
+  app.post(api.news.create.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.news.create.input.parse(req.body);
+      const item = await storage.createNews(input);
+      res.status(201).json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.news.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.news.update.input.parse(req.body);
+      const item = await storage.updateNews(Number(req.params.id), input);
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.news.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteNews(Number(req.params.id));
+      res.json({ message: "News deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === VENUES ===
   app.get(api.venues.list.path, async (_req, res) => {
     const data = await storage.getVenues();
