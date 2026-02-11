@@ -80,20 +80,9 @@ const sportDescriptions: Record<string, string> = {
 function EventCardMobile({ logo, sportName, name, desc, dateStr, tournamentId }: {
   logo: string; sportName: string; name: string; desc: string; dateStr: string; tournamentId: number;
 }) {
-  const [showInfo, setShowInfo] = useState(false);
-
-  useEffect(() => {
-    const interval = setInterval(() => setShowInfo(prev => !prev), 3000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <div className="md:hidden relative z-10 h-full">
-      <div
-        className={`absolute inset-0 flex items-center justify-center p-4 transition-opacity duration-700 ease-in-out ${
-          showInfo ? "opacity-0" : "opacity-100"
-        }`}
-      >
+    <div className="md:hidden relative z-10 h-full group">
+      <div className="absolute inset-0 flex items-center justify-center p-4 transition-opacity duration-500 ease-in-out group-hover:opacity-0">
         <img
           src={logo}
           alt={`${sportName} logo`}
@@ -101,11 +90,7 @@ function EventCardMobile({ logo, sportName, name, desc, dateStr, tournamentId }:
         />
       </div>
 
-      <div
-        className={`absolute inset-0 flex flex-col items-center justify-center text-center px-6 transition-opacity duration-700 ease-in-out ${
-          showInfo ? "opacity-100" : "opacity-0"
-        }`}
-      >
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100">
         <h3 className="text-xl font-bold font-display uppercase text-white tracking-wide mb-2" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
           {name}
         </h3>
