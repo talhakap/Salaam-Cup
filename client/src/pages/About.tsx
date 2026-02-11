@@ -363,7 +363,7 @@ export default function About() {
 
       {/* WE ADMIRE THEM */}
       {specialAwardsData && specialAwardsData.length > 0 && (
-        <section className="py-16 md:py-24 bg-stone-900 text-white" data-testid="section-admire">
+        <section className="py-16 md:py-24 bg-secondary text-white" data-testid="section-admire">
           <div className="container mx-auto px-4">
             <div className="text-center mb-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Awards Info</p>
@@ -371,22 +371,18 @@ export default function About() {
                 We Admire Them
               </h2>
             </div>
-            <div className="space-y-12 mt-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto mt-10">
               {specialAwardsData.map((award) => (
-                <div key={award.id} className="flex flex-col md:flex-row gap-6 md:gap-8" data-testid={`card-admire-${award.id}`}>
-                  <div className="md:w-2/5 flex-shrink-0">
-                    <div className="aspect-[4/3] rounded-md overflow-hidden">
-                      <img src={award.imageUrl} alt={award.header} className="w-full h-full object-cover" />
-                    </div>
+                <div key={award.id} data-testid={`card-admire-${award.id}`}>
+                  <div className="aspect-video rounded-md overflow-hidden mb-4">
+                    <img src={award.imageUrl} alt={award.header} className="w-full h-full object-cover" />
                   </div>
-                  <div className="md:w-3/5">
-                    <h3 className="text-lg font-bold font-display mb-3" data-testid={`text-admire-header-${award.id}`}>
-                      {award.header}
-                    </h3>
-                    <p className="text-sm text-gray-300 leading-relaxed" data-testid={`text-admire-desc-${award.id}`}>
-                      {award.description}
-                    </p>
-                  </div>
+                  <h3 className="text-lg font-bold font-display mb-2" data-testid={`text-admire-header-${award.id}`}>
+                    {award.header}
+                  </h3>
+                  <p className="text-sm text-gray-300 leading-relaxed" data-testid={`text-admire-desc-${award.id}`}>
+                    {award.description}
+                  </p>
                 </div>
               ))}
             </div>
