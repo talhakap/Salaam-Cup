@@ -83,13 +83,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col font-body">
       <header className="sticky top-0 z-50 w-full bg-background border-b border-border">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <div className="container mx-auto px-4 h-39 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 shrink-0" data-testid="link-logo">
             <span className="text-2xl font-bold font-display tracking-tight text-foreground">
               <img
-                src="/logo.png"
+                src="/images/salaam-cup-logo-black.png"
                 alt="Sport Cup Manager Logo"
-                className="h-10 w-auto"
+                className="h-20 w-auto"
               />
             </span>
           </Link>

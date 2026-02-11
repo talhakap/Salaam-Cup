@@ -5,7 +5,7 @@ import { useNews } from "@/hooks/use-news";
 import { useFeaturedFaqs } from "@/hooks/use-faqs";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import heroImg from "/images/hero-landing.png";
+import heroImg from "/images/hero-main.png";
 import {
   Accordion,
   AccordionContent,
@@ -25,7 +25,7 @@ const valueCards = [
     description: "Community of over 20,000 Athletes living the Brodie lifestyle. Compete with old friends or make new ones!",
     cta: "Register Now",
     href: "/register",
-    image: "/images/hero-about.png",
+    image: "/images/home-community.png",
   },
   {
     tagline: "Play by the rules. Win with intensity.",
@@ -33,7 +33,7 @@ const valueCards = [
     description: "Structured divisions, refs, scorekeeping, playoffs. Everything feels official and intense.",
     cta: "Tournaments",
     href: "/tournaments",
-    image: "/images/hero-tournaments.png",
+    image: "/images/home-comp.png",
   },
   {
     tagline: "Relive the best moments.",
@@ -41,7 +41,7 @@ const valueCards = [
     description: "Highlights, photography, social media features, turn tournament moments into shareable content.",
     cta: "Our Gallery",
     href: "/media",
-    image: "/images/hero-media.png",
+    image: "/images/home-highlights.png",
   },
   {
     tagline: "Instant updates. Zero confusion.",
@@ -49,7 +49,7 @@ const valueCards = [
     description: "On-time scheduling, clear communications, venue management, instant updates, everything handled.",
     cta: "See Our Staff",
     href: "/about",
-    image: "/images/hero-register.png",
+    image: "/images/home-organization.png",
   },
 ];
 
@@ -382,7 +382,7 @@ export default function Home() {
 
   return (
     <MainLayout>
-      <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden" data-testid="hero-landing">
+      <section className="relative h-[75vh] min-h-[600px] flex items-center justify-center overflow-hidden" data-testid="hero-landing">
         <div className="absolute inset-0 z-0">
           <img src={heroImg} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/70" />

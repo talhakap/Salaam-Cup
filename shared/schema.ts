@@ -64,6 +64,7 @@ export const divisions = pgTable("divisions", {
   registrationFee: integer("registration_fee"),
   rulesContent: text("rules_content"),
   venueId: integer("venue_id").references(() => venues.id),
+  heroImage: text("hero_image"),
 });
 
 export const insertDivisionSchema = createInsertSchema(divisions).omit({ id: true });
