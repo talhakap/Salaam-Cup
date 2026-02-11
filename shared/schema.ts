@@ -228,6 +228,19 @@ export type InsertMediaItem = z.infer<typeof insertMediaItemSchema>;
 
 export type MediaYearWithItems = MediaYear & { items: MediaItem[] };
 
+// === FAQS ===
+export const faqs = pgTable("faqs", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  featured: boolean("featured").default(false).notNull(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertFaqSchema = createInsertSchema(faqs).omit({ id: true });
+export type Faq = typeof faqs.$inferSelect;
+export type InsertFaq = z.infer<typeof insertFaqSchema>;
+
 // === ABOUT CONTENT ===
 export const aboutContent = pgTable("about_content", {
   id: serial("id").primaryKey(),

@@ -438,14 +438,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="mt-12 opacity-70">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-white/50 flex items-center justify-center">
-              <div className="text-center leading-tight">
-                <span className="text-white font-bold text-lg md:text-xl block">20</span>
-                <span className="text-white/70 text-[8px] md:text-[9px] uppercase tracking-wider block">Since 2004</span>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </section>
 
