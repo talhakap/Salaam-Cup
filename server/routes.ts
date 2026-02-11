@@ -5,7 +5,7 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin } from "./supabaseAdmin";
+import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin, seedAdminAccounts } from "./supabaseAdmin";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -14,6 +14,8 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
+
+  seedAdminAccounts().catch(err => console.error("Admin seeding error:", err));
 
   // === CAPTAIN AUTH (Supabase Auth - email/password) ===
   app.post("/api/captain/login", async (req, res) => {
@@ -68,6 +70,15 @@ export async function registerRoutes(
       if (error) {
         return res.status(500).json({ message: `Failed to create captain account: ${error}` });
       }
+
+      const { authStorage } = await import("./replit_integrations/auth/storage");
+      await authStorage.upsertUser({
+        id: userId,
+        email: team.captainEmail,
+        firstName: team.captainName?.split(" ")[0] || null,
+        lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
+        role: "captain",
+      });
 
       await storage.updateTeam(teamId, { status: "approved", captainUserId: userId });
 
@@ -233,17 +244,16 @@ export async function registerRoutes(
     }
   });
 
-  // === MY TEAMS (captain - requires Replit or captain auth) ===
+  // === MY TEAMS (captain or admin auth) ===
   app.get(api.myTeams.list.path, async (req, res) => {
     const captainUserId = (req.session as any)?.captainUserId;
     const captainEmail = (req.session as any)?.captainEmail;
 
-    const replitUser = req.user as any;
-    const replitUserId = replitUser?.claims?.sub;
-    const replitEmail = replitUser?.claims?.email;
+    const adminUserId = (req.session as any)?.adminUserId;
+    const adminEmail = (req.session as any)?.adminEmail;
 
-    const userId = captainUserId || replitUserId;
-    const email = captainEmail || replitEmail;
+    const userId = captainUserId || adminUserId;
+    const email = captainEmail || adminEmail;
 
     if (!userId) return res.status(401).json({ message: "Not authenticated" });
 

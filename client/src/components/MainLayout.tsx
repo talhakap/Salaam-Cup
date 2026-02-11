@@ -141,11 +141,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <a href="/api/login" className="hidden md:block">
-                <Button className="rounded-full font-bold uppercase text-xs tracking-wider px-6" data-testid="button-login">
+              <Link href="/register" className="hidden md:block">
+                <Button className="rounded-full font-bold uppercase text-xs tracking-wider px-6" data-testid="button-register">
                   Register Now
                 </Button>
-              </a>
+              </Link>
             )}
 
             <button
@@ -188,11 +188,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             )}
             {!isAuthenticated && !isCaptainAuth && (
               <div className="mt-4 pt-4 border-t">
-                <a href="/api/login" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full rounded-full font-bold uppercase text-xs tracking-wider" data-testid="button-login-mobile">
+                <Link href="/register" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full rounded-full font-bold uppercase text-xs tracking-wider" data-testid="button-register-mobile">
                     Register Now
                   </Button>
-                </a>
+                </Link>
               </div>
             )}
           </div>

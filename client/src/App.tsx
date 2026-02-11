@@ -25,6 +25,7 @@ import AdminNews from "@/pages/AdminNews";
 import AdminSponsors from "@/pages/AdminSponsors";
 import AdminAboutContent from "@/pages/AdminAboutContent";
 import AdminMedia from "@/pages/AdminMedia";
+import AdminLogin from "@/pages/AdminLogin";
 import Media from "@/pages/Media";
 import TournamentAwards from "@/pages/TournamentAwards";
 
@@ -44,6 +45,7 @@ function Router() {
       
       <Route path="/captain-login" component={CaptainLogin} />
       <Route path="/captain" component={CaptainDashboard} />
+      <Route path="/admin-login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/tournaments" component={AdminTournaments} />
       <Route path="/admin/teams" component={AdminTeams} />

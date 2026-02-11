@@ -233,9 +233,6 @@ export default function CaptainDashboard() {
             <Link href="/captain-login">
               <Button data-testid="link-captain-login">Captain Sign In</Button>
             </Link>
-            <Button variant="outline" asChild>
-              <a href="/api/login" data-testid="link-login">Admin Sign In</a>
-            </Button>
           </div>
         </div>
       </MainLayout>

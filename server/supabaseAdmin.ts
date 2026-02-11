@@ -52,6 +52,68 @@ export async function createCaptainAccount(email: string, password: string): Pro
   return { userId: createData.user.id };
 }
 
+export async function seedAdminAccounts(): Promise<void> {
+  const adminEmails = process.env.ADMIN_EMAILS;
+  if (!adminEmails || !supabaseAdmin) return;
+
+  const { db } = await import("./db");
+  const { users } = await import("@shared/models/auth");
+  const { eq } = await import("drizzle-orm");
+
+  const emails = adminEmails.split(",").map(e => e.trim()).filter(Boolean);
+
+  for (const email of emails) {
+    try {
+      const [existing] = await db.select().from(users).where(eq(users.email, email));
+      if (existing) {
+        if (existing.role !== "admin") {
+          await db.update(users).set({ role: "admin", updatedAt: new Date() }).where(eq(users.id, existing.id));
+          console.log(`Updated ${email} to admin role`);
+        }
+        continue;
+      }
+
+      const { data: supabaseUsers } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const supabaseUser = supabaseUsers?.users?.find(u => u.email === email);
+
+      if (supabaseUser) {
+        await db.insert(users).values({
+          id: supabaseUser.id,
+          email,
+          role: "admin",
+        }).onConflictDoUpdate({
+          target: users.id,
+          set: { role: "admin", updatedAt: new Date() },
+        });
+        console.log(`Seeded admin account for ${email} (existing Supabase user)`);
+      } else {
+        const password = generatePassword(16);
+        const { data: newUser, error } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+        });
+        if (error) {
+          console.error(`Failed to create admin Supabase account for ${email}:`, error.message);
+          continue;
+        }
+        await db.insert(users).values({
+          id: newUser.user.id,
+          email,
+          role: "admin",
+        }).onConflictDoUpdate({
+          target: users.id,
+          set: { role: "admin", updatedAt: new Date() },
+        });
+        console.log(`Created admin account for ${email} with password: ${password}`);
+        console.log(`IMPORTANT: Save this password! It will not be shown again.`);
+      }
+    } catch (err) {
+      console.error(`Error seeding admin for ${email}:`, err);
+    }
+  }
+}
+
 export async function verifyCaptainCredentials(email: string, password: string): Promise<{ userId: string; error?: string }> {
   if (!supabaseAdmin) {
     return { userId: "", error: "Supabase Auth is not configured" };

@@ -14,15 +14,29 @@ import {
   Newspaper,
   Handshake,
   FileText,
-  Image
+  Image,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [location] = useLocation();
-  const { logout } = useAuth();
+  const [location, navigate] = useLocation();
+  const { logout, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    navigate("/admin-login");
+    return null;
+  }
 
   const sidebarItems = [
     { label: "Overview", href: "/admin", icon: Settings },
