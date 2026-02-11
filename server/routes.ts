@@ -159,6 +159,15 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/tournaments/:id/reset", isAuthenticated, async (req, res) => {
+    try {
+      await storage.resetTournament(Number(req.params.id));
+      res.json({ message: "Tournament reset successfully" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === DIVISIONS ===
   app.get(api.divisions.list.path, async (req, res) => {
     const data = await storage.getDivisions(Number(req.params.tournamentId));

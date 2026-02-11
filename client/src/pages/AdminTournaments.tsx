@@ -3,7 +3,7 @@ import { useTournaments, useCreateTournament, useUpdateTournament, useDeleteTour
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon, RotateCcw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -302,6 +302,8 @@ export default function AdminTournaments() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTournament, setEditTournament] = useState<Tournament | null>(null);
   const [deleteTournamentState, setDeleteTournamentState] = useState<Tournament | null>(null);
+  const [resetTournamentState, setResetTournamentState] = useState<Tournament | null>(null);
+  const [resetting, setResetting] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const { toast } = useToast();
 
@@ -371,6 +373,21 @@ export default function AdminTournaments() {
       setEditTournament(null);
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleReset = async () => {
+    if (!resetTournamentState) return;
+    setResetting(true);
+    try {
+      const res = await fetch(`/api/tournaments/${resetTournamentState.id}/reset`, { method: "POST", credentials: "include" });
+      if (!res.ok) throw new Error((await res.json()).message);
+      toast({ title: "Tournament Reset", description: "All teams, players, matches, and standings have been removed." });
+      setResetTournamentState(null);
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -551,6 +568,9 @@ export default function AdminTournaments() {
                   <Button size="icon" variant="ghost" onClick={() => openEdit(t)} data-testid={`button-edit-tournament-${t.id}`}>
                     <Pencil className="h-4 w-4" />
                   </Button>
+                  <Button size="icon" variant="ghost" onClick={() => setResetTournamentState(t)} data-testid={`button-reset-tournament-${t.id}`} title="Reset tournament">
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => setDeleteTournamentState(t)} data-testid={`button-delete-tournament-${t.id}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -582,6 +602,23 @@ export default function AdminTournaments() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!resetTournamentState} onOpenChange={(o) => !o && setResetTournamentState(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Tournament</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reset "{resetTournamentState?.name}"? This will remove all teams, players, matches, and standings. Divisions and awards will be kept.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetTournamentState(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleReset} disabled={resetting} data-testid="button-confirm-reset-tournament">
+              {resetting && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Reset
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -23,6 +23,7 @@ export interface IStorage {
   createTournament(data: InsertTournament): Promise<Tournament>;
   updateTournament(id: number, data: Partial<InsertTournament>): Promise<Tournament>;
   deleteTournament(id: number): Promise<void>;
+  resetTournament(id: number): Promise<void>;
 
   // Divisions
   getDivisions(tournamentId: number): Promise<Division[]>;
@@ -128,6 +129,16 @@ export class DatabaseStorage implements IStorage {
   async updateTournament(id: number, data: Partial<InsertTournament>): Promise<Tournament> {
     const [tournament] = await db.update(tournaments).set(data).where(eq(tournaments.id, id)).returning();
     return tournament;
+  }
+
+  async resetTournament(id: number): Promise<void> {
+    await db.delete(standings).where(eq(standings.tournamentId, id));
+    await db.delete(matches).where(eq(matches.tournamentId, id));
+    const teamRows = await db.select().from(teams).where(eq(teams.tournamentId, id));
+    for (const t of teamRows) {
+      await db.delete(players).where(eq(players.teamId, t.id));
+    }
+    await db.delete(teams).where(eq(teams.tournamentId, id));
   }
 
   async deleteTournament(id: number): Promise<void> {
