@@ -18,10 +18,38 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Tournament, Division, News, Sport } from "@shared/schema";
 
 const valueCards = [
-  { title: "Amazing Community", image: "/images/hero-about.png" },
-  { title: "Real Competition", image: "/images/hero-tournaments.png" },
-  { title: "Content Media Team", image: "/images/hero-media.png" },
-  { title: "Professional Staff", image: "/images/hero-register.png" },
+  {
+    tagline: "Compete. Connect. Belong.",
+    title: "Amazing Community",
+    description: "Community of over 20,000 Athletes living the Brodie lifestyle. Compete with old friends or make new ones!",
+    cta: "Register Now",
+    href: "/register",
+    image: "/images/hero-about.png",
+  },
+  {
+    tagline: "Play by the rules. Win with intensity.",
+    title: "Real Competition",
+    description: "Structured divisions, refs, scorekeeping, playoffs. Everything feels official and intense.",
+    cta: "Tournaments",
+    href: "/tournaments",
+    image: "/images/hero-tournaments.png",
+  },
+  {
+    tagline: "Relive the best moments.",
+    title: "Content Media Team",
+    description: "Highlights, photography, social media features, turn tournament moments into shareable content.",
+    cta: "Our Gallery",
+    href: "/media",
+    image: "/images/hero-media.png",
+  },
+  {
+    tagline: "Instant updates. Zero confusion.",
+    title: "Professional Stuff",
+    description: "On-time scheduling, clear communications, venue management, instant updates, everything handled.",
+    cta: "See Our Staff",
+    href: "/about",
+    image: "/images/hero-register.png",
+  },
 ];
 
 
@@ -417,15 +445,27 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {valueCards.map((card) => (
-              <div key={card.title} className="relative aspect-[4/3] rounded-md overflow-hidden group" data-testid={`card-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                <img src={card.image} alt={card.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-bold font-display text-sm md:text-base uppercase underline decoration-1 underline-offset-4">
+              <div key={card.title} className="relative aspect-square rounded-md overflow-hidden" data-testid={`card-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/50" />
+                <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-6 pb-8">
+                  <p className="text-xs md:text-sm text-gray-300 italic mb-1">{card.tagline}</p>
+                  <h3 className="text-xl md:text-3xl font-bold font-display text-white uppercase mb-2" data-testid={`text-value-title-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
                     {card.title}
                   </h3>
+                  <p className="text-xs md:text-sm text-gray-300 max-w-xs mb-4 leading-relaxed">
+                    {card.description}
+                  </p>
+                  <Link href={card.href} data-testid={`link-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <Button
+                      variant="outline"
+                      className="rounded-full border-white/60 text-white bg-transparent text-xs md:text-sm font-medium tracking-wide uppercase px-6"
+                    >
+                      {card.cta}
+                    </Button>
+                  </Link>
                 </div>
               </div>
             ))}
