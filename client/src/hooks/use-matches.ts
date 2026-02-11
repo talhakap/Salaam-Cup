@@ -56,3 +56,16 @@ export function useDeleteMatch() {
     },
   });
 }
+
+export function useImportMatches() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ tournamentId, matches }: { tournamentId: number; matches: Record<string, string>[] }) => {
+      const res = await apiRequest("POST", `/api/tournaments/${tournamentId}/matches/import`, { matches });
+      return res.json() as Promise<{ created: number; errors: string[]; total: number }>;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [api.matches.list.path, variables.tournamentId] });
+    },
+  });
+}

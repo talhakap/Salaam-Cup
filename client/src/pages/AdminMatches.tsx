@@ -1,6 +1,6 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
-import { useMatches, useCreateMatch, useUpdateMatch, useDeleteMatch } from "@/hooks/use-matches";
+import { useMatches, useCreateMatch, useUpdateMatch, useDeleteMatch, useImportMatches } from "@/hooks/use-matches";
 import { useAllTeams } from "@/hooks/use-teams";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useState } from "react";
-import { Loader2, Plus, Pencil, Trash2, Calendar } from "lucide-react";
+import { useState, useRef } from "react";
+import { Loader2, Plus, Pencil, Trash2, Calendar, Upload, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import Papa from "papaparse";
 import type { Match, Team, Division, Tournament } from "@shared/schema";
 
 type MatchWithTeams = Match & { homeTeam: Team | null; awayTeam: Team | null };
@@ -173,10 +174,15 @@ export default function AdminMatches() {
   const { data: divisions } = useDivisions(activeTournamentId);
   const { data: allTeams } = useAllTeams();
   const deleteMatch = useDeleteMatch();
+  const importMatches = useImportMatches();
   const { toast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
   const [editMatch, setEditMatch] = useState<MatchWithTeams | null>(null);
   const [deleteMatchState, setDeleteMatchState] = useState<MatchWithTeams | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importPreview, setImportPreview] = useState<Record<string, string>[] | null>(null);
+  const [importResult, setImportResult] = useState<{ created: number; errors: string[]; total: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tournamentTeams = allTeams?.filter(t => t.tournamentId === activeTournamentId && t.status === "approved") || [];
 
@@ -188,6 +194,59 @@ export default function AdminMatches() {
       setDeleteMatchState(null);
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    const csvContent = "division,homeTeam,awayTeam,date,time,round,matchNumber,status,homeScore,awayScore\nMen's Open,Team A,Team B,2025-06-15,10:00 AM,Group Stage,1,scheduled,0,0";
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "matches_template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const rows = results.data as Record<string, string>[];
+        if (rows.length === 0) {
+          toast({ title: "CSV file is empty", variant: "destructive" });
+          return;
+        }
+        setImportPreview(rows);
+        setImportResult(null);
+        setImportOpen(true);
+      },
+      error: (err) => {
+        toast({ title: "Failed to parse CSV", description: err.message, variant: "destructive" });
+      },
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleImportConfirm = async () => {
+    if (!importPreview || !activeTournamentId) return;
+    try {
+      const result = await importMatches.mutateAsync({
+        tournamentId: activeTournamentId,
+        matches: importPreview,
+      });
+      setImportResult(result);
+      if (result.created > 0) {
+        toast({ title: `${result.created} matches imported successfully` });
+      }
+      if (result.errors.length > 0 && result.created === 0) {
+        toast({ title: "Import failed", description: "See errors below", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: "Import failed", description: (err as Error).message, variant: "destructive" });
     }
   };
 
@@ -209,9 +268,18 @@ export default function AdminMatches() {
           <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-matches-title">Match Management</h1>
           <p className="text-muted-foreground mt-1">Schedule and manage matches</p>
         </div>
-        <Button className="gap-2" onClick={() => setCreateOpen(true)} disabled={!activeTournamentId} data-testid="button-create-match">
-          <Plus className="h-4 w-4" /> Create Match
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" className="gap-2" onClick={handleDownloadTemplate} data-testid="button-download-csv-template">
+            <Download className="h-4 w-4" /> CSV Template
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={!activeTournamentId} data-testid="button-import-csv">
+            <Upload className="h-4 w-4" /> Import CSV
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileSelect} />
+          <Button className="gap-2" onClick={() => setCreateOpen(true)} disabled={!activeTournamentId} data-testid="button-create-match">
+            <Plus className="h-4 w-4" /> Create Match
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -318,6 +386,93 @@ export default function AdminMatches() {
               {deleteMatch.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={importOpen} onOpenChange={(o) => { if (!o) { setImportOpen(false); setImportPreview(null); setImportResult(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import Matches from CSV</DialogTitle>
+            <DialogDescription>
+              Review the parsed data below before importing. Division and team names must match existing records exactly.
+            </DialogDescription>
+          </DialogHeader>
+
+          {importResult ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-md bg-muted">
+                {importResult.created > 0 ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-6 w-6 text-destructive shrink-0" />
+                )}
+                <div>
+                  <p className="font-medium">{importResult.created} of {importResult.total} matches imported</p>
+                  {importResult.errors.length > 0 && (
+                    <p className="text-sm text-muted-foreground">{importResult.errors.length} row(s) had errors</p>
+                  )}
+                </div>
+              </div>
+              {importResult.errors.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-destructive">Errors:</p>
+                  <div className="bg-muted rounded-md p-3 max-h-40 overflow-y-auto space-y-1">
+                    {importResult.errors.map((err, i) => (
+                      <p key={i} className="text-xs text-muted-foreground">{err}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setImportOpen(false); setImportPreview(null); setImportResult(null); }} data-testid="button-import-close">
+                  Close
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : importPreview ? (
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2 font-medium">#</th>
+                      <th className="text-left p-2 font-medium">Division</th>
+                      <th className="text-left p-2 font-medium">Home</th>
+                      <th className="text-left p-2 font-medium">Away</th>
+                      <th className="text-left p-2 font-medium">Date</th>
+                      <th className="text-left p-2 font-medium">Time</th>
+                      <th className="text-left p-2 font-medium">Round</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importPreview.slice(0, 20).map((row, i) => (
+                      <tr key={i} className="border-b">
+                        <td className="p-2 text-muted-foreground">{i + 1}</td>
+                        <td className="p-2">{row.division || "-"}</td>
+                        <td className="p-2">{row.homeTeam || "-"}</td>
+                        <td className="p-2">{row.awayTeam || "-"}</td>
+                        <td className="p-2">{row.date || "-"}</td>
+                        <td className="p-2">{row.time || "-"}</td>
+                        <td className="p-2">{row.round || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {importPreview.length > 20 && (
+                  <p className="text-xs text-muted-foreground mt-2">Showing first 20 of {importPreview.length} rows</p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setImportOpen(false); setImportPreview(null); }} data-testid="button-import-cancel">
+                  Cancel
+                </Button>
+                <Button onClick={handleImportConfirm} disabled={importMatches.isPending} data-testid="button-import-confirm">
+                  {importMatches.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+                  Import {importPreview.length} Matches
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
     </AdminLayout>

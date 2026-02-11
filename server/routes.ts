@@ -5,6 +5,7 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import type { InsertMatch } from "@shared/schema";
 import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin, seedAdminAccounts } from "./supabaseAdmin";
 
 export async function registerRoutes(
@@ -399,6 +400,111 @@ export async function registerRoutes(
       res.json({ message: "Match deleted" });
     } catch (err) {
       throw err;
+    }
+  });
+
+  app.post("/api/tournaments/:tournamentId/matches/import", isAuthenticated, async (req, res) => {
+    try {
+      const tournamentId = Number(req.params.tournamentId);
+      const rows = req.body.matches as Array<{
+        division: string;
+        homeTeam: string;
+        awayTeam: string;
+        date?: string;
+        time?: string;
+        round?: string;
+        matchNumber?: string;
+        status?: string;
+        homeScore?: string;
+        awayScore?: string;
+      }>;
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return res.status(400).json({ message: "No match rows provided" });
+      }
+      const allDivisions = await storage.getDivisions(tournamentId);
+      const allTeams = await storage.getTeams(tournamentId);
+
+      const errors: string[] = [];
+      const matchData: InsertMatch[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNum = i + 1;
+
+        const division = allDivisions.find(
+          (d) => d.name.toLowerCase().trim() === (row.division || "").toLowerCase().trim()
+        );
+        if (!division) {
+          errors.push(`Row ${rowNum}: Division "${row.division}" not found`);
+          continue;
+        }
+
+        let homeTeamId: number | null = null;
+        let awayTeamId: number | null = null;
+        if (row.homeTeam && row.homeTeam.trim()) {
+          const ht = allTeams.find(
+            (t) => t.name.toLowerCase().trim() === row.homeTeam.toLowerCase().trim() && t.divisionId === division.id
+          );
+          if (!ht) {
+            errors.push(`Row ${rowNum}: Home team "${row.homeTeam}" not found in division "${division.name}"`);
+            continue;
+          }
+          homeTeamId = ht.id;
+        }
+        if (row.awayTeam && row.awayTeam.trim()) {
+          const at = allTeams.find(
+            (t) => t.name.toLowerCase().trim() === row.awayTeam.toLowerCase().trim() && t.divisionId === division.id
+          );
+          if (!at) {
+            errors.push(`Row ${rowNum}: Away team "${row.awayTeam}" not found in division "${division.name}"`);
+            continue;
+          }
+          awayTeamId = at.id;
+        }
+
+        let startTime: string | null = null;
+        if (row.date) {
+          const dateStr = row.date.trim();
+          const timeStr = (row.time || "").trim();
+          try {
+            if (timeStr) {
+              startTime = new Date(`${dateStr} ${timeStr}`).toISOString();
+            } else {
+              startTime = new Date(dateStr).toISOString();
+            }
+          } catch {
+            errors.push(`Row ${rowNum}: Invalid date/time "${dateStr} ${timeStr}"`);
+            continue;
+          }
+        }
+
+        const validStatuses = ["scheduled", "live", "final", "cancelled"];
+        const status = row.status && validStatuses.includes(row.status.toLowerCase().trim())
+          ? row.status.toLowerCase().trim() as "scheduled" | "live" | "final" | "cancelled"
+          : "scheduled";
+
+        matchData.push({
+          tournamentId,
+          divisionId: division.id,
+          homeTeamId,
+          awayTeamId,
+          startTime: startTime as any,
+          homeScore: row.homeScore ? parseInt(row.homeScore) || 0 : 0,
+          awayScore: row.awayScore ? parseInt(row.awayScore) || 0 : 0,
+          status,
+          round: row.round || null,
+          matchNumber: row.matchNumber ? parseInt(row.matchNumber) || null : null,
+        });
+      }
+
+      const created = await storage.bulkCreateMatches(matchData);
+      res.json({
+        created: created.length,
+        errors,
+        total: rows.length,
+      });
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
     }
   });
 

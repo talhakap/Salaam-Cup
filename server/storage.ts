@@ -54,6 +54,7 @@ export interface IStorage {
   // Matches
   getMatches(tournamentId: number): Promise<MatchWithTeams[]>;
   createMatch(data: InsertMatch): Promise<Match>;
+  bulkCreateMatches(data: InsertMatch[]): Promise<Match[]>;
   updateMatch(id: number, data: Partial<InsertMatch>): Promise<Match>;
   deleteMatch(id: number): Promise<void>;
 
@@ -371,6 +372,12 @@ export class DatabaseStorage implements IStorage {
   async createMatch(data: InsertMatch): Promise<Match> {
     const [match] = await db.insert(matches).values(data).returning();
     return match;
+  }
+
+  async bulkCreateMatches(data: InsertMatch[]): Promise<Match[]> {
+    if (data.length === 0) return [];
+    const result = await db.insert(matches).values(data).returning();
+    return result;
   }
 
   async updateMatch(id: number, data: Partial<InsertMatch>): Promise<Match> {
