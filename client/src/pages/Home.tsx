@@ -159,7 +159,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                     <div className="absolute inset-0 bg-black/50" />
                   </div>
                   <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 h-full">
-                    <div className="w-36 h-36 md:w-44 md:h-44 mb-4">
+                    <div className="w-48 h-48 md:w-56 md:h-56 mb-4">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
