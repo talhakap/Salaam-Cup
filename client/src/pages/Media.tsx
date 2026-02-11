@@ -2,14 +2,19 @@ import { MainLayout } from "@/components/MainLayout";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useMediaYears } from "@/hooks/use-media";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ExternalLink } from "lucide-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ExternalLink } from "lucide-react";
 import type { MediaYearWithItems } from "@shared/schema";
 
 function MediaCard({ item }: { item: MediaYearWithItems["items"][0] }) {
   return (
-    <div className="group" data-testid={`media-card-${item.id}`}>
+    <div data-testid={`media-card-${item.id}`}>
       <div className="aspect-[4/3] overflow-hidden rounded-md mb-3">
         <img
           src={item.imageUrl}
@@ -32,51 +37,14 @@ function MediaCard({ item }: { item: MediaYearWithItems["items"][0] }) {
             href={item.linkUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-foreground rounded-full text-xs font-medium transition-colors hover:bg-foreground hover:text-background"
             data-testid={`media-card-link-${item.id}`}
           >
-            Show All <ExternalLink className="w-3 h-3" />
+            <Button variant="outline" size="sm" className="rounded-full gap-1.5">
+              Show All <ExternalLink className="w-3 h-3" />
+            </Button>
           </a>
         )}
       </div>
-    </div>
-  );
-}
-
-function YearAccordion({ yearData }: { yearData: MediaYearWithItems }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="border-b border-border" data-testid={`media-year-${yearData.year}`}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between py-5 text-left"
-        data-testid={`media-year-toggle-${yearData.year}`}
-      >
-        <h3 className="font-display text-2xl md:text-3xl font-bold">
-          {yearData.year} Tournaments
-        </h3>
-        <ChevronDown
-          className={cn(
-            "w-6 h-6 transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
-        />
-      </button>
-      {isOpen && yearData.items.length > 0 && (
-        <div className="pb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {yearData.items.map((item) => (
-              <MediaCard key={item.id} item={item} />
-            ))}
-          </div>
-        </div>
-      )}
-      {isOpen && yearData.items.length === 0 && (
-        <div className="pb-8 text-center text-muted-foreground text-sm">
-          No tournaments added for this year yet.
-        </div>
-      )}
     </div>
   );
 }
@@ -108,11 +76,32 @@ export default function Media() {
               ))}
             </div>
           ) : mediaYears && mediaYears.length > 0 ? (
-            <div>
-              {mediaYears.map((yearData, idx) => (
-                <YearAccordion key={yearData.id} yearData={yearData} />
+            <Accordion type="multiple" className="w-full">
+              {mediaYears.map((yearData) => (
+                <AccordionItem key={yearData.id} value={`year-${yearData.id}`} data-testid={`media-year-${yearData.year}`}>
+                  <AccordionTrigger className="py-5" data-testid={`media-year-toggle-${yearData.year}`}>
+                    <h3 className="font-display text-2xl md:text-3xl font-bold text-left">
+                      {yearData.year} Tournaments
+                    </h3>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {yearData.items.length > 0 ? (
+                      <div className="pb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {yearData.items.map((item) => (
+                            <MediaCard key={item.id} item={item} />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="pb-4 text-center text-muted-foreground text-sm">
+                        No tournaments added for this year yet.
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           ) : (
             <div className="text-center py-16 text-muted-foreground">
               <p>No media content available yet.</p>

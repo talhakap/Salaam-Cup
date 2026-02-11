@@ -28,6 +28,8 @@ Core features include:
 - Sponsor system: sponsors table with name, logoUrl, websiteUrl, sortOrder; animated marquee SponsorBar component on home/about pages; Admin Sponsors page with CRUD and image upload
 - About page: Full design with Hero ("Who We Are"), SponsorBar, admin-managed letter section (PDF embed or rich text), moments gallery, history (Our Beginnings/How We Grew), value cards, "We Admire Them" section, celebrations gallery, upcoming events carousel, ReadyToCompete CTA
 - Admin About Content page: toggle between PDF upload or rich text editor (Quill) for the letter/content section on the About page
+- Media Gallery page: admin-managed past tournaments gallery with year-based accordion sections; each year contains tournament cards (image, category, name, "Show All" link URL)
+- Admin Media Gallery page: CRUD for media years and tournament cards with image upload support
 
 ## User Preferences
 

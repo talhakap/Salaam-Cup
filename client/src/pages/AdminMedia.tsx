@@ -220,7 +220,9 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
   const [isOpen, setIsOpen] = useState(true);
   const [editingItem, setEditingItem] = useState<MediaItem | undefined>();
   const [showAddItem, setShowAddItem] = useState(false);
+  const [showEditYear, setShowEditYear] = useState(false);
   const deleteYear = useDeleteMediaYear();
+  const updateYear = useUpdateMediaYear();
   const deleteItem = useDeleteMediaItem();
   const { toast } = useToast();
 
@@ -259,6 +261,9 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={() => setShowAddItem(true)} data-testid={`button-add-card-${yearData.year}`}>
             <Plus className="w-4 h-4 mr-1" /> Add Card
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => setShowEditYear(true)} data-testid={`button-edit-year-${yearData.year}`}>
+            <Pencil className="w-4 h-4" />
           </Button>
           <Button size="icon" variant="destructive" onClick={handleDeleteYear} data-testid={`button-delete-year-${yearData.year}`}>
             <Trash2 className="w-4 h-4" />
@@ -317,7 +322,62 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
           }}
         />
       )}
+
+      {showEditYear && (
+        <EditYearDialog
+          yearData={yearData}
+          onClose={() => setShowEditYear(false)}
+        />
+      )}
     </Card>
+  );
+}
+
+function EditYearDialog({ yearData, onClose }: { yearData: MediaYearWithItems; onClose: () => void }) {
+  const updateYear = useUpdateMediaYear();
+  const { toast } = useToast();
+  const [year, setYear] = useState(yearData.year);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateYear.mutateAsync({ id: yearData.id, year });
+      toast({ title: "Year updated" });
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Year</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Year</Label>
+            <Input
+              type="number"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="mt-1.5"
+              min={2000}
+              max={2100}
+              data-testid="input-edit-year"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} data-testid="button-cancel-edit-year">Cancel</Button>
+            <Button type="submit" disabled={updateYear.isPending} data-testid="button-save-edit-year">
+              {updateYear.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Update
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
