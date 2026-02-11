@@ -104,7 +104,7 @@ export async function registerRoutes(
 
       if (isNewAccount && password) {
         try {
-          const { sendCaptainCredentialsEmail } = await import("./mailgun");
+          const { sendCaptainCredentialsEmail } = await import("./mailjet");
           const baseUrl = `${req.protocol}://${req.get("host")}`;
           await sendCaptainCredentialsEmail(
             team.captainEmail,
