@@ -71,10 +71,10 @@ const freeAgentRegistrationSchema = z.object({
   waiverAgreed: z.boolean().refine(val => val, "You must agree to the waiver"),
 });
 
-function TeamRegistrationForm({ onSuccess, initialTournamentId, initialDivisionId }: { onSuccess: () => void; initialTournamentId?: number; initialDivisionId?: number }) {
+function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
   const { toast } = useToast();
   const { data: tournaments } = useTournaments();
-  const [selectedTournament, setSelectedTournament] = useState<number | null>(initialTournamentId || null);
+  const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
   const { data: divisions } = useDivisions(selectedTournament || 0);
   const createTeam = useCreateTeam();
 
@@ -87,8 +87,6 @@ function TeamRegistrationForm({ onSuccess, initialTournamentId, initialDivisionI
       captainPhone: "",
       logoUrl: "",
       description: "",
-      tournamentId: initialTournamentId || undefined,
-      divisionId: initialDivisionId || undefined,
       waiverAgreed: false,
     },
   });
@@ -196,11 +194,11 @@ function TeamRegistrationForm({ onSuccess, initialTournamentId, initialDivisionI
   );
 }
 
-function PlayerRegistrationForm({ onSuccess, initialTournamentId, initialDivisionId }: { onSuccess: (status: string) => void; initialTournamentId?: number; initialDivisionId?: number }) {
+function PlayerRegistrationForm({ onSuccess }: { onSuccess: (status: string) => void }) {
   const { toast } = useToast();
   const { data: tournaments } = useTournaments();
-  const [selectedTournament, setSelectedTournament] = useState<number | null>(initialTournamentId || null);
-  const [selectedDivision, setSelectedDivision] = useState<number | null>(initialDivisionId || null);
+  const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
+  const [selectedDivision, setSelectedDivision] = useState<number | null>(null);
   const { data: divisions } = useDivisions(selectedTournament || 0);
   const { data: availableTeams } = useTeams(selectedTournament || 0, selectedDivision ? { status: "approved", divisionId: selectedDivision.toString() } : { status: "approved" });
   const registerPlayer = useRegisterPlayer();
@@ -211,8 +209,6 @@ function PlayerRegistrationForm({ onSuccess, initialTournamentId, initialDivisio
       fullName: "",
       email: "",
       dob: "",
-      tournamentId: initialTournamentId || undefined,
-      divisionId: initialDivisionId || undefined,
       waiverAgreed: false,
     },
   });
@@ -339,10 +335,10 @@ function PlayerRegistrationForm({ onSuccess, initialTournamentId, initialDivisio
   );
 }
 
-function FreeAgentRegistrationForm({ onSuccess, initialTournamentId, initialDivisionId }: { onSuccess: (status: string) => void; initialTournamentId?: number; initialDivisionId?: number }) {
+function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) => void }) {
   const { toast } = useToast();
   const { data: tournaments } = useTournaments();
-  const [selectedTournament, setSelectedTournament] = useState<number | null>(initialTournamentId || null);
+  const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
   const { data: divisions } = useDivisions(selectedTournament || 0);
   const registerPlayer = useRegisterPlayer();
 
@@ -352,8 +348,6 @@ function FreeAgentRegistrationForm({ onSuccess, initialTournamentId, initialDivi
       fullName: "",
       email: "",
       dob: "",
-      tournamentId: initialTournamentId || undefined,
-      divisionId: initialDivisionId || undefined,
       waiverAgreed: false,
     },
   });
@@ -464,10 +458,6 @@ function FreeAgentRegistrationForm({ onSuccess, initialTournamentId, initialDivi
 }
 
 export default function Register() {
-  const searchParams = new URLSearchParams(window.location.search);
-  const initialTournamentId = searchParams.get("tournamentId") ? Number(searchParams.get("tournamentId")) : undefined;
-  const initialDivisionId = searchParams.get("divisionId") ? Number(searchParams.get("divisionId")) : undefined;
-
   const [registrationType, setRegistrationType] = useState<RegistrationType>("team");
   const [submitted, setSubmitted] = useState(false);
   const [playerStatus, setPlayerStatus] = useState<string>("");
@@ -547,13 +537,13 @@ export default function Register() {
             <div>
               <h3 className="font-bold text-lg mb-6" data-testid="text-personal-info-title">Personal information</h3>
               {registrationType === "team" && (
-                <TeamRegistrationForm onSuccess={() => setSubmitted(true)} initialTournamentId={initialTournamentId} initialDivisionId={initialDivisionId} />
+                <TeamRegistrationForm onSuccess={() => setSubmitted(true)} />
               )}
               {registrationType === "player" && (
-                <PlayerRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} initialTournamentId={initialTournamentId} initialDivisionId={initialDivisionId} />
+                <PlayerRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
               )}
               {registrationType === "free_agent" && (
-                <FreeAgentRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} initialTournamentId={initialTournamentId} initialDivisionId={initialDivisionId} />
+                <FreeAgentRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
               )}
             </div>
           </div>

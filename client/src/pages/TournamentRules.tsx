@@ -229,7 +229,7 @@ export default function TournamentRules() {
         </div>
       </section>
 
-      <ReadyToCompete tournamentId={tournamentId} divisions={divisions} />
+      <ReadyToCompete />
       <FAQSection />
     </MainLayout>
   );

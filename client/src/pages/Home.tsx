@@ -86,7 +86,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {valueCards.map((card) => (
               <div key={card.title} className="relative aspect-[4/3] rounded-md overflow-hidden group" data-testid={`card-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
                 <img src={card.image} alt={card.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
