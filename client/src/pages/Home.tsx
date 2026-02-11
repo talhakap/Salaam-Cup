@@ -216,7 +216,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                   </div>
 
                   <div className="hidden md:flex absolute inset-0 z-10 flex-col items-center justify-center text-center group/card">
-                    <div className="w-[350px] h-[350px] transition-opacity duration-500 group-hover/card:opacity-0">
+                    <div className="w-[450px] h-[450px] transition-opacity duration-500 group-hover/card:opacity-0">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
@@ -224,13 +224,13 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800/90 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500">
-                      <h3 className="text-2xl font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
+                      <h3 className="text-5xl font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
                         {t.name}
                       </h3>
-                      <p className="text-sm text-gray-300 max-w-sm mb-3 leading-snug">
+                      <p className="text-md text-gray-300 max-w-sm mb-3 leading-snug">
                         {t.description || desc}
                       </p>
-                      <div className="text-sm text-gray-200 font-semibold">
+                      <div className="text-lg text-gray-200 font-semibold">
                         Upcoming Tournaments:
                       </div>
                       <div className="text-sm text-white font-bold mt-0.5">
