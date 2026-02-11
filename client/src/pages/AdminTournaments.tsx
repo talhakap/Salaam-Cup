@@ -87,7 +87,8 @@ function ImageUploadField({
   );
 }
 
-function DivisionManager({ tournamentId }: { tournamentId: number }) {
+function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: number | string }) {
+  const tournamentId = Number(rawTournamentId);
   const { data: divisions, isLoading } = useDivisions(tournamentId);
   const createDivision = useCreateDivision();
   const updateDivision = useUpdateDivision();

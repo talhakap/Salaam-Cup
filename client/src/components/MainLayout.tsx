@@ -42,7 +42,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     { label: "About", href: "/about" },
     { label: "Tournaments", href: "/tournaments", hasDropdown: true },
     { label: "Media", href: "/media" },
-    { label: "Contact", href: "/contact" },
+    { label: "Contact", href: "/register" },
   ];
 
   const { data: sports } = useQuery<Sport[]>({ queryKey: ["/api/sports"] });
