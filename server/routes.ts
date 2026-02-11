@@ -86,6 +86,21 @@ export async function registerRoutes(
 
       await storage.claimTeamsByEmail(team.captainEmail, userId);
 
+      try {
+        const { sendCaptainCredentialsEmail } = await import("./mailjet");
+        const baseUrl = `${req.protocol}://${req.get("host")}`;
+        await sendCaptainCredentialsEmail(
+          team.captainEmail,
+          team.captainName || "Captain",
+          team.name,
+          password,
+          `${baseUrl}/captain-login`
+        );
+        console.log(`Credentials email sent to ${team.captainEmail}`);
+      } catch (emailErr) {
+        console.error("Failed to send credentials email:", emailErr);
+      }
+
       res.json({
         team: { ...team, status: "approved", captainUserId: userId },
         credentials: {
