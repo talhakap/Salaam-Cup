@@ -142,7 +142,7 @@ function RosterList({ teamId }: { teamId: number }) {
   );
 }
 
-function TeamCard({ team }: { team: Team }) {
+function TeamCard({ team }: { team: Team & { tournamentName?: string; divisionName?: string } }) {
   const statusVariant = team.status === "approved" ? "default" : team.status === "rejected" ? "destructive" : "secondary";
 
   return (
@@ -185,6 +185,18 @@ function TeamCard({ team }: { team: Team }) {
                 <span className="text-muted-foreground">Team Name</span>
                 <span className="font-medium" data-testid="text-team-name">{team.name}</span>
               </div>
+              {team.tournamentName && (
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Tournament</span>
+                  <span className="font-medium text-sm text-right" data-testid="text-team-tournament">{team.tournamentName}</span>
+                </div>
+              )}
+              {team.divisionName && (
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Division</span>
+                  <span className="font-medium" data-testid="text-team-division">{team.divisionName}</span>
+                </div>
+              )}
               <div className="flex justify-between border-b pb-2">
                 <span className="text-muted-foreground">Captain</span>
                 <span className="font-medium">{team.captainName}</span>
