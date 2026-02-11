@@ -176,6 +176,21 @@ export default function Home() {
           <p className="mt-4 text-base md:text-lg text-gray-300 max-w-xl mx-auto">
             For those with integrity, patience, heart
           </p>
+
+          <a
+            href="/register"
+            className="px-8 py-3 rounded-full bg-white text-black font-semibold text-sm uppercase tracking-wide
+                   hover:bg-gray-200 transition"
+          >
+            Register Now
+          </a>
+          <a
+            href="/tournaments"
+            className="px-8 py-3 rounded-full border border-white text-white font-semibold text-sm uppercase tracking-wide
+                   hover:bg-white hover:text-black transition"
+          >
+            Tournaments
+          </a>
         </div>
       </section>
 
