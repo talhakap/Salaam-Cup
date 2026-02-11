@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   Award,
-  Newspaper
+  Newspaper,
+  Handshake
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -29,6 +30,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Matches", href: "/admin/matches", icon: Calendar },
     { label: "Awards", href: "/admin/awards", icon: Award },
     { label: "News", href: "/admin/news", icon: Newspaper },
+    { label: "Sponsors", href: "/admin/sponsors", icon: Handshake },
   ];
 
   return (

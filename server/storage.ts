@@ -1,10 +1,10 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news,
+  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
-  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews,
+  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
-  type Standing, type Sport, type Award, type News,
+  type Standing, type Sport, type Award, type News, type Sponsor,
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
@@ -69,6 +69,12 @@ export interface IStorage {
   createNews(data: InsertNews): Promise<News>;
   updateNews(id: number, data: Partial<InsertNews>): Promise<News>;
   deleteNews(id: number): Promise<void>;
+
+  // Sponsors
+  getSponsors(): Promise<Sponsor[]>;
+  createSponsor(data: InsertSponsor): Promise<Sponsor>;
+  updateSponsor(id: number, data: Partial<InsertSponsor>): Promise<Sponsor>;
+  deleteSponsor(id: number): Promise<void>;
 
   // Venues
   getVenues(): Promise<Venue[]>;
@@ -478,6 +484,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteNews(id: number): Promise<void> {
     await db.delete(news).where(eq(news.id, id));
+  }
+
+  // Sponsors
+  async getSponsors(): Promise<Sponsor[]> {
+    return await db.select().from(sponsors).orderBy(sponsors.sortOrder);
+  }
+
+  async createSponsor(data: InsertSponsor): Promise<Sponsor> {
+    const [item] = await db.insert(sponsors).values(data).returning();
+    return item;
+  }
+
+  async updateSponsor(id: number, data: Partial<InsertSponsor>): Promise<Sponsor> {
+    const [item] = await db.update(sponsors).set(data).where(eq(sponsors.id, id)).returning();
+    return item;
+  }
+
+  async deleteSponsor(id: number): Promise<void> {
+    await db.delete(sponsors).where(eq(sponsors.id, id));
   }
 
   // Venues

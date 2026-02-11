@@ -1,29 +1,42 @@
-const sponsors = [
-  { name: "D Spot Dessert Cafe", id: "dspot" },
-  { name: "Sahara Supplements", id: "sahara" },
-  { name: "Gladiator Burger", id: "gladiator" },
-  { name: "NISA Foundation", id: "nisa" },
-];
+import { useSponsors } from "@/hooks/use-sponsors";
 
-interface SponsorBarProps {
-  variant?: "light" | "dark";
-}
+export function SponsorBar() {
+  const { data: sponsorsList } = useSponsors();
 
-export function SponsorBar({ variant = "light" }: SponsorBarProps) {
-  const bgClass = variant === "dark" ? "bg-foreground text-background" : "bg-background";
+  if (!sponsorsList?.length) return null;
+
+  const doubled = [...sponsorsList, ...sponsorsList];
 
   return (
-    <section className={`py-6 ${bgClass}`} data-testid="sponsor-bar">
-      <div className="container mx-auto px-4">
-        <p className="text-center text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4 font-medium">Sponsors</p>
-        <div className="flex items-center justify-center gap-8 md:gap-16 flex-wrap">
-          {sponsors.map((sponsor) => (
-            <div 
-              key={sponsor.id} 
-              className="text-sm md:text-base font-bold font-display uppercase tracking-wide opacity-60 hover:opacity-100 transition-opacity"
+    <section className="bg-foreground py-6 overflow-hidden" data-testid="sponsor-bar">
+      <p className="text-center text-xs uppercase tracking-[0.2em] text-background/60 mb-4 font-medium">
+        Sponsors
+      </p>
+      <div className="relative">
+        <div className="flex animate-marquee items-center gap-16">
+          {doubled.map((sponsor, i) => (
+            <div
+              key={`${sponsor.id}-${i}`}
+              className="flex-shrink-0"
               data-testid={`sponsor-${sponsor.id}`}
             >
-              {sponsor.name}
+              {sponsor.websiteUrl ? (
+                <a href={sponsor.websiteUrl} target="_blank" rel="noreferrer" data-testid={`link-sponsor-${sponsor.id}`}>
+                  <img
+                    src={sponsor.logoUrl}
+                    alt={sponsor.name}
+                    className="h-12 md:h-16 w-auto max-w-[160px] object-contain"
+                    data-testid={`img-sponsor-${sponsor.id}`}
+                  />
+                </a>
+              ) : (
+                <img
+                  src={sponsor.logoUrl}
+                  alt={sponsor.name}
+                  className="h-12 md:h-16 w-auto max-w-[160px] object-contain"
+                  data-testid={`img-sponsor-${sponsor.id}`}
+                />
+              )}
             </div>
           ))}
         </div>

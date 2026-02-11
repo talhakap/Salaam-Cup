@@ -183,6 +183,20 @@ export const insertNewsSchema = createInsertSchema(news).omit({ id: true, create
 export type News = typeof news.$inferSelect;
 export type InsertNews = z.infer<typeof insertNewsSchema>;
 
+// === SPONSORS ===
+export const sponsors = pgTable("sponsors", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  logoUrl: text("logo_url").notNull(),
+  websiteUrl: text("website_url"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSponsorSchema = createInsertSchema(sponsors).omit({ id: true, createdAt: true });
+export type Sponsor = typeof sponsors.$inferSelect;
+export type InsertSponsor = z.infer<typeof insertSponsorSchema>;
+
 // === RELATIONS ===
 export const sportsRelations = relations(sports, ({ many }) => ({
   tournaments: many(tournaments),

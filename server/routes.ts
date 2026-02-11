@@ -388,6 +388,43 @@ export async function registerRoutes(
     }
   });
 
+  // === SPONSORS ===
+  app.get(api.sponsors.list.path, async (_req, res) => {
+    const data = await storage.getSponsors();
+    res.json(data);
+  });
+
+  app.post(api.sponsors.create.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.sponsors.create.input.parse(req.body);
+      const item = await storage.createSponsor(input);
+      res.status(201).json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.sponsors.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.sponsors.update.input.parse(req.body);
+      const item = await storage.updateSponsor(Number(req.params.id), input);
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.sponsors.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteSponsor(Number(req.params.id));
+      res.json({ message: "Sponsor deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === VENUES ===
   app.get(api.venues.list.path, async (_req, res) => {
     const data = await storage.getVenues();

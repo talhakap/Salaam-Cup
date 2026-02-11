@@ -10,6 +10,7 @@ import {
   insertSportSchema,
   insertAwardSchema,
   insertNewsSchema,
+  insertSponsorSchema,
   teams,
   players,
   tournaments,
@@ -20,6 +21,7 @@ import {
   sports,
   awards,
   news,
+  sponsors,
 } from './schema';
 
 export const errorSchemas = {
@@ -404,6 +406,43 @@ export const api = {
     delete: {
       method: 'DELETE' as const,
       path: '/api/news/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === SPONSORS ===
+  sponsors: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/sponsors' as const,
+      responses: {
+        200: z.array(z.custom<typeof sponsors.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/sponsors' as const,
+      input: insertSponsorSchema,
+      responses: {
+        201: z.custom<typeof sponsors.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/sponsors/:id' as const,
+      input: insertSponsorSchema.partial(),
+      responses: {
+        200: z.custom<typeof sponsors.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/sponsors/:id' as const,
       responses: {
         200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,
