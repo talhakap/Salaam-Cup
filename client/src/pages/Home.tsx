@@ -81,24 +81,24 @@ function EventCardMobile({ logo, sportName, name, desc, dateStr, tournamentId }:
   logo: string; sportName: string; name: string; desc: string; dateStr: string; tournamentId: number;
 }) {
   return (
-    <div className="md:hidden relative z-10 flex flex-col items-center justify-center text-center px-4 h-full">
-      <div className="w-[300px] h-[300px] -mb-4">
+    <div className="md:hidden absolute inset-0 z-10 flex flex-col items-center justify-end text-center px-4 pb-4">
+      <div className="flex-1 flex items-center justify-center w-full">
         <img
           src={logo}
           alt={`${sportName} logo`}
-          className="w-full h-full object-contain drop-shadow-lg"
+          className="w-[65%] object-contain drop-shadow-lg"
         />
       </div>
-      <h3 className="text-lg font-bold font-display uppercase text-white tracking-wide mb-0.5" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
+      <h3 className="text-base font-bold font-display uppercase text-white tracking-wide mb-0.5" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
         {name}
       </h3>
-      <p className="text-xs text-gray-300 max-w-xs mb-1 leading-snug">
+      <p className="text-[11px] text-gray-300 max-w-[90%] mb-1 leading-snug line-clamp-2">
         {desc}
       </p>
-      <div className="text-xs text-gray-200 font-semibold">
+      <div className="text-[11px] text-gray-200 font-semibold">
         Upcoming Tournaments:
       </div>
-      <div className="text-xs text-white font-bold">
+      <div className="text-[11px] text-white font-bold">
         {dateStr}
       </div>
     </div>
@@ -187,25 +187,25 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                     <div className="absolute inset-0 bg-black/50" />
                   </div>
 
-                  <div className="hidden md:flex relative z-10 flex-col items-center justify-center text-center px-6 h-full">
-                    <div className="w-[500px] h-[500px] -mb-10 -mt-8">
+                  <div className="hidden md:flex absolute inset-0 z-10 flex-col items-center justify-end text-center px-6 pb-5">
+                    <div className="flex-1 flex items-center justify-center w-full">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
-                        className="w-full h-full object-contain drop-shadow-lg"
+                        className="w-[75%] object-contain drop-shadow-lg"
                       />
                     </div>
-                    <div className="-mt-10">
-                      <h3 className="text-2xl font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
+                    <div>
+                      <h3 className="text-xl font-bold font-display uppercase text-white tracking-wide mb-0.5" data-testid={`text-upcoming-name-${t.id}`}>
                         {t.name}
                       </h3>
-                      <p className="text-sm text-gray-300 max-w-sm mb-2 leading-relaxed">
+                      <p className="text-sm text-gray-300 max-w-sm mb-1 leading-snug line-clamp-2">
                         {t.description || desc}
                       </p>
                       <div className="text-sm text-gray-200 font-semibold">
                         Upcoming Tournaments:
                       </div>
-                      <div className="text-sm text-white font-bold mt-1">
+                      <div className="text-sm text-white font-bold mt-0.5">
                         {dateStr}
                       </div>
                     </div>
