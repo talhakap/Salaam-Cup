@@ -1,17 +1,16 @@
 import { AdminLayout } from "@/components/AdminLayout";
-import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
-import { useAwards, useCreateAward, useUpdateAward, useDeleteAward } from "@/hooks/use-awards";
+import { useAllAwards, useCreateAward, useUpdateAward, useDeleteAward } from "@/hooks/use-awards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Trophy, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Trophy } from "lucide-react";
 import { useState } from "react";
-import type { Award, Tournament, Division } from "@shared/schema";
+import type { Award } from "@shared/schema";
 
 const AWARD_CATEGORIES = [
   "Champions",
@@ -27,13 +26,9 @@ const AWARD_CATEGORIES = [
 
 function AwardDialog({
   award,
-  tournamentId,
-  divisions,
   onClose,
 }: {
   award?: Award;
-  tournamentId: number;
-  divisions: Division[];
   onClose: () => void;
 }) {
   const createAward = useCreateAward();
@@ -41,7 +36,8 @@ function AwardDialog({
   const { toast } = useToast();
   const isEdit = !!award;
 
-  const [divisionId, setDivisionId] = useState<string>(award ? String(award.divisionId) : (divisions[0] ? String(divisions[0].id) : ""));
+  const [tournamentName, setTournamentName] = useState(award?.tournamentName || "");
+  const [divisionName, setDivisionName] = useState(award?.divisionName || "");
   const [year, setYear] = useState(award?.year || new Date().getFullYear());
   const [category, setCategory] = useState(award?.category || AWARD_CATEGORIES[0]);
   const [teamName, setTeamName] = useState(award?.teamName || "");
@@ -50,8 +46,12 @@ function AwardDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!divisionId) {
-      toast({ title: "Please select a division", variant: "destructive" });
+    if (!tournamentName.trim()) {
+      toast({ title: "Please enter a tournament name", variant: "destructive" });
+      return;
+    }
+    if (!divisionName.trim()) {
+      toast({ title: "Please enter a division name", variant: "destructive" });
       return;
     }
     if (!year || year < 2000 || year > 2100) {
@@ -63,8 +63,10 @@ function AwardDialog({
       return;
     }
     const data = {
-      tournamentId,
-      divisionId: Number(divisionId),
+      tournamentId: null,
+      divisionId: null,
+      tournamentName: tournamentName.trim(),
+      divisionName: divisionName.trim(),
       year,
       category,
       teamName: teamName || null,
@@ -76,7 +78,7 @@ function AwardDialog({
         await updateAward.mutateAsync({ id: award.id, ...data });
         toast({ title: "Award updated" });
       } else {
-        await createAward.mutateAsync(data);
+        await createAward.mutateAsync(data as any);
         toast({ title: "Award created" });
       }
       onClose();
@@ -89,18 +91,25 @@ function AwardDialog({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Division</Label>
-          <Select value={divisionId} onValueChange={setDivisionId}>
-            <SelectTrigger data-testid="select-award-division">
-              <SelectValue placeholder="Select division" />
-            </SelectTrigger>
-            <SelectContent>
-              {divisions.map((d) => (
-                <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Tournament Name</Label>
+          <Input
+            value={tournamentName}
+            onChange={(e) => setTournamentName(e.target.value)}
+            placeholder="e.g., Salaam Cup 2024"
+            data-testid="input-award-tournament-name"
+          />
         </div>
+        <div>
+          <Label>Division Name</Label>
+          <Input
+            value={divisionName}
+            onChange={(e) => setDivisionName(e.target.value)}
+            placeholder="e.g., Men's Open"
+            data-testid="input-award-division-name"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Year</Label>
           <Input
@@ -110,19 +119,19 @@ function AwardDialog({
             data-testid="input-award-year"
           />
         </div>
-      </div>
-      <div>
-        <Label>Category</Label>
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger data-testid="select-award-category">
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {AWARD_CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div>
+          <Label>Category</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger data-testid="select-award-category">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {AWARD_CATEGORIES.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div>
         <Label>Team Name</Label>
@@ -161,12 +170,7 @@ function AwardDialog({
 }
 
 export default function AdminAwards() {
-  const { data: tournaments, isLoading: tournamentsLoading } = useTournaments();
-  const [selectedTournamentId, setSelectedTournamentId] = useState<string>("");
-  const tournamentId = selectedTournamentId ? Number(selectedTournamentId) : 0;
-
-  const { data: divisions } = useDivisions(tournamentId);
-  const { data: awards, isLoading: awardsLoading } = useAwards(tournamentId);
+  const { data: awards, isLoading } = useAllAwards();
   const deleteAward = useDeleteAward();
   const { toast } = useToast();
 
@@ -174,24 +178,24 @@ export default function AdminAwards() {
   const [editingAward, setEditingAward] = useState<Award | undefined>();
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
+  const [filterTournament, setFilterTournament] = useState<string>("all");
   const [filterDivision, setFilterDivision] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
 
-  if (!selectedTournamentId && tournaments?.length) {
-    setSelectedTournamentId(String(tournaments[0].id));
-  }
+  const tournamentNames = Array.from(new Set((awards || []).map((a) => a.tournamentName).filter(Boolean))).sort();
+  const divisionNames = Array.from(new Set((awards || []).map((a) => a.divisionName).filter(Boolean))).sort();
+  const years = Array.from(new Set((awards || []).map((a) => a.year))).sort((a, b) => b - a);
 
-  const filteredAwards = (awards || []).filter((a: Award) => {
-    if (filterDivision !== "all" && a.divisionId !== Number(filterDivision)) return false;
+  const filteredAwards = (awards || []).filter((a) => {
+    if (filterTournament !== "all" && a.tournamentName !== filterTournament) return false;
+    if (filterDivision !== "all" && a.divisionName !== filterDivision) return false;
     if (filterYear !== "all" && a.year !== Number(filterYear)) return false;
     return true;
   });
 
-  const years = Array.from(new Set((awards || []).map((a: Award) => a.year))).sort((a, b) => b - a);
-
   const handleDelete = async (id: number) => {
     try {
-      await deleteAward.mutateAsync({ id, tournamentId });
+      await deleteAward.mutateAsync({ id });
       toast({ title: "Award deleted" });
       setDeleteConfirm(null);
     } catch (err) {
@@ -215,53 +219,48 @@ export default function AdminAwards() {
         <h1 className="text-2xl font-bold font-display" data-testid="text-admin-awards-title">
           Awards Management
         </h1>
-        <Button onClick={openCreate} className="gap-2" disabled={!tournamentId} data-testid="button-create-award">
+        <Button onClick={openCreate} className="gap-2" data-testid="button-create-award">
           <Plus className="h-4 w-4" /> Add Award
         </Button>
       </div>
 
-      <div className="mb-6">
-        <Label className="text-sm text-muted-foreground mb-2 block">Tournament</Label>
-        <Select value={selectedTournamentId} onValueChange={setSelectedTournamentId}>
-          <SelectTrigger className="max-w-xs" data-testid="select-tournament-awards">
-            <SelectValue placeholder="Select tournament" />
+      <div className="flex gap-2 mb-6 flex-wrap">
+        <Select value={filterTournament} onValueChange={setFilterTournament}>
+          <SelectTrigger className="w-48" data-testid="select-filter-tournament">
+            <SelectValue placeholder="Tournament" />
           </SelectTrigger>
           <SelectContent>
-            {(tournaments || []).map((t: Tournament) => (
-              <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+            <SelectItem value="all">All Tournaments</SelectItem>
+            {tournamentNames.map((name) => (
+              <SelectItem key={name} value={name!}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterDivision} onValueChange={setFilterDivision}>
+          <SelectTrigger className="w-40" data-testid="select-filter-division">
+            <SelectValue placeholder="Division" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Divisions</SelectItem>
+            {divisionNames.map((name) => (
+              <SelectItem key={name} value={name!}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterYear} onValueChange={setFilterYear}>
+          <SelectTrigger className="w-32" data-testid="select-filter-year">
+            <SelectValue placeholder="Year" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Years</SelectItem>
+            {years.map((y) => (
+              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {tournamentId > 0 && (
-        <div className="flex gap-2 mb-6 flex-wrap">
-          <Select value={filterDivision} onValueChange={setFilterDivision}>
-            <SelectTrigger className="w-40" data-testid="select-filter-division">
-              <SelectValue placeholder="Division" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Divisions</SelectItem>
-              {(divisions || []).map((d: Division) => (
-                <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterYear} onValueChange={setFilterYear}>
-            <SelectTrigger className="w-32" data-testid="select-filter-year">
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Years</SelectItem>
-              {years.map((y) => (
-                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {tournamentsLoading || awardsLoading ? (
+      {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
         </div>
@@ -272,53 +271,52 @@ export default function AdminAwards() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredAwards.map((award: Award) => {
-            const div = divisions?.find((d: Division) => d.id === award.divisionId);
-            return (
-              <div key={award.id} className="bg-card border rounded-lg p-4 flex items-center justify-between gap-4" data-testid={`card-award-${award.id}`}>
-                <div className="flex items-center gap-4 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    {award.teamLogoUrl ? (
-                      <img src={award.teamLogoUrl} alt="" className="w-8 h-8 object-contain rounded-full" />
-                    ) : (
-                      <Trophy className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-sm truncate">
-                        {award.category === "Champions" || award.category === "Runner Up"
-                          ? (award.teamName || "TBD")
-                          : (award.playerName || "TBD")}
-                      </span>
-                      <Badge variant="secondary" className="text-xs">{award.category}</Badge>
-                      <Badge variant="outline" className="text-xs">{award.year}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{div?.name || "Unknown Division"}</p>
-                  </div>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(award)} data-testid={`button-edit-award-${award.id}`}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  {deleteConfirm === award.id ? (
-                    <div className="flex items-center gap-1">
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(award.id)} data-testid={`button-confirm-delete-award-${award.id}`}>
-                        Delete
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setDeleteConfirm(null)}>
-                        Cancel
-                      </Button>
-                    </div>
+          {filteredAwards.map((award) => (
+            <div key={award.id} className="bg-card border rounded-md p-4 flex items-center justify-between gap-4" data-testid={`card-award-${award.id}`}>
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  {award.teamLogoUrl ? (
+                    <img src={award.teamLogoUrl} alt="" className="w-8 h-8 object-contain rounded-full" />
                   ) : (
-                    <Button size="icon" variant="ghost" onClick={() => setDeleteConfirm(award.id)} data-testid={`button-delete-award-${award.id}`}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <Trophy className="h-4 w-4 text-muted-foreground" />
                   )}
                 </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-sm truncate">
+                      {award.category === "Champions" || award.category === "Runner Up"
+                        ? (award.teamName || "TBD")
+                        : (award.playerName || "TBD")}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">{award.category}</Badge>
+                    <Badge variant="outline" className="text-xs">{award.year}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {award.tournamentName || "Unknown Tournament"} — {award.divisionName || "Unknown Division"}
+                  </p>
+                </div>
               </div>
-            );
-          })}
+              <div className="flex gap-1 shrink-0">
+                <Button size="icon" variant="ghost" onClick={() => openEdit(award)} data-testid={`button-edit-award-${award.id}`}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                {deleteConfirm === award.id ? (
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(award.id)} data-testid={`button-confirm-delete-award-${award.id}`}>
+                      Delete
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setDeleteConfirm(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="icon" variant="ghost" onClick={() => setDeleteConfirm(award.id)} data-testid={`button-delete-award-${award.id}`}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -327,14 +325,10 @@ export default function AdminAwards() {
           <DialogHeader>
             <DialogTitle>{editingAward ? "Edit Award" : "Add Award"}</DialogTitle>
           </DialogHeader>
-          {tournamentId > 0 && divisions && (
-            <AwardDialog
-              award={editingAward}
-              tournamentId={tournamentId}
-              divisions={divisions}
-              onClose={() => setDialogOpen(false)}
-            />
-          )}
+          <AwardDialog
+            award={editingAward}
+            onClose={() => setDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </AdminLayout>

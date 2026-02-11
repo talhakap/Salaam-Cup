@@ -159,6 +159,8 @@ export const awards = pgTable("awards", {
   id: serial("id").primaryKey(),
   tournamentId: integer("tournament_id").references(() => tournaments.id),
   divisionId: integer("division_id").references(() => divisions.id),
+  tournamentName: text("tournament_name"),
+  divisionName: text("division_name"),
   year: integer("year").notNull(),
   category: text("category").notNull(),
   teamName: text("team_name"),

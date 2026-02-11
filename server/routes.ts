@@ -414,6 +414,11 @@ export async function registerRoutes(
   });
 
   // === AWARDS ===
+  app.get("/api/awards", async (_req, res) => {
+    const data = await storage.getAllAwards();
+    res.json(data);
+  });
+
   app.get(api.awards.list.path, async (req, res) => {
     const data = await storage.getAwards(Number(req.params.tournamentId));
     res.json(data);

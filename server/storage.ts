@@ -63,6 +63,7 @@ export interface IStorage {
 
   // Awards
   getAwards(tournamentId: number): Promise<Award[]>;
+  getAllAwards(): Promise<Award[]>;
   createAward(data: InsertAward): Promise<Award>;
   updateAward(id: number, data: Partial<InsertAward>): Promise<Award>;
   deleteAward(id: number): Promise<void>;
@@ -480,6 +481,10 @@ export class DatabaseStorage implements IStorage {
   // Awards
   async getAwards(tournamentId: number): Promise<Award[]> {
     return await db.select().from(awards).where(eq(awards.tournamentId, tournamentId));
+  }
+
+  async getAllAwards(): Promise<Award[]> {
+    return await db.select().from(awards).orderBy(desc(awards.year));
   }
 
   async createAward(data: InsertAward): Promise<Award> {
