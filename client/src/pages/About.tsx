@@ -11,7 +11,7 @@ import { format, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import DOMPurify from "dompurify";
 import type { Tournament, Sport } from "@shared/schema";
-import heroImg from "/images/hero-about.png";
+import heroImg from "/images/tournament-hero-home.png";
 import { Button } from "@/components/ui/button";
 
 const valueCards = [
@@ -21,7 +21,7 @@ const valueCards = [
     description: "Community of over 20,000 Athletes living the Brodie lifestyle. Compete with old friends or make new ones!",
     cta: "Register Now",
     href: "/register",
-    image: "/images/hero-about.png",
+    image: "/images/home-community.png",
   },
   {
     tagline: "Play by the rules. Win with intensity.",
@@ -29,7 +29,7 @@ const valueCards = [
     description: "Structured divisions, refs, scorekeeping, playoffs. Everything feels official and intense.",
     cta: "Tournaments",
     href: "/tournaments",
-    image: "/images/hero-tournaments.png",
+    image: "/images/home-comp.png",
   },
   {
     tagline: "Relive the best moments.",
@@ -37,7 +37,7 @@ const valueCards = [
     description: "Highlights, photography, social media features, turn tournament moments into shareable content.",
     cta: "Our Gallery",
     href: "/media",
-    image: "/images/hero-media.png",
+    image: "/images/home-highlights.png",
   },
   {
     tagline: "Instant updates. Zero confusion.",
@@ -45,7 +45,7 @@ const valueCards = [
     description: "On-time scheduling, clear communications, venue management, instant updates, everything handled.",
     cta: "See Our Staff",
     href: "/about",
-    image: "/images/hero-register.png",
+    image: "/images/home-organization.png",
   },
 ];
 
@@ -65,22 +65,18 @@ const sportBgMap: Record<string, string> = {
 
 
 const momentsImages = [
-  "/images/hero-landing.png",
-  "/images/hero-about.png",
-  "/images/hero-tournaments.png",
-  "/images/hero-media.png",
-  "/images/hero-register.png",
-  "/images/hero-landing.png",
+  "/images/about-relive.png",
+  "/images/about-relive2.png",
 ];
 
 
 const celebrationImages = [
-  "/images/hero-landing.png",
-  "/images/hero-tournaments.png",
-  "/images/hero-media.png",
-  "/images/hero-register.png",
-  "/images/hero-landing.png",
-  "/images/hero-about.png",
+  "/images/about-celebration.png",
+  "/images/about-celebration2.png",
+  "/images/about-celebration3.png",
+  "/images/about-celebration4.png",
+  "/images/about-celebration5.png",
+  "/images/about-celebration6.png",
   
 ];
 
@@ -297,19 +293,11 @@ export default function About() {
                 The first Salaam Cup was held with just a handful of teams and a dream to create something bigger. That dream has become a reality.
               </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-5xl mx-auto">
-              {momentsImages.map((img, i) => (
-                <div key={i} className="aspect-[4/3] rounded-md overflow-hidden" data-testid={`img-moment-${i}`}>
-                  <img src={img} alt={`Moment ${i + 1}`} className="w-full h-full object-cover" />
-                </div>
-              ))}
+             <div data-testid="section-beginnings">
+              <img src={momentsImages[0]} className="w-full h-full object-cover" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-5xl mx-auto">
-              {momentsImages.map((img, i) => (
-                <div key={i} className="aspect-[4/3] rounded-md overflow-hidden" data-testid={`img-moment-${i}`}>
-                  <img src={img} alt={`Moment ${i + 1}`} className="w-full h-full object-cover" />
-                </div>
-              ))}
+            <div data-testid="section-how-we-grew">
+              <img src={momentsImages[1]} className="w-full h-full object-cover" />
             </div>
             <div data-testid="section-how-we-grew">
               <h3 className="text-2xl md:text-3xl font-bold font-display uppercase mb-4">How We Grew</h3>
