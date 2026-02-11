@@ -2,6 +2,8 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useCaptainAuth } from "@/hooks/use-captain-auth";
+import { useQuery } from "@tanstack/react-query";
+import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { 
   Menu, 
   X, 
@@ -12,9 +14,11 @@ import {
   Facebook,
   Linkedin,
   Mail,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -25,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { Sport, Tournament, Division } from "@shared/schema";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,10 +40,45 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
-    { label: "Tournaments", href: "/tournaments" },
+    { label: "Tournaments", href: "/tournaments", hasDropdown: true },
     { label: "Media", href: "/media" },
     { label: "Contact", href: "/contact" },
   ];
+
+  const { data: sports } = useQuery<Sport[]>({ queryKey: ["/api/sports"] });
+  const { data: tournaments } = useTournaments();
+  const [tournamentDropdownOpen, setTournamentDropdownOpen] = useState(false);
+  const [selectedSportId, setSelectedSportId] = useState<number | null>(null);
+  const [selectedTournamentId, setSelectedTournamentId] = useState<number | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const activeSport = selectedSportId ?? (sports && sports.length > 0 ? sports[0].id : null);
+  const sportTournaments = (tournaments || []).filter((t: Tournament) => 
+    activeSport ? Number(t.sportId) === Number(activeSport) : true
+  );
+  const activeTournament = selectedTournamentId ?? (sportTournaments.length > 0 ? Number(sportTournaments[0].id) : null);
+
+  const handleDropdownEnter = () => {
+    if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
+    setTournamentDropdownOpen(true);
+  };
+
+  const handleDropdownLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setTournamentDropdownOpen(false);
+      setSelectedSportId(null);
+      setSelectedTournamentId(null);
+    }, 200);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
+    };
+  }, []);
+
+  const [mobileTournamentExpanded, setMobileTournamentExpanded] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col font-body">
@@ -51,21 +91,111 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className={cn(
-                  "text-sm font-medium transition-colors uppercase tracking-wide",
-                  location === item.href 
-                    ? "text-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                data-testid={`nav-${item.label.toLowerCase()}`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => 
+              item.hasDropdown ? (
+                <div
+                  key={item.href}
+                  className="relative"
+                  onMouseEnter={handleDropdownEnter}
+                  onMouseLeave={handleDropdownLeave}
+                  ref={dropdownRef}
+                >
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "text-sm font-medium transition-colors uppercase tracking-wide flex items-center gap-1",
+                      location.startsWith("/tournaments") 
+                        ? "text-foreground" 
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    data-testid="nav-tournaments"
+                  >
+                    {item.label}
+                    <ChevronDown className="h-3 w-3" />
+                  </Link>
+
+                  {tournamentDropdownOpen && (
+                    <div 
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-background border border-border rounded-md shadow-lg min-w-[500px] z-50"
+                      onMouseEnter={handleDropdownEnter}
+                      onMouseLeave={handleDropdownLeave}
+                      data-testid="dropdown-tournaments"
+                    >
+                      <div className="flex divide-x divide-border">
+                        <div className="p-4 min-w-[160px]">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">Sports</h4>
+                          <ul className="space-y-1">
+                            {(sports || []).map((sport: Sport) => (
+                              <li key={sport.id}>
+                                <button
+                                  className={cn(
+                                    "w-full text-left text-sm py-1.5 px-2 rounded-md flex items-center justify-between gap-2 transition-colors",
+                                    Number(activeSport) === Number(sport.id)
+                                      ? "text-foreground font-medium bg-muted"
+                                      : "text-muted-foreground hover:text-foreground"
+                                  )}
+                                  onMouseEnter={() => { setSelectedSportId(sport.id); setSelectedTournamentId(null); }}
+                                  data-testid={`dropdown-sport-${sport.id}`}
+                                >
+                                  {sport.name}
+                                  <ChevronRight className="h-3 w-3" />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="p-4 min-w-[170px]">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">Tournaments</h4>
+                          <ul className="space-y-1">
+                            {sportTournaments.length > 0 ? sportTournaments.map((t: Tournament) => (
+                              <li key={t.id}>
+                                <Link
+                                  href={`/tournaments/${t.id}`}
+                                  className={cn(
+                                    "block text-sm py-1.5 px-2 rounded-md flex items-center justify-between gap-2 transition-colors",
+                                    Number(activeTournament) === Number(t.id)
+                                      ? "text-foreground font-medium bg-muted"
+                                      : "text-muted-foreground hover:text-foreground"
+                                  )}
+                                  onMouseEnter={() => setSelectedTournamentId(Number(t.id))}
+                                  onClick={() => { setTournamentDropdownOpen(false); setSelectedSportId(null); setSelectedTournamentId(null); }}
+                                  data-testid={`dropdown-tournament-${t.id}`}
+                                >
+                                  {t.name.replace("Salaam Cup ", "")}
+                                  <ChevronRight className="h-3 w-3" />
+                                </Link>
+                              </li>
+                            )) : (
+                              <li className="text-xs text-muted-foreground px-2 py-1">No tournaments</li>
+                            )}
+                          </ul>
+                        </div>
+
+                        <TournamentDivisionsColumn
+                          tournamentId={activeTournament}
+                          onClose={() => { setTournamentDropdownOpen(false); setSelectedSportId(null); setSelectedTournamentId(null); }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={cn(
+                    "text-sm font-medium transition-colors uppercase tracking-wide",
+                    location === item.href 
+                      ? "text-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  data-testid={`nav-${item.label.toLowerCase()}`}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -160,22 +290,63 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
         {isOpen && (
           <div className="md:hidden border-t bg-background p-4 flex flex-col gap-1 animate-in slide-in-from-top-2">
-            {navItems.map((item) => (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className={cn(
-                  "text-sm font-medium p-3 rounded-md transition-colors uppercase tracking-wide",
-                  location === item.href 
-                    ? "text-foreground bg-muted" 
-                    : "text-muted-foreground"
-                )}
-                onClick={() => setIsOpen(false)}
-                data-testid={`nav-mobile-${item.label.toLowerCase()}`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => 
+              item.hasDropdown ? (
+                <div key={item.href}>
+                  <button
+                    className={cn(
+                      "w-full text-left text-sm font-medium p-3 rounded-md transition-colors uppercase tracking-wide flex items-center justify-between",
+                      location.startsWith("/tournaments") 
+                        ? "text-foreground bg-muted" 
+                        : "text-muted-foreground"
+                    )}
+                    onClick={() => setMobileTournamentExpanded(!mobileTournamentExpanded)}
+                    data-testid="nav-mobile-tournaments-toggle"
+                  >
+                    {item.label}
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", mobileTournamentExpanded && "rotate-180")} />
+                  </button>
+                  {mobileTournamentExpanded && (
+                    <div className="pl-4 pb-2 space-y-1">
+                      <Link 
+                        href="/tournaments"
+                        className="block text-sm p-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => { setIsOpen(false); setMobileTournamentExpanded(false); }}
+                        data-testid="nav-mobile-all-tournaments"
+                      >
+                        All Tournaments
+                      </Link>
+                      {(tournaments || []).map((t: Tournament) => (
+                        <Link
+                          key={t.id}
+                          href={`/tournaments/${t.id}`}
+                          className="block text-sm p-2 text-muted-foreground hover:text-foreground"
+                          onClick={() => { setIsOpen(false); setMobileTournamentExpanded(false); }}
+                          data-testid={`nav-mobile-tournament-${t.id}`}
+                        >
+                          {t.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={cn(
+                    "text-sm font-medium p-3 rounded-md transition-colors uppercase tracking-wide",
+                    location === item.href 
+                      ? "text-foreground bg-muted" 
+                      : "text-muted-foreground"
+                  )}
+                  onClick={() => setIsOpen(false)}
+                  data-testid={`nav-mobile-${item.label.toLowerCase()}`}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
             {isCaptainAuth && (
               <div className="mt-4 pt-4 border-t space-y-2">
                 <Link href="/captain" onClick={() => setIsOpen(false)}>
@@ -264,6 +435,34 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function TournamentDivisionsColumn({ tournamentId, onClose }: { tournamentId: number | null; onClose: () => void }) {
+  const { data: divisions } = useDivisions(tournamentId || 0);
+
+  if (!tournamentId) return null;
+
+  return (
+    <div className="p-4 min-w-[150px]">
+      <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">Divisions</h4>
+      <ul className="space-y-1">
+        {(divisions || []).length > 0 ? (divisions || []).map((div: Division) => (
+          <li key={div.id}>
+            <Link
+              href={`/tournaments/${tournamentId}`}
+              className="block text-sm py-1.5 px-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+              onClick={onClose}
+              data-testid={`dropdown-division-${div.id}`}
+            >
+              {div.name}
+            </Link>
+          </li>
+        )) : (
+          <li className="text-xs text-muted-foreground px-2 py-1">No divisions</li>
+        )}
+      </ul>
     </div>
   );
 }
