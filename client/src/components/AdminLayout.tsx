@@ -21,7 +21,7 @@ import {
   Dumbbell,
   UserCog
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -29,17 +29,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { logout, isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate("/admin-login");
+    }
+  }, [isLoading, isAuthenticated, navigate]);
+
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    navigate("/admin-login");
-    return null;
   }
 
   const sidebarItems = [
