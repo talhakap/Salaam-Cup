@@ -51,6 +51,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "About Page", href: "/admin/about-content", icon: FileText },
     { label: "Media Gallery", href: "/admin/media", icon: Image },
     { label: "FAQs", href: "/admin/faqs", icon: HelpCircle },
+    { label: "Special Awards", href: "/admin/special-awards", icon: Award },
   ];
 
   return (

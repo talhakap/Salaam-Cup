@@ -241,6 +241,19 @@ export const insertFaqSchema = createInsertSchema(faqs).omit({ id: true });
 export type Faq = typeof faqs.$inferSelect;
 export type InsertFaq = z.infer<typeof insertFaqSchema>;
 
+// === SPECIAL AWARDS ===
+export const specialAwards = pgTable("special_awards", {
+  id: serial("id").primaryKey(),
+  imageUrl: text("image_url").notNull(),
+  header: text("header").notNull(),
+  description: text("description").notNull(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertSpecialAwardSchema = createInsertSchema(specialAwards).omit({ id: true });
+export type SpecialAward = typeof specialAwards.$inferSelect;
+export type InsertSpecialAward = z.infer<typeof insertSpecialAwardSchema>;
+
 // === ABOUT CONTENT ===
 export const aboutContent = pgTable("about_content", {
   id: serial("id").primaryKey(),

@@ -1,11 +1,11 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, aboutContent, mediaYears, mediaItems, faqs,
+  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, specialAwards, aboutContent, mediaYears, mediaItems, faqs,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
-  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertAboutContent,
+  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertSpecialAward, type InsertAboutContent,
   type InsertMediaYear, type InsertMediaItem, type InsertFaq,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
-  type Standing, type Sport, type Award, type News, type Sponsor, type AboutContent,
+  type Standing, type Sport, type Award, type News, type Sponsor, type SpecialAward, type AboutContent,
   type MediaYear, type MediaItem, type MediaYearWithItems, type Faq,
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
@@ -80,6 +80,12 @@ export interface IStorage {
   createSponsor(data: InsertSponsor): Promise<Sponsor>;
   updateSponsor(id: number, data: Partial<InsertSponsor>): Promise<Sponsor>;
   deleteSponsor(id: number): Promise<void>;
+
+  // Special Awards
+  getSpecialAwards(): Promise<SpecialAward[]>;
+  createSpecialAward(data: InsertSpecialAward): Promise<SpecialAward>;
+  updateSpecialAward(id: number, data: Partial<InsertSpecialAward>): Promise<SpecialAward>;
+  deleteSpecialAward(id: number): Promise<void>;
 
   // About Content
   getAboutContent(): Promise<AboutContent | undefined>;
@@ -551,6 +557,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSponsor(id: number): Promise<void> {
     await db.delete(sponsors).where(eq(sponsors.id, id));
+  }
+
+  // Special Awards
+  async getSpecialAwards(): Promise<SpecialAward[]> {
+    return await db.select().from(specialAwards).orderBy(specialAwards.sortOrder);
+  }
+
+  async createSpecialAward(data: InsertSpecialAward): Promise<SpecialAward> {
+    const [item] = await db.insert(specialAwards).values(data).returning();
+    return item;
+  }
+
+  async updateSpecialAward(id: number, data: Partial<InsertSpecialAward>): Promise<SpecialAward> {
+    const [item] = await db.update(specialAwards).set(data).where(eq(specialAwards.id, id)).returning();
+    return item;
+  }
+
+  async deleteSpecialAward(id: number): Promise<void> {
+    await db.delete(specialAwards).where(eq(specialAwards.id, id));
   }
 
   // About Content

@@ -635,6 +635,43 @@ export async function registerRoutes(
     }
   });
 
+  // === SPECIAL AWARDS ===
+  app.get(api.specialAwards.list.path, async (_req, res) => {
+    const data = await storage.getSpecialAwards();
+    res.json(data);
+  });
+
+  app.post(api.specialAwards.create.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.specialAwards.create.input.parse(req.body);
+      const item = await storage.createSpecialAward(input);
+      res.status(201).json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.specialAwards.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.specialAwards.update.input.parse(req.body);
+      const item = await storage.updateSpecialAward(Number(req.params.id), input);
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.specialAwards.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteSpecialAward(Number(req.params.id));
+      res.json({ message: "Special award deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === ABOUT CONTENT ===
   app.get(api.aboutContent.get.path, async (_req, res) => {
     const data = await storage.getAboutContent();

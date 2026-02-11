@@ -11,6 +11,7 @@ import {
   insertAwardSchema,
   insertNewsSchema,
   insertSponsorSchema,
+  insertSpecialAwardSchema,
   insertAboutContentSchema,
   insertMediaYearSchema,
   insertMediaItemSchema,
@@ -26,6 +27,7 @@ import {
   awards,
   news,
   sponsors,
+  specialAwards,
   aboutContent,
   mediaYears,
   mediaItems,
@@ -600,6 +602,43 @@ export const api = {
     delete: {
       method: 'DELETE' as const,
       path: '/api/faqs/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === SPECIAL AWARDS ===
+  specialAwards: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/special-awards' as const,
+      responses: {
+        200: z.array(z.custom<typeof specialAwards.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/special-awards' as const,
+      input: insertSpecialAwardSchema,
+      responses: {
+        201: z.custom<typeof specialAwards.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/special-awards/:id' as const,
+      input: insertSpecialAwardSchema.partial(),
+      responses: {
+        200: z.custom<typeof specialAwards.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/special-awards/:id' as const,
       responses: {
         200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,

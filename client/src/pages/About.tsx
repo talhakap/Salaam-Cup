@@ -2,6 +2,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { SponsorBar } from "@/components/SponsorBar";
 import { ReadyToCompete } from "@/components/ReadyToCompete";
 import { useAboutContent } from "@/hooks/use-about-content";
+import { useSpecialAwards } from "@/hooks/use-special-awards";
 import { useTournaments } from "@/hooks/use-tournaments";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -11,6 +12,42 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import DOMPurify from "dompurify";
 import type { Tournament, Sport } from "@shared/schema";
 import heroImg from "/images/hero-about.png";
+import { Button } from "@/components/ui/button";
+
+const valueCards = [
+  {
+    tagline: "Compete. Connect. Belong.",
+    title: "Amazing Community",
+    description: "Community of over 20,000 Athletes living the Brodie lifestyle. Compete with old friends or make new ones!",
+    cta: "Register Now",
+    href: "/register",
+    image: "/images/hero-about.png",
+  },
+  {
+    tagline: "Play by the rules. Win with intensity.",
+    title: "Real Competition",
+    description: "Structured divisions, refs, scorekeeping, playoffs. Everything feels official and intense.",
+    cta: "Tournaments",
+    href: "/tournaments",
+    image: "/images/hero-tournaments.png",
+  },
+  {
+    tagline: "Relive the best moments.",
+    title: "Content Media Team",
+    description: "Highlights, photography, social media features, turn tournament moments into shareable content.",
+    cta: "Our Gallery",
+    href: "/media",
+    image: "/images/hero-media.png",
+  },
+  {
+    tagline: "Instant updates. Zero confusion.",
+    title: "Professional Stuff",
+    description: "On-time scheduling, clear communications, venue management, instant updates, everything handled.",
+    cta: "See Our Staff",
+    href: "/about",
+    image: "/images/hero-register.png",
+  },
+];
 
 const sportLogoMap: Record<string, string> = {
   hockey: "/images/logo-hockey.png",
@@ -26,12 +63,6 @@ const sportBgMap: Record<string, string> = {
   soccer: "/images/bg-soccer.png",
 };
 
-const valueCards = [
-  { title: "Content Media Team", image: "/images/hero-media.png" },
-  { title: "Engaging Community", image: "/images/hero-about.png" },
-  { title: "Real Competition", image: "/images/hero-tournaments.png" },
-  { title: "Professional Staff", image: "/images/hero-register.png" },
-];
 
 const momentsImages = [
   "/images/hero-landing.png",
@@ -42,10 +73,6 @@ const momentsImages = [
   "/images/hero-landing.png",
 ];
 
-const admireItems = [
-  { name: "Muhammad Naim", title: "Muslim Community Awards", image: "/images/hero-about.png" },
-  { name: "Muhammad Naim", title: "Hallamand Sports Club", image: "/images/hero-media.png" },
-];
 
 const celebrationImages = [
   "/images/hero-landing.png",
@@ -207,6 +234,7 @@ function PdfEmbed({ url }: { url: string }) {
 
 export default function About() {
   const { data: aboutContentData } = useAboutContent();
+  const { data: specialAwardsData } = useSpecialAwards();
   const { data: tournaments } = useTournaments();
   const { data: sports } = useQuery<Sport[]>({ queryKey: ["/api/sports"] });
 
@@ -249,39 +277,40 @@ export default function About() {
         </div>
       </section>
 
-      {/* RELIVE THE BEST MOMENTS WITH US */}
-      <section className="py-16 md:py-24 bg-muted" data-testid="section-moments">
-        <div className="container mx-auto px-4">
+      {/* Our Beginnings / How We Grew */}
+      <section className="py-16 md:py-24 bg-stone-900 text-white" data-testid="section-history">
+        <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold font-display uppercase leading-tight" data-testid="text-moments-title">
               Relive The Best Moments<br />With Us.
             </h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-5xl mx-auto">
-            {momentsImages.map((img, i) => (
-              <div key={i} className="aspect-[4/3] rounded-md overflow-hidden" data-testid={`img-moment-${i}`}>
-                <img src={img} alt={`Moment ${i + 1}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Our Beginnings / How We Grew */}
-      <section className="py-16 md:py-24 bg-background" data-testid="section-history">
-        <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
             <div data-testid="section-beginnings">
               <h3 className="text-2xl md:text-3xl font-bold font-display uppercase mb-4">Our Beginnings</h3>
-              <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
+              <p className="text-stone-300 leading-relaxed text-sm md:text-base">
                 What started as a small community gathering has grown into one of the most anticipated sporting events in the Muslim community. 
                 Our founders saw the need for organized, professional-level tournaments that bring people together through the love of sport. 
                 The first Salaam Cup was held with just a handful of teams and a dream to create something bigger. That dream has become a reality.
               </p>
             </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-5xl mx-auto">
+              {momentsImages.map((img, i) => (
+                <div key={i} className="aspect-[4/3] rounded-md overflow-hidden" data-testid={`img-moment-${i}`}>
+                  <img src={img} alt={`Moment ${i + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-5xl mx-auto">
+              {momentsImages.map((img, i) => (
+                <div key={i} className="aspect-[4/3] rounded-md overflow-hidden" data-testid={`img-moment-${i}`}>
+                  <img src={img} alt={`Moment ${i + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
             <div data-testid="section-how-we-grew">
               <h3 className="text-2xl md:text-3xl font-bold font-display uppercase mb-4">How We Grew</h3>
-              <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
+              <p className="text-stone-300 leading-relaxed text-sm md:text-base">
                 Year after year, the Salaam Cup has expanded to include multiple sports, more divisions, and athletes from across the region. 
                 Through word of mouth, social media presence, and the passion of our community, we have grown from a single tournament 
                 to a multi-sport organization. Our growth is a testament to the dedication of our volunteers, sponsors, and every athlete 
@@ -293,25 +322,38 @@ export default function About() {
       </section>
 
       {/* ANYONE CAN PLAY, FEW COMPETE */}
-      <section className="py-16 md:py-24 bg-background" data-testid="section-values">
+      <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-4" data-testid="text-values-about-title">
+            <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-4" data-testid="text-values-title">
               Anyone Can Play. Few Compete.
             </h2>
-            <p className="text-muted-foreground text-sm md:text-base">
+            <p className="text-muted-foreground">
               Join athletes who don't just show up to play. They show up to dominate and build legacy.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {valueCards.map((card) => (
-              <div key={card.title} className="relative aspect-[4/3] rounded-md overflow-hidden group" data-testid={`card-about-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                <img src={card.image} alt={card.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-bold font-display text-sm md:text-base uppercase underline decoration-1 underline-offset-4">
+              <div key={card.title} className="relative aspect-square rounded-md overflow-hidden" data-testid={`card-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/50" />
+                <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-6 pb-8">
+                  <p className="text-xs md:text-sm text-gray-300 italic mb-1">{card.tagline}</p>
+                  <h3 className="text-xl md:text-3xl font-bold font-display text-white uppercase mb-2" data-testid={`text-value-title-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
                     {card.title}
                   </h3>
+                  <p className="text-xs md:text-sm text-gray-300 max-w-xs mb-4 leading-relaxed">
+                    {card.description}
+                  </p>
+                  <Link href={card.href} data-testid={`link-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <Button
+                      variant="outline"
+                      className="rounded-full border-white/60 text-white bg-transparent text-xs md:text-sm font-medium tracking-wide uppercase px-6"
+                    >
+                      {card.cta}
+                    </Button>
+                  </Link>
                 </div>
               </div>
             ))}
@@ -320,26 +362,33 @@ export default function About() {
       </section>
 
       {/* WE ADMIRE THEM */}
-      <section className="py-16 md:py-24 bg-muted" data-testid="section-admire">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold font-display uppercase" data-testid="text-admire-title">
-              We Admire Them
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {admireItems.map((item, i) => (
-              <div key={i} className="text-center" data-testid={`card-admire-${i}`}>
-                <div className="aspect-video rounded-md overflow-hidden mb-4">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+      {specialAwardsData && specialAwardsData.length > 0 && (
+        <section className="py-16 md:py-24 bg-secondary text-white" data-testid="section-admire">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Awards Info</p>
+              <h2 className="text-3xl md:text-5xl font-bold font-display uppercase" data-testid="text-admire-title">
+                We Admire Them
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto mt-10">
+              {specialAwardsData.map((award) => (
+                <div key={award.id} data-testid={`card-admire-${award.id}`}>
+                  <div className="aspect-video rounded-md overflow-hidden mb-4">
+                    <img src={award.imageUrl} alt={award.header} className="w-full h-full object-cover" />
+                  </div>
+                  <h3 className="text-lg font-bold font-display mb-2" data-testid={`text-admire-header-${award.id}`}>
+                    {award.header}
+                  </h3>
+                  <p className="text-sm text-gray-300 leading-relaxed" data-testid={`text-admire-desc-${award.id}`}>
+                    {award.description}
+                  </p>
                 </div>
-                <p className="text-sm font-bold font-display uppercase">{item.name}</p>
-                <p className="text-xs text-muted-foreground">{item.title}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* HOW WE CELEBRATED */}
       <section className="py-16 md:py-24 bg-background" data-testid="section-celebrated">

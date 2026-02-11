@@ -31,6 +31,7 @@ Core features include:
 - Media Gallery page: admin-managed past tournaments gallery with year-based accordion sections; each year contains tournament cards (image, category, name, "Show All" link URL)
 - Admin Media Gallery page: CRUD for media years and tournament cards with image upload support
 - FAQ system: faqs table with question, answer, featured boolean, sortOrder; featured FAQs (max 5) shown on homepage in accordion; full /faq page shows all FAQs; Admin FAQs page (/admin/faqs) with CRUD, featured toggle, sort order management; backend enforces max 5 featured cap
+- Special Awards system: special_awards table with imageUrl, header, description, sortOrder; displayed in "We Admire Them" section on About page (dark background, 2-column grid with image + header + description); Admin Special Awards page (/admin/special-awards) with CRUD and image upload; section hidden when no awards exist
 
 ## User Preferences
 
