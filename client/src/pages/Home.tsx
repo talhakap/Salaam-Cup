@@ -187,15 +187,16 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                     <div className="absolute inset-0 bg-black/50" />
                   </div>
 
-                  <div className="hidden md:flex absolute inset-0 z-10 flex-col items-center justify-center text-center px-6">
-                    <div className="w-[400px] h-[400px]">
+                  <div className="hidden md:flex absolute inset-0 z-10 flex-col items-center justify-center text-center group/card">
+                    <div className="absolute inset-0 bg-gray-900/80 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 z-0" />
+                    <div className="w-[448px] h-[448px] z-10">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
                         className="w-full h-full object-contain drop-shadow-lg"
                       />
                     </div>
-                    <div className="-mt-4">
+                    <div className="opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 z-10 -mt-6">
                       <h3 className="text-xl font-bold font-display uppercase text-white tracking-wide mb-0.5" data-testid={`text-upcoming-name-${t.id}`}>
                         {t.name}
                       </h3>
