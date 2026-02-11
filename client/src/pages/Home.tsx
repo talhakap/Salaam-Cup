@@ -82,7 +82,7 @@ function EventCardMobile({ logo, sportName, name, desc, dateStr, tournamentId }:
 }) {
   return (
     <div className="md:hidden relative z-10 flex flex-col items-center justify-center text-center px-4 h-full">
-      <div className="w-[60%] max-w-[220px] mb-3">
+      <div className="w-[300px] h-[300px] mb-3">
         <img
           src={logo}
           alt={`${sportName} logo`}
@@ -188,7 +188,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                   </div>
 
                   <div className="hidden md:flex relative z-10 flex-col items-center justify-center text-center px-6 h-full">
-                    <div className="w-[400px] h-[400px] mb-0 -mt-8">
+                    <div className="w-[500px] h-[500px] mb-0 -mt-8">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
@@ -199,6 +199,9 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                       <h3 className="text-2xl font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
                         {t.name}
                       </h3>
+                      <p className="text-sm text-gray-300 max-w-sm mb-2 leading-relaxed">
+                        {t.description || desc}
+                      </p>
                       <div className="text-sm text-gray-200 font-semibold">
                         Upcoming Tournaments:
                       </div>
