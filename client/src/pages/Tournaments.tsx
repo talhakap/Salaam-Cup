@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useTournaments } from "@/hooks/use-tournaments";
 import { Loader2 } from "lucide-react";
-import heroImg from "/images/hero-tournaments.png";
+import heroImg from "/images/tournament-hero-home.png";
 
 const fallbackImages = [
   "/images/hero-landing.png",
