@@ -265,7 +265,7 @@ function MatchRow({ match, divisions, venues }: { match: MatchWithTeams; divisio
   const isFinal = match.status === "final";
   const isScheduled = match.status === "scheduled";
   const division = divisions?.find(d => d.id === match.divisionId);
-  const venueName = match.venueId && venues ? venues.find(v => v.id === match.venueId)?.name : null;
+  const venueName = match.venueId && venues ? venues.find(v => Number(v.id) === Number(match.venueId))?.name : null;
 
   return (
     <div className="flex items-center py-4 border-b gap-2 md:gap-4" data-testid={`match-row-${match.id}`}>
