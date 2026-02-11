@@ -275,7 +275,36 @@ export class DatabaseStorage implements IStorage {
 
   async createPlayer(data: InsertPlayer): Promise<Player> {
     const [player] = await db.insert(players).values(data).returning();
+    if (data.registrationType === 'roster' && data.teamId) {
+      await this.matchRosterAgainstRegistrations(player);
+    }
     return player;
+  }
+
+  private async matchRosterAgainstRegistrations(rosterPlayer: Player): Promise<void> {
+    if (!rosterPlayer.teamId) return;
+    const normalizedFirst = rosterPlayer.firstName.trim().toLowerCase();
+    const normalizedLast = rosterPlayer.lastName.trim().toLowerCase();
+    const normalizedDob = rosterPlayer.dob;
+
+    const registeredPlayers = await db.select().from(players).where(
+      and(
+        eq(players.teamId, rosterPlayer.teamId),
+        sql`${players.registrationType} IN ('player')`,
+        eq(players.status, 'flagged')
+      )
+    );
+
+    for (const rp of registeredPlayers) {
+      if (
+        rp.firstName.trim().toLowerCase() === normalizedFirst
+        && rp.lastName.trim().toLowerCase() === normalizedLast
+        && rp.dob === normalizedDob
+      ) {
+        await db.update(players).set({ status: 'confirmed' }).where(eq(players.id, rp.id));
+        await db.update(players).set({ status: 'confirmed' }).where(eq(players.id, rosterPlayer.id));
+      }
+    }
   }
 
   async getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team | null })[]> {
@@ -373,7 +402,13 @@ export class DatabaseStorage implements IStorage {
 
   async createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]> {
     const toInsert = data.map(p => ({ ...p, teamId }));
-    return await db.insert(players).values(toInsert).returning();
+    const created = await db.insert(players).values(toInsert).returning();
+    for (const player of created) {
+      if (player.registrationType === 'roster') {
+        await this.matchRosterAgainstRegistrations(player);
+      }
+    }
+    return created;
   }
 
   // Matches
