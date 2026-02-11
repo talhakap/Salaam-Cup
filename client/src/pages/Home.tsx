@@ -402,33 +402,50 @@ export default function Home() {
 
   return (
     <MainLayout>
-      <section className="relative h-[80vh] min-h-[550px] flex items-center justify-center overflow-hidden" data-testid="hero-landing">
+      <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden" data-testid="hero-landing">
         <div className="absolute inset-0 z-0">
           <img src={heroImg} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/55" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/70" />
         </div>
-        <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display text-white uppercase leading-none tracking-tight max-w-4xl mx-auto" data-testid="text-hero-title">
+        <div className="relative z-10 text-center px-4 flex flex-col items-center">
+          <p className="text-sm md:text-base italic text-gray-300 tracking-wide mb-4" data-testid="text-hero-tagline">
+            Play More. Compete Harder. Win Together.&trade;
+          </p>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display text-white uppercase leading-[1.05] tracking-tight max-w-4xl mx-auto" data-testid="text-hero-title">
             Best Muslim Tournaments In The World
           </h1>
-          <p className="mt-4 text-base md:text-lg text-gray-300 max-w-xl mx-auto">
-            For those with integrity, patience, heart
+          <p className="mt-5 text-base md:text-lg text-gray-300 max-w-xl mx-auto italic" data-testid="text-hero-subtitle">
+            For those still chasing greatness, we got you.
           </p>
 
-          <a
-            href="/register"
-            className="px-8 py-3 rounded-full bg-white text-black font-semibold text-sm uppercase tracking-wide
-                   hover:bg-gray-200 transition"
-          >
-            Register Now
-          </a>
-          <a
-            href="/tournaments"
-            className="px-8 py-3 rounded-full border border-white text-white font-semibold text-sm uppercase tracking-wide
-                   hover:bg-white hover:text-black transition"
-          >
-            Tournaments
-          </a>
+          <div className="flex items-center gap-4 mt-8">
+            <Link href="/register">
+              <Button
+                className="rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/40 text-sm font-semibold uppercase tracking-wider px-8"
+                data-testid="button-hero-register"
+              >
+                Register Now
+              </Button>
+            </Link>
+            <Link href="/tournaments">
+              <Button
+                variant="outline"
+                className="rounded-full border-white/40 text-white bg-white/10 backdrop-blur-sm text-sm font-semibold uppercase tracking-wider px-8"
+                data-testid="button-hero-tournaments"
+              >
+                Tournaments
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mt-12 opacity-70">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-white/50 flex items-center justify-center">
+              <div className="text-center leading-tight">
+                <span className="text-white font-bold text-lg md:text-xl block">20</span>
+                <span className="text-white/70 text-[8px] md:text-[9px] uppercase tracking-wider block">Since 2004</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
