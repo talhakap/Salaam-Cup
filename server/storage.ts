@@ -150,8 +150,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDivision(data: InsertDivision): Promise<Division> {
-    const [division] = await db.insert(divisions).values(data).returning();
-    return division;
+    const result = await db.execute(sql`
+      INSERT INTO divisions (tournament_id, name, category, description, game_format, registration_fee, rules_content)
+      VALUES (${data.tournamentId}, ${data.name}, ${data.category ?? null}, ${data.description ?? null}, ${data.gameFormat ?? null}, ${data.registrationFee ?? null}, ${data.rulesContent ?? null})
+      RETURNING *
+    `);
+    const row = result.rows[0] as any;
+    return {
+      id: row.id,
+      tournamentId: row.tournament_id,
+      name: row.name,
+      category: row.category,
+      description: row.description,
+      gameFormat: row.game_format,
+      registrationFee: row.registration_fee,
+      rulesContent: row.rules_content,
+    };
   }
 
   async updateDivision(id: number, data: Partial<InsertDivision>): Promise<Division> {
