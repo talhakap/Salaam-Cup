@@ -44,6 +44,7 @@ export const tournaments = pgTable("tournaments", {
   heroImage: text("hero_image"),
   description: text("description"),
   isFeatured: boolean("is_featured").default(false),
+  registrationOpen: boolean("registration_open").default(false),
 });
 
 export const insertTournamentSchema = createInsertSchema(tournaments).omit({ id: true });

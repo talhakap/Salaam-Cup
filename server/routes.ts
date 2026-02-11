@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
@@ -11,6 +12,7 @@ export async function registerRoutes(
 ): Promise<Server> {
   await setupAuth(app);
   registerAuthRoutes(app);
+  registerObjectStorageRoutes(app);
 
   // === SPORTS ===
   app.get(api.sports.list.path, async (_req, res) => {
@@ -126,6 +128,10 @@ export async function registerRoutes(
   app.post(api.teams.create.path, async (req, res) => {
     try {
       const input = api.teams.create.input.parse(req.body);
+      const tournament = await storage.getTournament(input.tournamentId);
+      if (tournament && !tournament.registrationOpen) {
+        return res.status(403).json({ message: "Registration is currently closed for this tournament." });
+      }
       const team = await storage.createTeam(input);
       res.status(201).json(team);
     } catch (err) {
@@ -197,6 +203,15 @@ export async function registerRoutes(
   app.post(api.players.register.path, async (req, res) => {
     try {
       const input = api.players.register.input.parse(req.body);
+      if (input.teamId) {
+        const team = await storage.getTeam(input.teamId);
+        if (team) {
+          const tournament = await storage.getTournament(team.tournamentId);
+          if (tournament && !tournament.registrationOpen) {
+            return res.status(403).json({ message: "Registration is currently closed for this tournament." });
+          }
+        }
+      }
       const player = await storage.registerPlayerWithMatching(input);
       res.status(201).json(player);
     } catch (err) {
@@ -214,8 +229,16 @@ export async function registerRoutes(
 
   app.post(api.players.bulkCreate.path, async (req, res) => {
     try {
+      const teamId = Number(req.params.teamId);
+      const team = await storage.getTeam(teamId);
+      if (team) {
+        const tournament = await storage.getTournament(team.tournamentId);
+        if (tournament && !tournament.registrationOpen) {
+          return res.status(403).json({ message: "Registration is currently closed for this tournament." });
+        }
+      }
       const input = api.players.bulkCreate.input.parse(req.body);
-      const data = await storage.createPlayersBulk(input, Number(req.params.teamId));
+      const data = await storage.createPlayersBulk(input, teamId);
       res.status(201).json(data);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });

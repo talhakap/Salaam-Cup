@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -420,7 +421,24 @@ export default function AdminTournaments() {
                     {t.description && <span className="ml-2">&middot; {t.description.slice(0, 60)}{t.description.length > 60 ? '...' : ''}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={!!t.registrationOpen}
+                      onCheckedChange={async (checked) => {
+                        try {
+                          await updateTournament.mutateAsync({ id: t.id, registrationOpen: checked });
+                          toast({ title: checked ? "Registration opened" : "Registration closed" });
+                        } catch (err) {
+                          toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+                        }
+                      }}
+                      data-testid={`switch-registration-${t.id}`}
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {t.registrationOpen ? "Reg. Open" : "Reg. Closed"}
+                    </span>
+                  </div>
                   <Button size="icon" variant="ghost" onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} data-testid={`button-expand-tournament-${t.id}`}>
                     {expandedId === t.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>

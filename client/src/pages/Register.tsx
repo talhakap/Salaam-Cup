@@ -145,7 +145,7 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
                 <SelectTrigger data-testid="select-tournament"><SelectValue placeholder="Select tournament..." /></SelectTrigger>
               </FormControl>
               <SelectContent>
-                {tournaments?.filter(t => t.status !== 'completed').map((t) => (
+                {tournaments?.filter(t => t.status !== 'completed' && t.registrationOpen).map((t) => (
                   <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -269,7 +269,7 @@ function PlayerRegistrationForm({ onSuccess }: { onSuccess: (status: string) => 
                 <SelectTrigger data-testid="select-player-tournament"><SelectValue placeholder="Select tournament..." /></SelectTrigger>
               </FormControl>
               <SelectContent>
-                {tournaments?.filter(t => t.status !== 'completed').map((t) => (
+                {tournaments?.filter(t => t.status !== 'completed' && t.registrationOpen).map((t) => (
                   <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -408,7 +408,7 @@ function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) 
                 <SelectTrigger data-testid="select-freeagent-tournament"><SelectValue placeholder="Select tournament..." /></SelectTrigger>
               </FormControl>
               <SelectContent>
-                {tournaments?.filter(t => t.status !== 'completed').map((t) => (
+                {tournaments?.filter(t => t.status !== 'completed' && t.registrationOpen).map((t) => (
                   <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -458,9 +458,11 @@ function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) 
 }
 
 export default function Register() {
+  const { data: tournaments } = useTournaments();
   const [registrationType, setRegistrationType] = useState<RegistrationType>("team");
   const [submitted, setSubmitted] = useState(false);
   const [playerStatus, setPlayerStatus] = useState<string>("");
+  const hasOpenRegistration = tournaments?.some(t => t.status !== 'completed' && t.registrationOpen);
 
   const registrationTypes: { key: RegistrationType; label: string }[] = [
     { key: "team", label: "Team" },
@@ -536,14 +538,23 @@ export default function Register() {
 
             <div>
               <h3 className="font-bold text-lg mb-6" data-testid="text-personal-info-title">Personal information</h3>
-              {registrationType === "team" && (
-                <TeamRegistrationForm onSuccess={() => setSubmitted(true)} />
-              )}
-              {registrationType === "player" && (
-                <PlayerRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
-              )}
-              {registrationType === "free_agent" && (
-                <FreeAgentRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
+              {hasOpenRegistration === false ? (
+                <div className="text-center py-12 border rounded-md bg-muted/30" data-testid="text-registration-closed">
+                  <p className="font-bold text-lg mb-2">Registration is Currently Closed</p>
+                  <p className="text-muted-foreground text-sm">There are no tournaments currently accepting registrations. Please check back later.</p>
+                </div>
+              ) : (
+                <>
+                  {registrationType === "team" && (
+                    <TeamRegistrationForm onSuccess={() => setSubmitted(true)} />
+                  )}
+                  {registrationType === "player" && (
+                    <PlayerRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
+                  )}
+                  {registrationType === "free_agent" && (
+                    <FreeAgentRegistrationForm onSuccess={(status) => { setPlayerStatus(status); setSubmitted(true); }} />
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Newspaper } from "lucide-react";
-import { useState } from "react";
+import { useUpload } from "@/hooks/use-upload";
+import { Plus, Pencil, Trash2, Newspaper, Upload, Loader2, ImageIcon } from "lucide-react";
+import { useState, useRef } from "react";
 import type { News, Tournament } from "@shared/schema";
 
 function NewsDialog({
@@ -25,11 +26,32 @@ function NewsDialog({
   const updateNews = useUpdateNews();
   const { toast } = useToast();
   const isEdit = !!item;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [headline, setHeadline] = useState(item?.headline || "");
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || "");
   const [publishedDate, setPublishedDate] = useState(item?.publishedDate || new Date().toISOString().split("T")[0]);
   const [tournamentId, setTournamentId] = useState<string>(item?.tournamentId ? String(item.tournamentId) : "none");
+
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      setImageUrl(response.objectPath);
+      toast({ title: "Image uploaded" });
+    },
+    onError: (error) => {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    await uploadFile(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +60,7 @@ function NewsDialog({
       return;
     }
     if (!imageUrl.trim()) {
-      toast({ title: "Please enter an image URL", variant: "destructive" });
+      toast({ title: "Please upload or enter an image", variant: "destructive" });
       return;
     }
     const data = {
@@ -73,18 +95,47 @@ function NewsDialog({
         />
       </div>
       <div>
-        <Label>Image URL</Label>
-        <Input
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://..."
-          data-testid="input-news-image-url"
-        />
-        {imageUrl && (
-          <div className="mt-2 aspect-video max-w-xs rounded-md overflow-hidden bg-muted">
-            <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+        <Label>Image</Label>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2 flex-1"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              data-testid="button-upload-news-image"
+            >
+              {isUploading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</>
+              ) : (
+                <><Upload className="h-4 w-4" /> Upload Image</>
+              )}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+              data-testid="input-news-file"
+            />
           </div>
-        )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>or enter URL:</span>
+          </div>
+          <Input
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://... or upload above"
+            data-testid="input-news-image-url"
+          />
+          {imageUrl && (
+            <div className="mt-2 aspect-video max-w-xs rounded-md overflow-hidden bg-muted">
+              <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
       </div>
       <div>
         <Label>Published Date</Label>
@@ -110,7 +161,7 @@ function NewsDialog({
         </Select>
       </div>
       <DialogFooter>
-        <Button type="submit" disabled={createNews.isPending || updateNews.isPending} data-testid="button-submit-news">
+        <Button type="submit" disabled={createNews.isPending || updateNews.isPending || isUploading} data-testid="button-submit-news">
           {isEdit ? "Update" : "Create"} News
         </Button>
       </DialogFooter>
@@ -175,7 +226,13 @@ export default function AdminNews() {
             return (
               <div key={item.id} className="bg-card border rounded-md p-4 flex items-center gap-4" data-testid={`card-news-${item.id}`}>
                 <div className="w-20 h-14 rounded-md overflow-hidden bg-muted shrink-0">
-                  <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-sm uppercase truncate" data-testid={`text-news-headline-${item.id}`}>{item.headline}</p>
@@ -215,6 +272,7 @@ export default function AdminNews() {
             <DialogTitle>{editingItem ? "Edit News" : "Add News"}</DialogTitle>
           </DialogHeader>
           <NewsDialog
+            key={editingItem?.id ?? "new"}
             item={editingItem}
             tournaments={tournaments || []}
             onClose={() => setDialogOpen(false)}
