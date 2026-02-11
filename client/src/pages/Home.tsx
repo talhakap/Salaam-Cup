@@ -82,23 +82,23 @@ function EventCardMobile({ logo, sportName, name, desc, dateStr, tournamentId }:
 }) {
   return (
     <div className="md:hidden relative z-10 flex flex-col items-center justify-center text-center px-4 h-full">
-      <div className="w-[300px] h-[300px] mb-3">
+      <div className="w-[300px] h-[300px] -mb-4">
         <img
           src={logo}
           alt={`${sportName} logo`}
           className="w-full h-full object-contain drop-shadow-lg"
         />
       </div>
-      <h3 className="text-lg font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
+      <h3 className="text-lg font-bold font-display uppercase text-white tracking-wide mb-0.5" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
         {name}
       </h3>
-      <p className="text-xs text-gray-300 max-w-xs mb-3 leading-relaxed">
+      <p className="text-xs text-gray-300 max-w-xs mb-1 leading-snug">
         {desc}
       </p>
       <div className="text-xs text-gray-200 font-semibold">
         Upcoming Tournaments:
       </div>
-      <div className="text-xs text-white font-bold mt-0.5">
+      <div className="text-xs text-white font-bold">
         {dateStr}
       </div>
     </div>
@@ -188,14 +188,14 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                   </div>
 
                   <div className="hidden md:flex relative z-10 flex-col items-center justify-center text-center px-6 h-full">
-                    <div className="w-[500px] h-[500px] mb-0 -mt-8">
+                    <div className="w-[500px] h-[500px] -mb-10 -mt-8">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
                         className="w-full h-full object-contain drop-shadow-lg"
                       />
                     </div>
-                    <div className="-mt-6">
+                    <div className="-mt-10">
                       <h3 className="text-2xl font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
                         {t.name}
                       </h3>
