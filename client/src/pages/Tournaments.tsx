@@ -1,7 +1,6 @@
 import { MainLayout } from "@/components/MainLayout";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
-import { ReadyToCompete } from "@/components/ReadyToCompete";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useTournaments } from "@/hooks/use-tournaments";
@@ -15,6 +14,66 @@ const fallbackImages = [
   "/images/hero-media.png",
   "/images/hero-register.png",
 ];
+
+function TournamentCard({ tournament, index }: { tournament: any; index: number }) {
+  const bgImage = tournament.heroImage || fallbackImages[index % fallbackImages.length];
+  const statusLabel = tournament.status === "upcoming" ? "TBD" : tournament.status === "active" ? "Live" : "Completed";
+
+  return (
+    <Link href={`/tournaments/${tournament.id}`}>
+      <div
+        className="relative rounded-md overflow-hidden group cursor-pointer bg-black"
+        data-testid={`card-tournament-${tournament.id}`}
+      >
+        <div className="relative aspect-[4/3]">
+          <img
+            src={bgImage}
+            alt={tournament.name}
+            className="w-full h-full object-cover opacity-50"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/50" />
+
+          <div className="absolute inset-0 flex flex-col items-center justify-between p-5">
+            <h3
+              className="text-white font-bold font-display text-lg md:text-xl uppercase tracking-wide text-center w-full"
+              data-testid={`text-tournament-name-${tournament.id}`}
+            >
+              {tournament.name}
+            </h3>
+
+            <div className="flex-1 flex items-center justify-center">
+              {tournament.logoUrl ? (
+                <img
+                  src={tournament.logoUrl}
+                  alt={`${tournament.name} logo`}
+                  className="max-h-28 md:max-h-36 w-auto object-contain drop-shadow-lg"
+                  data-testid={`img-tournament-logo-${tournament.id}`}
+                />
+              ) : (
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">
+                  <span className="text-white/60 font-display text-3xl md:text-4xl font-bold uppercase">
+                    {tournament.name.charAt(0)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="w-full text-center space-y-2">
+              {tournament.description && (
+                <p className="text-white/70 text-xs md:text-sm line-clamp-2 leading-relaxed">
+                  {tournament.description}
+                </p>
+              )}
+              <p className="text-white/50 text-xs">
+                Upcoming Tournaments: <span className="font-semibold text-white/80">{statusLabel}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Tournaments() {
   const { data: tournaments, isLoading } = useTournaments();
@@ -51,34 +110,7 @@ export default function Tournaments() {
           ) : (
             <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
               {tournaments.map((tournament, index) => (
-                <Link key={tournament.id} href={`/tournaments/${tournament.id}`}>
-                  <div
-                    className="relative aspect-[4/3] rounded-md overflow-hidden group cursor-pointer"
-                    data-testid={`card-tournament-${tournament.id}`}
-                  >
-                    <img
-                      src={tournament.heroImage || fallbackImages[index % fallbackImages.length]}
-                      alt={tournament.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-                    <div className="absolute top-4 left-4 right-4">
-                      <h3 className="text-white font-bold font-display text-xl md:text-2xl uppercase">
-                        {tournament.name}
-                      </h3>
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4">
-                      {tournament.description && (
-                        <p className="text-white/80 text-sm mb-3 line-clamp-2">
-                          {tournament.description}
-                        </p>
-                      )}
-                      <p className="text-white/60 text-xs">
-                        Upcoming Tournaments: <span className="font-medium text-white/80">{tournament.status === "upcoming" ? "Yes" : tournament.status === "active" ? "Live" : "Completed"}</span>
-                      </p>
-                    </div>
-                  </div>
-                </Link>
+                <TournamentCard key={tournament.id} tournament={tournament} index={index} />
               ))}
 
               <div className="flex flex-col items-center justify-center p-8 border border-border rounded-md" data-testid="card-ready-compete">
@@ -90,12 +122,12 @@ export default function Tournaments() {
                 </p>
                 <div className="flex gap-3 flex-wrap justify-center">
                   <Link href="/register">
-                    <Button className="rounded-full font-bold uppercase text-xs tracking-wider px-6" data-testid="button-register-now">
+                    <Button className="font-bold uppercase text-xs tracking-wider" data-testid="button-register-now">
                       Register Now
                     </Button>
                   </Link>
                   <Link href="/about">
-                    <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-6" data-testid="button-about">
+                    <Button variant="outline" className="font-bold uppercase text-xs tracking-wider" data-testid="button-about">
                       About
                     </Button>
                   </Link>

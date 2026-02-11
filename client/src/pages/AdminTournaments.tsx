@@ -245,6 +245,8 @@ export default function AdminTournaments() {
       endDate: "",
       status: "upcoming" as const,
       description: "",
+      heroImage: "",
+      logoUrl: "",
       isFeatured: false,
     },
   });
@@ -258,6 +260,8 @@ export default function AdminTournaments() {
       endDate: "",
       status: "upcoming" as const,
       description: "",
+      heroImage: "",
+      logoUrl: "",
       isFeatured: false,
     },
   });
@@ -283,6 +287,8 @@ export default function AdminTournaments() {
       endDate: t.endDate,
       status: t.status as any,
       description: t.description || "",
+      heroImage: t.heroImage || "",
+      logoUrl: t.logoUrl || "",
       isFeatured: t.isFeatured || false,
     });
   };
@@ -368,6 +374,14 @@ export default function AdminTournaments() {
       <FormField control={form.control} name="description" render={({ field }: any) => (
         <FormItem><FormLabel>Description</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
       )} />
+      <div className="grid grid-cols-2 gap-4">
+        <FormField control={form.control} name="heroImage" render={({ field }: any) => (
+          <FormItem><FormLabel>Hero Image URL</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Background image URL" data-testid={`${prefix}input-tournament-hero-image`} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={form.control} name="logoUrl" render={({ field }: any) => (
+          <FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Tournament logo URL" data-testid={`${prefix}input-tournament-logo-url`} /></FormControl><FormMessage /></FormItem>
+        )} />
+      </div>
     </>
   );
 

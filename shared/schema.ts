@@ -42,6 +42,7 @@ export const tournaments = pgTable("tournaments", {
   endDate: date("end_date", { mode: "string" }).notNull(),
   status: text("status", { enum: ["upcoming", "active", "completed"] }).default("upcoming").notNull(),
   heroImage: text("hero_image"),
+  logoUrl: text("logo_url"),
   description: text("description"),
   isFeatured: boolean("is_featured").default(false),
   registrationOpen: boolean("registration_open").default(false),
