@@ -1,4 +1,4 @@
-import heroLandingImg from "/images/hero-landing.png";
+import heroLandingImg from "/images/tournament-hero-home.png";
 
 interface HeroSectionProps {
   title: string;

@@ -86,7 +86,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 shrink-0" data-testid="link-logo">
             <span className="text-2xl font-bold font-display tracking-tight text-foreground">
-              SALAAM CUP
+              <img
+                src="/logo.png"
+                alt="Sport Cup Manager Logo"
+                className="h-10 w-auto"
+              />
             </span>
           </Link>
 
