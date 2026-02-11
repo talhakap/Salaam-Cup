@@ -22,6 +22,7 @@ import AdminMatches from "@/pages/AdminMatches";
 import AdminAwards from "@/pages/AdminAwards";
 import AdminNews from "@/pages/AdminNews";
 import AdminSponsors from "@/pages/AdminSponsors";
+import AdminAboutContent from "@/pages/AdminAboutContent";
 import TournamentAwards from "@/pages/TournamentAwards";
 
 function Router() {
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/admin/awards" component={AdminAwards} />
       <Route path="/admin/news" component={AdminNews} />
       <Route path="/admin/sponsors" component={AdminSponsors} />
+      <Route path="/admin/about-content" component={AdminAboutContent} />
 
       <Route path="/media" component={Home} /> 
       <Route path="/faq" component={About} />

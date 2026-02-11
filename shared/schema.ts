@@ -197,6 +197,19 @@ export const insertSponsorSchema = createInsertSchema(sponsors).omit({ id: true,
 export type Sponsor = typeof sponsors.$inferSelect;
 export type InsertSponsor = z.infer<typeof insertSponsorSchema>;
 
+// === ABOUT CONTENT ===
+export const aboutContent = pgTable("about_content", {
+  id: serial("id").primaryKey(),
+  contentType: text("content_type", { enum: ["pdf", "richtext"] }).default("richtext").notNull(),
+  pdfUrl: text("pdf_url"),
+  richTextContent: text("rich_text_content"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAboutContentSchema = createInsertSchema(aboutContent).omit({ id: true, updatedAt: true });
+export type AboutContent = typeof aboutContent.$inferSelect;
+export type InsertAboutContent = z.infer<typeof insertAboutContentSchema>;
+
 // === RELATIONS ===
 export const sportsRelations = relations(sports, ({ many }) => ({
   tournaments: many(tournaments),

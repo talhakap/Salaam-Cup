@@ -25,7 +25,7 @@ export function SponsorBar() {
                   <img
                     src={sponsor.logoUrl}
                     alt={sponsor.name}
-                    className="h-12 md:h-16 w-auto max-w-[160px] object-contain"
+                    className="h-12 md:h-16 w-auto max-w-[2000px] object-contain"
                     data-testid={`img-sponsor-${sponsor.id}`}
                   />
                 </a>
@@ -33,7 +33,7 @@ export function SponsorBar() {
                 <img
                   src={sponsor.logoUrl}
                   alt={sponsor.name}
-                  className="h-12 md:h-16 w-auto max-w-[160px] object-contain"
+                  className="h-12 md:h-16 w-auto max-w-[2000px] object-contain"
                   data-testid={`img-sponsor-${sponsor.id}`}
                 />
               )}

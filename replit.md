@@ -25,6 +25,9 @@ Core features include:
 - News system: admin can create news items (headline, image URL, date, optional tournament link); displayed on home page in "Where Stories Become Legacy" section with 3-column card grid and pagination dots
 - Admin News page for CRUD operations on news items
 - Reusable ReadyToCompete CTA and FAQSection components used across tournament pages
+- Sponsor system: sponsors table with name, logoUrl, websiteUrl, sortOrder; animated marquee SponsorBar component on home/about pages; Admin Sponsors page with CRUD and image upload
+- About page: Full design with Hero ("Who We Are"), SponsorBar, admin-managed letter section (PDF embed or rich text), moments gallery, history (Our Beginnings/How We Grew), value cards, "We Admire Them" section, celebrations gallery, upcoming events carousel, ReadyToCompete CTA
+- Admin About Content page: toggle between PDF upload or rich text editor (Quill) for the letter/content section on the About page
 
 ## User Preferences
 

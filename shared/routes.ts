@@ -11,6 +11,7 @@ import {
   insertAwardSchema,
   insertNewsSchema,
   insertSponsorSchema,
+  insertAboutContentSchema,
   teams,
   players,
   tournaments,
@@ -22,6 +23,7 @@ import {
   awards,
   news,
   sponsors,
+  aboutContent,
 } from './schema';
 
 export const errorSchemas = {
@@ -445,6 +447,26 @@ export const api = {
       path: '/api/sponsors/:id' as const,
       responses: {
         200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === ABOUT CONTENT ===
+  aboutContent: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/about-content' as const,
+      responses: {
+        200: z.custom<typeof aboutContent.$inferSelect>().nullable(),
+      },
+    },
+    upsert: {
+      method: 'POST' as const,
+      path: '/api/about-content' as const,
+      input: insertAboutContentSchema,
+      responses: {
+        200: z.custom<typeof aboutContent.$inferSelect>(),
         403: errorSchemas.forbidden,
       },
     },
