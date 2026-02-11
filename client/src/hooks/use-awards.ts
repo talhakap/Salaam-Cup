@@ -25,15 +25,21 @@ export function useAwards(tournamentId: number) {
   });
 }
 
+function invalidateAllAwardQueries() {
+  queryClient.invalidateQueries({ queryKey: ["/api/awards"] });
+  queryClient.invalidateQueries({ queryKey: ["/api/tournaments"], predicate: (query) => {
+    const key = query.queryKey;
+    return Array.isArray(key) && key.length >= 3 && key[2] === "awards";
+  }});
+}
+
 export function useCreateAward() {
   return useMutation({
     mutationFn: async (data: Omit<Award, "id">) => {
       const res = await apiRequest("POST", "/api/awards", data);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/awards"] });
-    },
+    onSuccess: invalidateAllAwardQueries,
   });
 }
 
@@ -44,9 +50,7 @@ export function useUpdateAward() {
       const res = await apiRequest("PATCH", `/api/awards/${id}`, body);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/awards"] });
-    },
+    onSuccess: invalidateAllAwardQueries,
   });
 }
 
@@ -56,8 +60,6 @@ export function useDeleteAward() {
       const res = await apiRequest("DELETE", `/api/awards/${id}`);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/awards"] });
-    },
+    onSuccess: invalidateAllAwardQueries,
   });
 }

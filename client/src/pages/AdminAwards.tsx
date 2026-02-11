@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { useAllAwards, useCreateAward, useUpdateAward, useDeleteAward } from "@/hooks/use-awards";
+import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,17 @@ function AwardDialog({
   const { toast } = useToast();
   const isEdit = !!award;
 
+  const { data: tournaments } = useTournaments();
+  const [selectedTournamentId, setSelectedTournamentId] = useState<string>(
+    award?.tournamentId ? String(award.tournamentId) : "none"
+  );
+  const activeTournamentId = selectedTournamentId !== "none" ? Number(selectedTournamentId) : null;
+  const { data: divisions } = useDivisions(activeTournamentId || 0);
+
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>(
+    award?.divisionId ? String(award.divisionId) : "none"
+  );
+
   const [tournamentName, setTournamentName] = useState(award?.tournamentName || "");
   const [divisionName, setDivisionName] = useState(award?.divisionName || "");
   const [year, setYear] = useState(award?.year || new Date().getFullYear());
@@ -43,6 +55,31 @@ function AwardDialog({
   const [teamName, setTeamName] = useState(award?.teamName || "");
   const [playerName, setPlayerName] = useState(award?.playerName || "");
   const [teamLogoUrl, setTeamLogoUrl] = useState(award?.teamLogoUrl || "");
+
+  const handleTournamentChange = (val: string) => {
+    setSelectedTournamentId(val);
+    setSelectedDivisionId("none");
+    if (val !== "none") {
+      const t = tournaments?.find(t => String(t.id) === val);
+      if (t) {
+        setTournamentName(t.name);
+        setYear(t.year);
+      }
+    } else {
+      setTournamentName("");
+    }
+    setDivisionName("");
+  };
+
+  const handleDivisionChange = (val: string) => {
+    setSelectedDivisionId(val);
+    if (val !== "none") {
+      const d = divisions?.find(d => String(d.id) === val);
+      if (d) setDivisionName(d.name);
+    } else {
+      setDivisionName("");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,8 +100,8 @@ function AwardDialog({
       return;
     }
     const data = {
-      tournamentId: null,
-      divisionId: null,
+      tournamentId: activeTournamentId,
+      divisionId: selectedDivisionId !== "none" ? Number(selectedDivisionId) : null,
       tournamentName: tournamentName.trim(),
       divisionName: divisionName.trim(),
       year,
@@ -91,6 +128,40 @@ function AwardDialog({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
+          <Label>Link to Tournament</Label>
+          <Select value={selectedTournamentId} onValueChange={handleTournamentChange}>
+            <SelectTrigger data-testid="select-award-tournament">
+              <SelectValue placeholder="Select tournament" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">-- None (manual entry) --</SelectItem>
+              {(tournaments || []).map((t) => (
+                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Link to Division</Label>
+          <Select
+            value={selectedDivisionId}
+            onValueChange={handleDivisionChange}
+            disabled={!activeTournamentId}
+          >
+            <SelectTrigger data-testid="select-award-division">
+              <SelectValue placeholder={activeTournamentId ? "Select division" : "Select tournament first"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">-- None --</SelectItem>
+              {(divisions || []).map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
           <Label>Tournament Name</Label>
           <Input
             value={tournamentName}
@@ -98,6 +169,7 @@ function AwardDialog({
             placeholder="e.g., Salaam Cup 2024"
             data-testid="input-award-tournament-name"
           />
+          <p className="text-xs text-muted-foreground mt-1">Auto-filled from selection, or type manually</p>
         </div>
         <div>
           <Label>Division Name</Label>
@@ -107,6 +179,7 @@ function AwardDialog({
             placeholder="e.g., Men's Open"
             data-testid="input-award-division-name"
           />
+          <p className="text-xs text-muted-foreground mt-1">Auto-filled from selection, or type manually</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -290,6 +363,7 @@ export default function AdminAwards() {
                     </span>
                     <Badge variant="secondary" className="text-xs">{award.category}</Badge>
                     <Badge variant="outline" className="text-xs">{award.year}</Badge>
+                    {award.tournamentId && <Badge variant="outline" className="text-xs border-green-500 text-green-600">Linked</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {award.tournamentName || "Unknown Tournament"} — {award.divisionName || "Unknown Division"}
@@ -326,6 +400,7 @@ export default function AdminAwards() {
             <DialogTitle>{editingAward ? "Edit Award" : "Add Award"}</DialogTitle>
           </DialogHeader>
           <AwardDialog
+            key={editingAward?.id || "new"}
             award={editingAward}
             onClose={() => setDialogOpen(false)}
           />
