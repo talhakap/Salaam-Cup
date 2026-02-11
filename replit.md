@@ -30,6 +30,7 @@ Core features include:
 - Admin About Content page: toggle between PDF upload or rich text editor (Quill) for the letter/content section on the About page
 - Media Gallery page: admin-managed past tournaments gallery with year-based accordion sections; each year contains tournament cards (image, category, name, "Show All" link URL)
 - Admin Media Gallery page: CRUD for media years and tournament cards with image upload support
+- FAQ system: faqs table with question, answer, featured boolean, sortOrder; featured FAQs (max 5) shown on homepage in accordion; full /faq page shows all FAQs; Admin FAQs page (/admin/faqs) with CRUD, featured toggle, sort order management; backend enforces max 5 featured cap
 
 ## User Preferences
 

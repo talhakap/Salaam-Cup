@@ -751,6 +751,12 @@ export async function registerRoutes(
   app.post(api.faqs.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.faqs.create.input.parse(req.body);
+      if (input.featured) {
+        const existing = await storage.getFeaturedFaqs();
+        if (existing.length >= 5) {
+          return res.status(400).json({ message: "Maximum 5 featured FAQs allowed. Unfeature another FAQ first." });
+        }
+      }
       const faq = await storage.createFaq(input);
       res.status(201).json(faq);
     } catch (err) {
@@ -762,6 +768,14 @@ export async function registerRoutes(
   app.patch(api.faqs.update.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.faqs.update.input.parse(req.body);
+      if (input.featured) {
+        const existing = await storage.getFeaturedFaqs();
+        const currentId = Number(req.params.id);
+        const otherFeatured = existing.filter(f => f.id !== currentId);
+        if (otherFeatured.length >= 5) {
+          return res.status(400).json({ message: "Maximum 5 featured FAQs allowed. Unfeature another FAQ first." });
+        }
+      }
       const faq = await storage.updateFaq(Number(req.params.id), input);
       res.json(faq);
     } catch (err) {
