@@ -3,7 +3,7 @@ import { useTournaments, useCreateTournament, useUpdateTournament, useDeleteTour
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -14,9 +14,78 @@ import { insertTournamentSchema, insertDivisionSchema } from "@shared/schema";
 import type { Tournament, Division } from "@shared/schema";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useUpload } from "@/hooks/use-upload";
+import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { z } from "zod";
+
+function ImageUploadField({
+  label,
+  value,
+  onChange,
+  testIdPrefix,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  testIdPrefix: string;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      onChange(response.objectPath);
+      toast({ title: `${label} uploaded` });
+    },
+    onError: (error) => {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    await uploadFile(file);
+  };
+
+  return (
+    <div className="space-y-2">
+      {value && (
+        <div className="bg-muted rounded-md p-3 flex items-center justify-center">
+          <img src={value} alt="Preview" className="max-h-20 object-contain" data-testid={`${testIdPrefix}-preview`} />
+        </div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+        data-testid={`${testIdPrefix}-upload`}
+      >
+        {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+        {isUploading ? "Uploading..." : `Upload ${label}`}
+      </Button>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`Or paste ${label.toLowerCase()} URL`}
+        data-testid={`${testIdPrefix}-url`}
+      />
+    </div>
+  );
+}
 
 function DivisionManager({ tournamentId }: { tournamentId: number }) {
   const { data: divisions, isLoading } = useDivisions(tournamentId);
@@ -376,10 +445,32 @@ export default function AdminTournaments() {
       )} />
       <div className="grid grid-cols-2 gap-4">
         <FormField control={form.control} name="heroImage" render={({ field }: any) => (
-          <FormItem><FormLabel>Hero Image URL</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Background image URL" data-testid={`${prefix}input-tournament-hero-image`} /></FormControl><FormMessage /></FormItem>
+          <FormItem>
+            <FormLabel>Hero Image</FormLabel>
+            <FormControl>
+              <ImageUploadField
+                label="Hero Image"
+                value={field.value || ''}
+                onChange={field.onChange}
+                testIdPrefix={`${prefix}tournament-hero`}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )} />
         <FormField control={form.control} name="logoUrl" render={({ field }: any) => (
-          <FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Tournament logo URL" data-testid={`${prefix}input-tournament-logo-url`} /></FormControl><FormMessage /></FormItem>
+          <FormItem>
+            <FormLabel>Logo</FormLabel>
+            <FormControl>
+              <ImageUploadField
+                label="Logo"
+                value={field.value || ''}
+                onChange={field.onChange}
+                testIdPrefix={`${prefix}tournament-logo`}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )} />
       </div>
     </>
