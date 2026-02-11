@@ -81,28 +81,25 @@ function EventCardMobile({ logo, sportName, name, desc, dateStr, tournamentId }:
   logo: string; sportName: string; name: string; desc: string; dateStr: string; tournamentId: number;
 }) {
   return (
-    <div className="md:hidden relative z-10 h-full group">
-      <div className="absolute inset-0 flex items-center justify-center p-4 transition-opacity duration-500 ease-in-out group-hover:opacity-0">
+    <div className="md:hidden relative z-10 flex flex-col items-center justify-center text-center px-4 h-full">
+      <div className="w-[60%] max-w-[220px] mb-3">
         <img
           src={logo}
           alt={`${sportName} logo`}
-          className="w-[85%] h-[85%] object-contain drop-shadow-lg"
+          className="w-full h-full object-contain drop-shadow-lg"
         />
       </div>
-
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100">
-        <h3 className="text-xl font-bold font-display uppercase text-white tracking-wide mb-2" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
-          {name}
-        </h3>
-        <p className="text-sm text-gray-300 max-w-xs mb-4 leading-relaxed">
-          {desc}
-        </p>
-        <div className="text-sm text-gray-200 font-semibold">
-          Upcoming Tournaments:
-        </div>
-        <div className="text-sm text-white font-bold mt-1">
-          {dateStr}
-        </div>
+      <h3 className="text-lg font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
+        {name}
+      </h3>
+      <p className="text-xs text-gray-300 max-w-xs mb-3 leading-relaxed">
+        {desc}
+      </p>
+      <div className="text-xs text-gray-200 font-semibold">
+        Upcoming Tournaments:
+      </div>
+      <div className="text-xs text-white font-bold mt-0.5">
+        {dateStr}
       </div>
     </div>
   );
