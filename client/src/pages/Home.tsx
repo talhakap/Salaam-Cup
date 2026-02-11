@@ -181,7 +181,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
 
             return (
               <div key={t.id} className="w-full flex-shrink-0 px-4 md:px-12" data-testid={`card-upcoming-${t.id}`}>
-                <div className="relative rounded-xl overflow-hidden max-w-md mx-auto aspect-square">
+                <Link href={`/tournaments/${t.slug}`} className="block relative rounded-xl overflow-hidden max-w-md mx-auto aspect-square cursor-pointer" data-testid={`link-upcoming-${t.id}`}>
                   <div className="absolute inset-0">
                     <img src={bg} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50" />
@@ -219,7 +219,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                     dateStr={dateStr}
                     tournamentId={t.id}
                   />
-                </div>
+                </Link>
               </div>
             );
           })}
