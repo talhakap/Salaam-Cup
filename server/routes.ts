@@ -322,7 +322,10 @@ export async function registerRoutes(
 
   app.post(api.players.create.path, async (req, res) => {
     try {
-      const input = api.players.create.input.parse(req.body);
+      const body = { ...req.body };
+      if (body.jerseyNumber !== undefined && body.jerseyNumber !== null) body.jerseyNumber = Number(body.jerseyNumber);
+      if (body.teamId !== undefined && body.teamId !== null) body.teamId = Number(body.teamId);
+      const input = api.players.create.input.parse(body);
       const player = await storage.createPlayer(input);
       res.status(201).json(player);
     } catch (err) {
@@ -333,7 +336,11 @@ export async function registerRoutes(
 
   app.post(api.players.register.path, async (req, res) => {
     try {
-      const input = api.players.register.input.parse(req.body);
+      const body = { ...req.body };
+      if (body.jerseyNumber !== undefined && body.jerseyNumber !== null) {
+        body.jerseyNumber = Number(body.jerseyNumber);
+      }
+      const input = api.players.register.input.parse(body);
       if (input.teamId) {
         const team = await storage.getTeam(input.teamId);
         if (team) {

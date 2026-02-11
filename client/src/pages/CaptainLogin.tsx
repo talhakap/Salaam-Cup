@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useCaptainAuth } from "@/hooks/use-captain-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Lock } from "lucide-react";
 
 export default function CaptainLogin() {
@@ -15,6 +16,7 @@ export default function CaptainLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
   const { captain, isLoading: authLoading } = useCaptainAuth();
 
   if (authLoading) {
@@ -50,6 +52,8 @@ export default function CaptainLogin() {
         const data = await res.json();
         throw new Error(data.message || "Login failed");
       }
+      await queryClient.invalidateQueries({ queryKey: ["/api/captain/me"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/my-teams"] });
       toast({ title: "Welcome back, Captain!" });
       navigate("/captain");
     } catch (err) {

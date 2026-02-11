@@ -52,8 +52,9 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
       toast({ title: "Player added!", description: "They will need admin verification." });
       setOpen(false);
       form.reset();
-    } catch (err) {
-      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    } catch (err: any) {
+      const msg = err?.response ? await err.response.text().catch(() => err.message) : err.message;
+      toast({ title: "Error", description: msg, variant: "destructive" });
     }
   };
 
@@ -87,7 +88,7 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
                     <FormItem><FormLabel>Date of Birth</FormLabel><FormControl><Input type="date" {...field} data-testid="input-player-dob" /></FormControl><FormMessage/></FormItem>
                )} />
                <FormField control={form.control} name="jerseyNumber" render={({field}) => (
-                    <FormItem><FormLabel>Jersey #</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} data-testid="input-player-jersey" /></FormControl><FormMessage/></FormItem>
+                    <FormItem><FormLabel>Jersey #</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value) || 0)} data-testid="input-player-jersey" /></FormControl><FormMessage/></FormItem>
                )} />
              </div>
              <DialogFooter>
