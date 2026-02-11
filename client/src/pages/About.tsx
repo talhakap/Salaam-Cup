@@ -405,17 +405,15 @@ export default function About() {
               </div>
             ))}
           </div>
-          <div className="flex justify-center mt-8">
+          <div className="w-full aspect-video mt-12 rounded-md overflow-hidden">
             <iframe
-              width="560"
-              height="315"
               src="https://www.youtube.com/embed/2zAYK9ostto?si=kt3EkpdWncMwGBwq"
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
-              className="rounded-md"
+              className="w-full h-full"
               data-testid="video-youtube-embed"
             />
           </div>
