@@ -64,49 +64,65 @@ export async function seedAdminAccounts(): Promise<void> {
 
   for (const email of emails) {
     try {
-      const [existing] = await db.select().from(users).where(eq(users.email, email));
-      if (existing) {
-        if (existing.role !== "admin") {
-          await db.update(users).set({ role: "admin", updatedAt: new Date() }).where(eq(users.id, existing.id));
-          console.log(`Updated ${email} to admin role`);
-        }
-        continue;
-      }
-
       const { data: supabaseUsers } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const supabaseUser = supabaseUsers?.users?.find(u => u.email === email);
+      let supabaseUser = supabaseUsers?.users?.find(u => u.email === email);
+      let generatedPassword: string | null = null;
 
-      if (supabaseUser) {
-        await db.insert(users).values({
-          id: supabaseUser.id,
-          email,
-          role: "admin",
-        }).onConflictDoUpdate({
-          target: users.id,
-          set: { role: "admin", updatedAt: new Date() },
-        });
-        console.log(`Seeded admin account for ${email} (existing Supabase user)`);
-      } else {
-        const password = generatePassword(16);
+      if (!supabaseUser) {
+        generatedPassword = generatePassword(16);
         const { data: newUser, error } = await supabaseAdmin.auth.admin.createUser({
           email,
-          password,
+          password: generatedPassword,
           email_confirm: true,
         });
         if (error) {
           console.error(`Failed to create admin Supabase account for ${email}:`, error.message);
           continue;
         }
+        supabaseUser = newUser.user;
+      }
+
+      const supabaseId = supabaseUser!.id;
+
+      const [existing] = await db.select().from(users).where(eq(users.email, email));
+      if (existing && existing.id !== supabaseId) {
         await db.insert(users).values({
-          id: newUser.user.id,
-          email,
+          id: supabaseId,
+          email: `temp_${supabaseId}@placeholder`,
+          firstName: existing.firstName,
+          lastName: existing.lastName,
+          profileImageUrl: existing.profileImageUrl,
           role: "admin",
         }).onConflictDoUpdate({
           target: users.id,
           set: { role: "admin", updatedAt: new Date() },
         });
-        console.log(`Created admin account for ${email} with password: ${password}`);
+
+        const { teams } = await import("@shared/schema");
+        await db.update(teams).set({ captainUserId: supabaseId }).where(eq(teams.captainUserId, existing.id));
+        await db.delete(users).where(eq(users.id, existing.id));
+
+        await db.update(users).set({ email, updatedAt: new Date() }).where(eq(users.id, supabaseId));
+      } else if (!existing) {
+        await db.insert(users).values({
+          id: supabaseId,
+          email,
+          role: "admin",
+        }).onConflictDoUpdate({
+          target: users.id,
+          set: { role: "admin", email, updatedAt: new Date() },
+        });
+      } else {
+        if (existing.role !== "admin") {
+          await db.update(users).set({ role: "admin", updatedAt: new Date() }).where(eq(users.id, existing.id));
+        }
+      }
+
+      if (generatedPassword) {
+        console.log(`Created admin account for ${email} with password: ${generatedPassword}`);
         console.log(`IMPORTANT: Save this password! It will not be shown again.`);
+      } else {
+        console.log(`Admin account ready for ${email}`);
       }
     } catch (err) {
       console.error(`Error seeding admin for ${email}:`, err);

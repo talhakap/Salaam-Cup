@@ -4,6 +4,23 @@ import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
 import { verifyCaptainCredentials } from "../../supabaseAdmin";
 
+const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_ATTEMPTS = 10;
+const WINDOW_MS = 15 * 60 * 1000;
+
+function checkRateLimit(key: string): boolean {
+  const now = Date.now();
+  const record = loginAttempts.get(key);
+  if (!record || now - record.lastAttempt > WINDOW_MS) {
+    loginAttempts.set(key, { count: 1, lastAttempt: now });
+    return true;
+  }
+  if (record.count >= MAX_ATTEMPTS) return false;
+  record.count++;
+  record.lastAttempt = now;
+  return true;
+}
+
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
   const pgStore = connectPg(session);
@@ -13,6 +30,7 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  const isProduction = process.env.NODE_ENV === "production" || !!process.env.REPL_ID;
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
@@ -20,7 +38,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });
@@ -35,6 +54,9 @@ export async function setupAuth(app: Express) {
       const { email, password } = req.body;
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
+      }
+      if (!checkRateLimit(email.toLowerCase())) {
+        return res.status(429).json({ message: "Too many login attempts. Please try again later." });
       }
       const result = await verifyCaptainCredentials(email, password);
       if (result.error) {

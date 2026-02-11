@@ -89,18 +89,23 @@ The project uses a monorepo layout with three top-level code directories:
 
 ### Required Services
 - **PostgreSQL Database**: Supabase-hosted PostgreSQL. Connection via `SUPABASE_DATABASE_URL` environment variable (falls back to `DATABASE_URL`). Uses Supabase session-mode pooler (port 5432). The code auto-converts transaction-mode pooler URLs (port 6543) to session mode. Used for all data storage and session management.
-- **Replit Auth (OpenID Connect)**: Authentication provider for admins. Requires `ISSUER_URL` (defaults to `https://replit.com/oidc`), `REPL_ID`, and `SESSION_SECRET` environment variables.
-- **Supabase Auth**: Used for captain login (email/password). Server-side admin client (`server/supabaseAdmin.ts`) creates captain accounts when admin approves teams. Requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment variables.
-  - Dual auth: Admins use Replit Auth, captains use Supabase Auth email/password. Both share the same Express session store.
+- **Supabase Auth**: Used for both admin and captain login (email/password). Server-side admin client (`server/supabaseAdmin.ts`) manages user accounts. Requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment variables.
+  - Users table has a `role` column ("admin" or "captain") to distinguish access levels
+  - Admin accounts seeded on startup via `ADMIN_EMAILS` env var (comma-separated). If the Supabase Auth account doesn't exist, one is created with a generated password logged to the console
+  - Admin auth endpoints: POST `/api/admin/login`, POST `/api/admin/logout`, GET `/api/auth/user`
   - Captain auth endpoints: POST `/api/captain/login`, POST `/api/captain/logout`, GET `/api/captain/me`
-  - Team approval endpoint: POST `/api/admin/teams/:id/approve` creates Supabase Auth user + generated password, returns credentials to admin
+  - Team approval endpoint: POST `/api/admin/teams/:id/approve` creates Supabase Auth user + generated password, inserts user with role='captain', returns credentials to admin
+  - Admin login page: `/admin-login`, Admin dashboard: `/admin`
   - Captain login page: `/captain-login`, Captain dashboard: `/captain`
+  - AdminLayout gates all admin pages behind auth check, redirects to `/admin-login` if not authenticated
+  - `requireAdmin` middleware protects all admin API routes, checks role='admin' in users table
+  - To add a new admin: add their email to the `ADMIN_EMAILS` env var and restart the app
 
 ### Key NPM Packages
 - **drizzle-orm** + **drizzle-kit**: Database ORM and migration tooling
 - **express** + **express-session**: HTTP server and session management
 - **connect-pg-simple**: PostgreSQL-backed session store
-- **passport** + **openid-client**: Authentication strategy
+- **@supabase/supabase-js**: Supabase Auth client for admin operations
 - **zod** + **drizzle-zod**: Runtime validation
 - **@tanstack/react-query**: Async state management
 - **react-hook-form** + **@hookform/resolvers**: Form handling
