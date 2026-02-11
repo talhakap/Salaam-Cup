@@ -363,7 +363,7 @@ export default function About() {
 
       {/* WE ADMIRE THEM */}
       {specialAwardsData && specialAwardsData.length > 0 && (
-        <section className="py-16 md:py-24 bg-secondary text-white" data-testid="section-admire">
+        <section className="py-16 md:py-24 bg-stone-900 text-white" data-testid="section-admire">
           <div className="container mx-auto px-4">
             <div className="text-center mb-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Awards Info</p>
@@ -380,7 +380,7 @@ export default function About() {
                   <h3 className="text-lg font-bold font-display mb-2" data-testid={`text-admire-header-${award.id}`}>
                     {award.header}
                   </h3>
-                  <p className="text-sm text-gray-300 leading-relaxed" data-testid={`text-admire-desc-${award.id}`}>
+                  <p className="text-sm text-stone-300 leading-relaxed" data-testid={`text-admire-desc-${award.id}`}>
                     {award.description}
                   </p>
                 </div>
@@ -405,7 +405,22 @@ export default function About() {
               </div>
             ))}
           </div>
+          <div className="flex justify-center mt-8">
+            <iframe
+              width="560"
+              height="315"
+              src="https://www.youtube.com/embed/2zAYK9ostto?si=kt3EkpdWncMwGBwq"
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              className="rounded-md"
+              data-testid="video-youtube-embed"
+            />
+          </div>
         </div>
+        
       </section>
 
       {/* UPCOMING EVENTS */}
