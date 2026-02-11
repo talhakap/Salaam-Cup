@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { randomBytes } from "crypto";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -18,11 +19,10 @@ export const supabaseAdmin = supabaseUrl && supabaseServiceRoleKey
 
 export function generatePassword(length = 12): string {
   const chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$";
+  const bytes = randomBytes(length);
   let password = "";
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
   for (let i = 0; i < length; i++) {
-    password += chars[array[i] % chars.length];
+    password += chars[bytes[i] % chars.length];
   }
   return password;
 }
@@ -32,23 +32,24 @@ export async function createCaptainAccount(email: string, password: string): Pro
     return { userId: "", error: "Supabase Auth is not configured" };
   }
 
-  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-  const existingUser = existingUsers?.users?.find(u => u.email === email);
-  if (existingUser) {
-    return { userId: existingUser.id };
-  }
-
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
   });
 
-  if (error) {
-    return { userId: "", error: error.message };
+  if (createError) {
+    if (createError.message?.includes("already been registered") || createError.status === 422) {
+      const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const existing = listData?.users?.find(u => u.email === email);
+      if (existing) {
+        return { userId: existing.id };
+      }
+    }
+    return { userId: "", error: createError.message };
   }
 
-  return { userId: data.user.id };
+  return { userId: createData.user.id };
 }
 
 export async function verifyCaptainCredentials(email: string, password: string): Promise<{ userId: string; error?: string }> {
