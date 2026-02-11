@@ -1,10 +1,12 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, aboutContent,
+  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, aboutContent, mediaYears, mediaItems,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
   type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertAboutContent,
+  type InsertMediaYear, type InsertMediaItem,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
   type Standing, type Sport, type Award, type News, type Sponsor, type AboutContent,
+  type MediaYear, type MediaItem, type MediaYearWithItems,
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
@@ -79,6 +81,16 @@ export interface IStorage {
   // About Content
   getAboutContent(): Promise<AboutContent | undefined>;
   upsertAboutContent(data: InsertAboutContent): Promise<AboutContent>;
+
+  // Media
+  getMediaYears(): Promise<MediaYearWithItems[]>;
+  createMediaYear(data: InsertMediaYear): Promise<MediaYear>;
+  updateMediaYear(id: number, data: Partial<InsertMediaYear>): Promise<MediaYear>;
+  deleteMediaYear(id: number): Promise<void>;
+  getMediaItems(mediaYearId: number): Promise<MediaItem[]>;
+  createMediaItem(data: InsertMediaItem): Promise<MediaItem>;
+  updateMediaItem(id: number, data: Partial<InsertMediaItem>): Promise<MediaItem>;
+  deleteMediaItem(id: number): Promise<void>;
 
   // Venues
   getVenues(): Promise<Venue[]>;
@@ -523,6 +535,50 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(aboutContent).values(data).returning();
     return created;
+  }
+
+  // Media
+  async getMediaYears(): Promise<MediaYearWithItems[]> {
+    const years = await db.select().from(mediaYears).orderBy(desc(mediaYears.year));
+    const result: MediaYearWithItems[] = [];
+    for (const year of years) {
+      const items = await db.select().from(mediaItems).where(eq(mediaItems.mediaYearId, year.id)).orderBy(mediaItems.sortOrder);
+      result.push({ ...year, items });
+    }
+    return result;
+  }
+
+  async createMediaYear(data: InsertMediaYear): Promise<MediaYear> {
+    const [item] = await db.insert(mediaYears).values(data).returning();
+    return item;
+  }
+
+  async updateMediaYear(id: number, data: Partial<InsertMediaYear>): Promise<MediaYear> {
+    const [item] = await db.update(mediaYears).set(data).where(eq(mediaYears.id, id)).returning();
+    return item;
+  }
+
+  async deleteMediaYear(id: number): Promise<void> {
+    await db.delete(mediaItems).where(eq(mediaItems.mediaYearId, id));
+    await db.delete(mediaYears).where(eq(mediaYears.id, id));
+  }
+
+  async getMediaItems(mediaYearId: number): Promise<MediaItem[]> {
+    return await db.select().from(mediaItems).where(eq(mediaItems.mediaYearId, mediaYearId)).orderBy(mediaItems.sortOrder);
+  }
+
+  async createMediaItem(data: InsertMediaItem): Promise<MediaItem> {
+    const [item] = await db.insert(mediaItems).values(data).returning();
+    return item;
+  }
+
+  async updateMediaItem(id: number, data: Partial<InsertMediaItem>): Promise<MediaItem> {
+    const [item] = await db.update(mediaItems).set(data).where(eq(mediaItems.id, id)).returning();
+    return item;
+  }
+
+  async deleteMediaItem(id: number): Promise<void> {
+    await db.delete(mediaItems).where(eq(mediaItems.id, id));
   }
 
   // Venues

@@ -12,6 +12,8 @@ import {
   insertNewsSchema,
   insertSponsorSchema,
   insertAboutContentSchema,
+  insertMediaYearSchema,
+  insertMediaItemSchema,
   teams,
   players,
   tournaments,
@@ -24,6 +26,8 @@ import {
   news,
   sponsors,
   aboutContent,
+  mediaYears,
+  mediaItems,
 } from './schema';
 
 export const errorSchemas = {
@@ -467,6 +471,69 @@ export const api = {
       input: insertAboutContentSchema,
       responses: {
         200: z.custom<typeof aboutContent.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === MEDIA ===
+  media: {
+    listYears: {
+      method: 'GET' as const,
+      path: '/api/media/years' as const,
+      responses: {
+        200: z.array(z.custom<typeof mediaYears.$inferSelect & { items: (typeof mediaItems.$inferSelect)[] }>()),
+      },
+    },
+    createYear: {
+      method: 'POST' as const,
+      path: '/api/media/years' as const,
+      input: insertMediaYearSchema,
+      responses: {
+        201: z.custom<typeof mediaYears.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    updateYear: {
+      method: 'PATCH' as const,
+      path: '/api/media/years/:id' as const,
+      input: insertMediaYearSchema.partial(),
+      responses: {
+        200: z.custom<typeof mediaYears.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    deleteYear: {
+      method: 'DELETE' as const,
+      path: '/api/media/years/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
+    createItem: {
+      method: 'POST' as const,
+      path: '/api/media/items' as const,
+      input: insertMediaItemSchema,
+      responses: {
+        201: z.custom<typeof mediaItems.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    updateItem: {
+      method: 'PATCH' as const,
+      path: '/api/media/items/:id' as const,
+      input: insertMediaItemSchema.partial(),
+      responses: {
+        200: z.custom<typeof mediaItems.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    deleteItem: {
+      method: 'DELETE' as const,
+      path: '/api/media/items/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,
       },
     },

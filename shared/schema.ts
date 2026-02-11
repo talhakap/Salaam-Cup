@@ -197,6 +197,34 @@ export const insertSponsorSchema = createInsertSchema(sponsors).omit({ id: true,
 export type Sponsor = typeof sponsors.$inferSelect;
 export type InsertSponsor = z.infer<typeof insertSponsorSchema>;
 
+// === MEDIA YEARS ===
+export const mediaYears = pgTable("media_years", {
+  id: serial("id").primaryKey(),
+  year: integer("year").notNull().unique(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertMediaYearSchema = createInsertSchema(mediaYears).omit({ id: true });
+export type MediaYear = typeof mediaYears.$inferSelect;
+export type InsertMediaYear = z.infer<typeof insertMediaYearSchema>;
+
+// === MEDIA ITEMS ===
+export const mediaItems = pgTable("media_items", {
+  id: serial("id").primaryKey(),
+  mediaYearId: integer("media_year_id").references(() => mediaYears.id, { onDelete: "cascade" }).notNull(),
+  imageUrl: text("image_url").notNull(),
+  category: text("category").notNull(),
+  tournamentName: text("tournament_name").notNull(),
+  linkUrl: text("link_url"),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertMediaItemSchema = createInsertSchema(mediaItems).omit({ id: true });
+export type MediaItem = typeof mediaItems.$inferSelect;
+export type InsertMediaItem = z.infer<typeof insertMediaItemSchema>;
+
+export type MediaYearWithItems = MediaYear & { items: MediaItem[] };
+
 // === ABOUT CONTENT ===
 export const aboutContent = pgTable("about_content", {
   id: serial("id").primaryKey(),
@@ -232,6 +260,17 @@ export const newsRelations = relations(news, ({ one }) => ({
   tournament: one(tournaments, {
     fields: [news.tournamentId],
     references: [tournaments.id],
+  }),
+}));
+
+export const mediaYearsRelations = relations(mediaYears, ({ many }) => ({
+  items: many(mediaItems),
+}));
+
+export const mediaItemsRelations = relations(mediaItems, ({ one }) => ({
+  mediaYear: one(mediaYears, {
+    fields: [mediaItems.mediaYearId],
+    references: [mediaYears.id],
   }),
 }));
 

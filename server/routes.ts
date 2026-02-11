@@ -442,6 +442,74 @@ export async function registerRoutes(
     }
   });
 
+  // === MEDIA ===
+  app.get(api.media.listYears.path, async (_req, res) => {
+    const data = await storage.getMediaYears();
+    res.json(data);
+  });
+
+  app.post(api.media.createYear.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.media.createYear.input.parse(req.body);
+      const item = await storage.createMediaYear(input);
+      res.status(201).json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.media.updateYear.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.media.updateYear.input.parse(req.body);
+      const item = await storage.updateMediaYear(Number(req.params.id), input);
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.media.deleteYear.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteMediaYear(Number(req.params.id));
+      res.json({ message: "Year deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
+  app.post(api.media.createItem.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.media.createItem.input.parse(req.body);
+      const item = await storage.createMediaItem(input);
+      res.status(201).json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.media.updateItem.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.media.updateItem.input.parse(req.body);
+      const item = await storage.updateMediaItem(Number(req.params.id), input);
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.media.deleteItem.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteMediaItem(Number(req.params.id));
+      res.json({ message: "Item deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === VENUES ===
   app.get(api.venues.list.path, async (_req, res) => {
     const data = await storage.getVenues();
