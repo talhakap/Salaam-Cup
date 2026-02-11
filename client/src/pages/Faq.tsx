@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SponsorBar } from "@/components/SponsorBar";
 import { useFaqs } from "@/hooks/use-faqs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -13,7 +14,7 @@ export default function Faq() {
 
   return (
     <MainLayout>
-      <section className="py-20 bg-background min-h-[60vh]">
+      <section className="py-20 bg-stone-900 min-h-[60vh] text-white">
         <div className="container mx-auto px-4 max-w-4xl">
           <h1 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-faq-page-title">
             Frequently Asked Questions
@@ -37,7 +38,7 @@ export default function Faq() {
                   >
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground leading-relaxed pb-6" data-testid={`faq-content-${faq.id}`}>
+                  <AccordionContent className="text-gray-300 leading-relaxed pb-6" data-testid={`faq-content-${faq.id}`}>
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -46,6 +47,7 @@ export default function Faq() {
           )}
         </div>
       </section>
+      <SponsorBar />
     </MainLayout>
   );
 }

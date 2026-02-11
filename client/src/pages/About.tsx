@@ -179,6 +179,23 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
   );
 }
 
+function PdfEmbed({ url }: { url: string }) {
+  let src = url;
+  if (src.includes("/api/uploads/")) {
+    src = src.replace("/api/uploads/", "");
+    if (!src.startsWith("/")) src = "/" + src;
+  }
+  return (
+    <div className="w-full" data-testid="about-pdf-embed">
+      <iframe
+        src={src}
+        className="w-full min-h-[600px] md:min-h-[800px] border border-border rounded-md"
+        title="About Us Letter"
+      />
+    </div>
+  );
+}
+
 export default function About() {
   const { data: aboutContentData } = useAboutContent();
   const { data: tournaments } = useTournaments();
@@ -208,13 +225,7 @@ export default function About() {
       <section className="py-16 md:py-24 bg-background" data-testid="section-about-letter">
         <div className="container mx-auto px-4 max-w-4xl">
           {aboutContentData?.contentType === "pdf" && aboutContentData.pdfUrl ? (
-            <div className="w-full" data-testid="about-pdf-embed">
-              <iframe
-                src={aboutContentData.pdfUrl}
-                className="w-full min-h-[600px] md:min-h-[800px] border border-border rounded-md"
-                title="About Us Letter"
-              />
-            </div>
+            <PdfEmbed url={aboutContentData.pdfUrl} />
           ) : aboutContentData?.contentType === "richtext" && aboutContentData.richTextContent ? (
             <div
               className="prose prose-lg max-w-none dark:prose-invert"

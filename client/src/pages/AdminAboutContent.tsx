@@ -49,8 +49,7 @@ export default function AdminAboutContent() {
     }
     const result = await uploadFile(file);
     if (result) {
-      const url = `/api/uploads/${result.objectPath}`;
-      setPdfUrl(url);
+      setPdfUrl(result.objectPath);
       toast({ title: "PDF uploaded successfully" });
     }
   };

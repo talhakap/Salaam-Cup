@@ -530,7 +530,7 @@ export default function Home() {
       </section>
 
       {(featuredFaqs && featuredFaqs.length > 0) && (
-        <section className="py-20 bg-background">
+        <section className="py-20 bg-stone-900 text-white">
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-faq">
               Frequently Asked Questions
@@ -541,7 +541,7 @@ export default function Home() {
                   <AccordionTrigger className="text-left font-bold uppercase text-sm md:text-base tracking-wide py-5 hover:no-underline" data-testid={`faq-trigger-${faq.id}`}>
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+                  <AccordionContent className="text-stone-300 leading-relaxed pb-6">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
