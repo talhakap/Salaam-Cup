@@ -25,7 +25,7 @@ export default function TournamentSchedule() {
 
   const { data: tournament, isLoading } = useTournament(tournamentId);
   const { data: divisions } = useDivisions(tournamentId);
-  const { data: allMatches } = useMatches(tournamentId);
+  const { data: allMatches, isLoading: matchesLoading } = useMatches(tournamentId);
   const { data: venues } = useVenues();
 
   const [filterDivision, setFilterDivision] = useState<string>("all");
@@ -141,7 +141,13 @@ export default function TournamentSchedule() {
             </div>
           </div>
 
-          {filteredMatches.length > 0 ? (
+          {matchesLoading ? (
+            <div className="space-y-4 py-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : filteredMatches.length > 0 ? (
             <div>
               {filteredMatches.map((m: MatchWithTeams) => (
                 <ScheduleMatchRow key={m.id} match={m} divisions={divisions} venues={venues} />

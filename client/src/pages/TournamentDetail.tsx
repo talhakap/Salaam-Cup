@@ -25,9 +25,9 @@ export default function TournamentDetail() {
   const { data: tournament, isLoading } = useTournament(tournamentId);
   const { data: divisions } = useDivisions(tournamentId);
   const { data: allTeams } = useTeams(tournamentId);
-  const { data: allMatches } = useMatches(tournamentId);
+  const { data: allMatches, isLoading: matchesLoading } = useMatches(tournamentId);
   const { data: venues } = useVenues();
-  const { data: allStandings } = useStandings(tournamentId);
+  const { data: allStandings, isLoading: standingsLoading } = useStandings(tournamentId);
 
   const [selectedDivision, setSelectedDivision] = useState<string>("all");
 
@@ -136,7 +136,13 @@ export default function TournamentDetail() {
             </div>
           )}
 
-          {filteredMatches.length > 0 ? (
+          {matchesLoading ? (
+            <div className="mb-8 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : filteredMatches.length > 0 ? (
             <div className="mb-8">
               {filteredMatches.map((m: MatchWithTeams) => (
                 <MatchRow key={m.id} match={m} divisions={divisions} venues={venues} />
@@ -154,7 +160,15 @@ export default function TournamentDetail() {
             </Link>
           </div>
 
-          {filteredStandings.length > 0 && (
+          {standingsLoading && (
+            <div className="mb-8 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          )}
+
+          {!standingsLoading && filteredStandings.length > 0 && (
             <>
               <Table>
                 <TableHeader>
