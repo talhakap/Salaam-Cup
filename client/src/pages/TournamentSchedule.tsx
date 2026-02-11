@@ -177,7 +177,7 @@ function ScheduleMatchRow({ match, divisions, venues }: { match: MatchWithTeams;
           </>
         )}
         {(match.venueId || match.fieldLocation) && (
-          <div className="text-[10px] text-muted-foreground mt-0.5">
+          <div className="text-xs text-muted-foreground">
             {match.venueId && venues ? venues.find(v => v.id === match.venueId)?.name : ""}
             {match.venueId && match.fieldLocation ? " - " : ""}
             {match.fieldLocation || ""}

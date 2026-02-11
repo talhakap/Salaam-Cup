@@ -7,6 +7,7 @@ import { FAQSection } from "@/components/FAQSection";
 import { useTournament, useDivisions } from "@/hooks/use-tournaments";
 import { useTeams } from "@/hooks/use-teams";
 import { useMatches } from "@/hooks/use-matches";
+import { useVenues } from "@/hooks/use-venues";
 import { useStandings } from "@/hooks/use-standings";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
 import { Users, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import type { Division, Team, StandingWithTeam, MatchWithTeams } from "@shared/schema";
+import type { Division, Team, StandingWithTeam, MatchWithTeams, Venue } from "@shared/schema";
 
 export default function TournamentDetail() {
   const [, params] = useRoute("/tournaments/:id");
@@ -25,6 +26,7 @@ export default function TournamentDetail() {
   const { data: divisions } = useDivisions(tournamentId);
   const { data: allTeams } = useTeams(tournamentId);
   const { data: allMatches } = useMatches(tournamentId);
+  const { data: venues } = useVenues();
   const { data: allStandings } = useStandings(tournamentId);
 
   const [selectedDivision, setSelectedDivision] = useState<string>("all");
@@ -137,7 +139,7 @@ export default function TournamentDetail() {
           {filteredMatches.length > 0 ? (
             <div className="mb-8">
               {filteredMatches.map((m: MatchWithTeams) => (
-                <MatchRow key={m.id} match={m} divisions={divisions} />
+                <MatchRow key={m.id} match={m} divisions={divisions} venues={venues} />
               ))}
             </div>
           ) : (
@@ -257,12 +259,13 @@ export default function TournamentDetail() {
   );
 }
 
-function MatchRow({ match, divisions }: { match: MatchWithTeams; divisions?: Division[] }) {
+function MatchRow({ match, divisions, venues }: { match: MatchWithTeams; divisions?: Division[]; venues?: Venue[] }) {
   const matchDate = match.startTime ? new Date(match.startTime) : null;
   const isLive = match.status === "live";
   const isFinal = match.status === "final";
   const isScheduled = match.status === "scheduled";
   const division = divisions?.find(d => d.id === match.divisionId);
+  const venueName = match.venueId && venues ? venues.find(v => v.id === match.venueId)?.name : null;
 
   return (
     <div className="flex items-center py-4 border-b gap-2 md:gap-4" data-testid={`match-row-${match.id}`}>
@@ -274,6 +277,11 @@ function MatchRow({ match, divisions }: { match: MatchWithTeams; divisions?: Div
               {matchDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
             </div>
           </>
+        )}
+        {(venueName || match.fieldLocation) && (
+          <div>
+            {venueName}{venueName && match.fieldLocation ? " - " : ""}{match.fieldLocation || ""}
+          </div>
         )}
       </div>
 
