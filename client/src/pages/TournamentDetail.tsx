@@ -85,7 +85,7 @@ export default function TournamentDetail() {
     }
     const groups: { division: Division | undefined; teams: Team[] }[] = [];
     for (const div of (divisions || [])) {
-      const divTeams = sortedTeams.filter((t: Team) => t.divisionId === div.id);
+      const divTeams = sortedTeams.filter((t: Team) => String(t.divisionId) === String(div.id));
       if (divTeams.length > 0) {
         groups.push({ division: div, teams: divTeams });
       }
