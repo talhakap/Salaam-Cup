@@ -144,7 +144,7 @@ export default function TournamentStandings() {
         </div>
       </section>
 
-      <ReadyToCompete />
+      <ReadyToCompete tournamentId={tournamentId} divisions={divisions} />
       <FAQSection />
     </MainLayout>
   );

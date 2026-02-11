@@ -200,7 +200,7 @@ export default function TournamentDetail() {
         </div>
       </section>
 
-      <ReadyToCompete />
+      <ReadyToCompete tournamentId={tournamentId} divisions={divisions} />
       <FAQSection />
     </MainLayout>
   );
