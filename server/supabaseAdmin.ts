@@ -68,11 +68,14 @@ export async function seedAdminAccounts(): Promise<void> {
       let supabaseUser = supabaseUsers?.users?.find(u => u.email === email);
       let generatedPassword: string | null = null;
 
+      const customPassword = process.env.ADMIN_PASSWORD;
+
       if (!supabaseUser) {
-        generatedPassword = generatePassword(16);
+        const password = customPassword || generatePassword(16);
+        if (!customPassword) generatedPassword = password;
         const { data: newUser, error } = await supabaseAdmin.auth.admin.createUser({
           email,
-          password: generatedPassword,
+          password,
           email_confirm: true,
         });
         if (error) {
@@ -80,6 +83,8 @@ export async function seedAdminAccounts(): Promise<void> {
           continue;
         }
         supabaseUser = newUser.user;
+      } else if (customPassword) {
+        await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, { password: customPassword });
       }
 
       const supabaseId = supabaseUser!.id;
