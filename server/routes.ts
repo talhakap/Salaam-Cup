@@ -763,13 +763,33 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  app.post(api.venues.create.path, async (req, res) => {
+  app.post(api.venues.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.venues.create.input.parse(req.body);
       const venue = await storage.createVenue(input);
       res.status(201).json(venue);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.venues.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.venues.update.input.parse(req.body);
+      const venue = await storage.updateVenue(Number(req.params.id), input);
+      res.json(venue);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.venues.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteVenue(Number(req.params.id));
+      res.json({ message: "Venue deleted" });
+    } catch (err) {
       throw err;
     }
   });

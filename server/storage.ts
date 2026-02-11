@@ -104,6 +104,8 @@ export interface IStorage {
   // Venues
   getVenues(): Promise<Venue[]>;
   createVenue(data: InsertVenue): Promise<Venue>;
+  updateVenue(id: number, data: Partial<InsertVenue>): Promise<Venue>;
+  deleteVenue(id: number): Promise<void>;
 
   // FAQs
   getFaqs(): Promise<Faq[]>;
@@ -646,6 +648,15 @@ export class DatabaseStorage implements IStorage {
   async createVenue(data: InsertVenue): Promise<Venue> {
     const [venue] = await db.insert(venues).values(data).returning();
     return venue;
+  }
+
+  async updateVenue(id: number, data: Partial<InsertVenue>): Promise<Venue> {
+    const [venue] = await db.update(venues).set(data).where(eq(venues.id, id)).returning();
+    return venue;
+  }
+
+  async deleteVenue(id: number): Promise<void> {
+    await db.delete(venues).where(eq(venues.id, id));
   }
 
   // FAQs

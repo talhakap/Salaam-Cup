@@ -2,6 +2,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { useMatches, useCreateMatch, useUpdateMatch, useDeleteMatch, useImportMatches } from "@/hooks/use-matches";
 import { useAllTeams } from "@/hooks/use-teams";
+import { useVenues } from "@/hooks/use-venues";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,7 @@ import { Loader2, Plus, Pencil, Trash2, Calendar, Upload, Download, AlertTriangl
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import Papa from "papaparse";
-import type { Match, Team, Division, Tournament } from "@shared/schema";
+import type { Match, Team, Division, Tournament, Venue } from "@shared/schema";
 
 type MatchWithTeams = Match & { homeTeam: Team | null; awayTeam: Team | null };
 
@@ -24,6 +25,7 @@ function MatchFormDialog({
   tournamentId,
   divisions,
   teams,
+  venues,
 }: {
   match?: MatchWithTeams;
   open: boolean;
@@ -31,6 +33,7 @@ function MatchFormDialog({
   tournamentId: number;
   divisions: Division[];
   teams: Team[];
+  venues: Venue[];
 }) {
   const createMatch = useCreateMatch();
   const updateMatch = useUpdateMatch();
@@ -46,6 +49,8 @@ function MatchFormDialog({
   const [status, setStatus] = useState<string>(match?.status || "scheduled");
   const [round, setRound] = useState(match?.round || "");
   const [matchNumber, setMatchNumber] = useState(match?.matchNumber ?? 0);
+  const [venueId, setVenueId] = useState<string>(match?.venueId ? String(match.venueId) : "none");
+  const [fieldLocation, setFieldLocation] = useState(match?.fieldLocation || "");
 
   const filteredTeams = divisionId ? teams.filter(t => t.divisionId === Number(divisionId)) : teams;
 
@@ -62,6 +67,8 @@ function MatchFormDialog({
       status,
       round: round || null,
       matchNumber: matchNumber || null,
+      venueId: venueId && venueId !== "none" ? Number(venueId) : null,
+      fieldLocation: fieldLocation.trim() || null,
     };
     try {
       if (isEdit && match) {
@@ -154,6 +161,27 @@ function MatchFormDialog({
               <Input type="number" value={matchNumber} onChange={e => setMatchNumber(parseInt(e.target.value) || 0)} />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">Venue</label>
+              <Select value={venueId} onValueChange={setVenueId}>
+                <SelectTrigger data-testid="select-match-venue"><SelectValue placeholder="Select venue" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">-- None --</SelectItem>
+                  {venues.map(v => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Field / Rink</label>
+              <Input
+                data-testid="input-match-field-location"
+                value={fieldLocation}
+                onChange={e => setFieldLocation(e.target.value)}
+                placeholder="e.g. Field 1, Rink A"
+              />
+            </div>
+          </div>
           <DialogFooter>
             <Button type="submit" disabled={createMatch.isPending || updateMatch.isPending} data-testid={isEdit ? "button-save-match" : "button-create-match-submit"}>
               {(createMatch.isPending || updateMatch.isPending) && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
@@ -173,6 +201,7 @@ export default function AdminMatches() {
   const { data: matches, isLoading: matchesLoading } = useMatches(activeTournamentId);
   const { data: divisions } = useDivisions(activeTournamentId);
   const { data: allTeams } = useAllTeams();
+  const { data: venues } = useVenues();
   const deleteMatch = useDeleteMatch();
   const importMatches = useImportMatches();
   const { toast } = useToast();
@@ -335,6 +364,12 @@ export default function AdminMatches() {
                     {match.startTime && (
                       <span className="ml-2">{format(new Date(match.startTime), "MMM d, yyyy h:mm a")}</span>
                     )}
+                    {match.venueId && venues && (
+                      <span className="ml-2">{venues.find(v => v.id === match.venueId)?.name}</span>
+                    )}
+                    {match.fieldLocation && (
+                      <span className="ml-1">({match.fieldLocation})</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -358,6 +393,7 @@ export default function AdminMatches() {
           tournamentId={activeTournamentId}
           divisions={divisions}
           teams={tournamentTeams}
+          venues={venues || []}
         />
       )}
 
@@ -369,6 +405,7 @@ export default function AdminMatches() {
           tournamentId={activeTournamentId}
           divisions={divisions}
           teams={tournamentTeams}
+          venues={venues || []}
         />
       )}
 

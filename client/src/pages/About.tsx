@@ -79,6 +79,9 @@ const celebrationImages = [
   "/images/hero-tournaments.png",
   "/images/hero-media.png",
   "/images/hero-register.png",
+  "/images/hero-landing.png",
+  "/images/hero-about.png",
+  
 ];
 
 function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tournament[]; sports: Sport[] }) {
@@ -398,31 +401,39 @@ export default function About() {
               How We Celebrated
             </h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {celebrationImages.map((img, i) => (
-              <div key={i} className="aspect-square rounded-md overflow-hidden" data-testid={`img-celebration-${i}`}>
-                <img src={img} alt={`Celebration ${i + 1}`} className="w-full h-full object-cover" />
+              <div
+                key={i}
+                className="aspect-[16/9] overflow-hidden rounded-xl bg-black/5"
+                data-testid={`img-celebration-${i}`}
+              >
+                <img
+                  src={img}
+                  alt={`Celebration ${i + 1}`}
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                  loading="lazy"
+                />
               </div>
             ))}
           </div>
-          <div className="w-full aspect-video mt-12 rounded-md overflow-hidden">
-            <iframe
-              src="https://www.youtube.com/embed/2zAYK9ostto?si=kt3EkpdWncMwGBwq"
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-              className="w-full h-full"
-              data-testid="video-youtube-embed"
-            />
+          <div className="mt-16 flex justify-center">
+            <div className="w-full max-w-5xl aspect-video">
+              <iframe
+                className="w-full h-full rounded-xl shadow-lg"
+                src="https://www.youtube.com/embed/2zAYK9ostto"
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              ></iframe>
+            </div>
           </div>
         </div>
         
       </section>
 
       {/* UPCOMING EVENTS */}
-      <section className="py-16 md:py-24 bg-foreground text-background" data-testid="section-about-upcoming">
+      <section className="py-16 md:py-24 bg-background text-foreground" data-testid="section-about-upcoming">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-about-upcoming-events">
             Upcoming Events

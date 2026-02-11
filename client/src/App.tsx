@@ -27,6 +27,7 @@ import AdminAboutContent from "@/pages/AdminAboutContent";
 import AdminMedia from "@/pages/AdminMedia";
 import AdminFaqs from "@/pages/AdminFaqs";
 import AdminSpecialAwards from "@/pages/AdminSpecialAwards";
+import AdminVenues from "@/pages/AdminVenues";
 import AdminLogin from "@/pages/AdminLogin";
 import Media from "@/pages/Media";
 import Faq from "@/pages/Faq";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/admin/media" component={AdminMedia} />
       <Route path="/admin/faqs" component={AdminFaqs} />
       <Route path="/admin/special-awards" component={AdminSpecialAwards} />
+      <Route path="/admin/venues" component={AdminVenues} />
 
       <Route path="/media" component={Media} /> 
       <Route path="/faq" component={Faq} />

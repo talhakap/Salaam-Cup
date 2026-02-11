@@ -46,6 +46,7 @@ export const tournaments = pgTable("tournaments", {
   description: text("description"),
   isFeatured: boolean("is_featured").default(false),
   registrationOpen: boolean("registration_open").default(false),
+  venueId: integer("venue_id").references(() => venues.id),
 });
 
 export const insertTournamentSchema = createInsertSchema(tournaments).omit({ id: true });
@@ -62,6 +63,7 @@ export const divisions = pgTable("divisions", {
   gameFormat: text("game_format"),
   registrationFee: integer("registration_fee"),
   rulesContent: text("rules_content"),
+  venueId: integer("venue_id").references(() => venues.id),
 });
 
 export const insertDivisionSchema = createInsertSchema(divisions).omit({ id: true });
@@ -121,6 +123,7 @@ export const matches = pgTable("matches", {
   homeTeamId: integer("home_team_id").references(() => teams.id),
   awayTeamId: integer("away_team_id").references(() => teams.id),
   venueId: integer("venue_id").references(() => venues.id),
+  fieldLocation: text("field_location"),
   startTime: timestamp("start_time"),
   homeScore: integer("home_score").default(0),
   awayScore: integer("away_score").default(0),

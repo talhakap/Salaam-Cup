@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { useTournaments, useCreateTournament, useUpdateTournament, useDeleteTournament, useDivisions, useCreateDivision, useUpdateDivision, useDeleteDivision } from "@/hooks/use-tournaments";
+import { useVenues } from "@/hooks/use-venues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTournamentSchema, insertDivisionSchema } from "@shared/schema";
-import type { Tournament, Division } from "@shared/schema";
+import type { Tournament, Division, Venue } from "@shared/schema";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
@@ -87,7 +88,7 @@ function ImageUploadField({
   );
 }
 
-function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: number | string }) {
+function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournamentId: number | string; venues: Venue[] }) {
   const tournamentId = Number(rawTournamentId);
   const { data: divisions, isLoading } = useDivisions(tournamentId);
   const createDivision = useCreateDivision();
@@ -107,6 +108,7 @@ function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: numb
       description: "",
       gameFormat: "",
       registrationFee: 0,
+      venueId: null as number | null,
     },
   });
 
@@ -117,6 +119,7 @@ function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: numb
       description: "",
       gameFormat: "",
       registrationFee: 0,
+      venueId: null as number | null,
     },
   });
 
@@ -125,7 +128,7 @@ function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: numb
       await createDivision.mutateAsync({ ...data, tournamentId });
       toast({ title: "Division created" });
       setCreateOpen(false);
-      createForm.reset({ tournamentId, name: "", category: "", description: "", gameFormat: "", registrationFee: 0 });
+      createForm.reset({ tournamentId, name: "", category: "", description: "", gameFormat: "", registrationFee: 0, venueId: null });
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -161,6 +164,7 @@ function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: numb
       description: div.description || "",
       gameFormat: div.gameFormat || "",
       registrationFee: div.registrationFee || 0,
+      venueId: div.venueId || null,
     });
   };
 
@@ -199,6 +203,21 @@ function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: numb
                 )} />
                 <FormField control={createForm.control} name="registrationFee" render={({ field }) => (
                   <FormItem><FormLabel>Registration Fee ($)</FormLabel><FormControl><Input type="number" {...field} value={field.value || 0} onChange={e => field.onChange(parseInt(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={createForm.control} name="venueId" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Venue</FormLabel>
+                    <Select value={field.value ? String(field.value) : "none"} onValueChange={v => field.onChange(v === "none" ? null : Number(v))}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-division-venue"><SelectValue placeholder="Select venue" /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">-- None --</SelectItem>
+                        {venues.map(v => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )} />
                 <DialogFooter>
                   <Button type="submit" disabled={createDivision.isPending} data-testid="button-create-division-submit">
@@ -265,6 +284,19 @@ function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: numb
               <label className="text-sm font-medium">Registration Fee ($)</label>
               <Input type="number" {...editForm.register("registrationFee", { valueAsNumber: true })} />
             </div>
+            <div>
+              <label className="text-sm font-medium">Venue</label>
+              <Select
+                value={editForm.watch("venueId") ? String(editForm.watch("venueId")) : "none"}
+                onValueChange={v => editForm.setValue("venueId", v === "none" ? null : Number(v))}
+              >
+                <SelectTrigger data-testid="select-edit-division-venue"><SelectValue placeholder="Select venue" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">-- None --</SelectItem>
+                  {venues.map(v => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <DialogFooter>
               <Button type="submit" disabled={updateDivision.isPending} data-testid="button-update-division-submit">
                 {updateDivision.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Save
@@ -296,6 +328,7 @@ function DivisionManager({ tournamentId: rawTournamentId }: { tournamentId: numb
 
 export default function AdminTournaments() {
   const { data: tournaments, isLoading } = useTournaments();
+  const { data: venues } = useVenues();
   const createTournament = useCreateTournament();
   const updateTournament = useUpdateTournament();
   const deleteTournament = useDeleteTournament();
@@ -320,6 +353,7 @@ export default function AdminTournaments() {
       heroImage: "",
       logoUrl: "",
       isFeatured: false,
+      venueId: null as number | null,
     },
   });
 
@@ -335,6 +369,7 @@ export default function AdminTournaments() {
       heroImage: "",
       logoUrl: "",
       isFeatured: false,
+      venueId: null as number | null,
     },
   });
 
@@ -362,6 +397,7 @@ export default function AdminTournaments() {
       heroImage: t.heroImage || "",
       logoUrl: t.logoUrl || "",
       isFeatured: t.isFeatured || false,
+      venueId: t.venueId || null,
     });
   };
 
@@ -411,7 +447,7 @@ export default function AdminTournaments() {
     }
   };
 
-  const TournamentFormFields = ({ form, prefix = "" }: { form: any; prefix?: string }) => (
+  const TournamentFormFields = ({ form, prefix = "" }: { form: any; prefix?: string; }) => (
     <>
       <div className="grid grid-cols-2 gap-4">
         <FormField control={form.control} name="name" render={({ field }: any) => (
@@ -460,6 +496,21 @@ export default function AdminTournaments() {
       </div>
       <FormField control={form.control} name="description" render={({ field }: any) => (
         <FormItem><FormLabel>Description</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+      )} />
+      <FormField control={form.control} name="venueId" render={({ field }: any) => (
+        <FormItem>
+          <FormLabel>Venue</FormLabel>
+          <Select value={field.value ? String(field.value) : "none"} onValueChange={(v: string) => field.onChange(v === "none" ? null : Number(v))}>
+            <FormControl>
+              <SelectTrigger data-testid={`${prefix}select-tournament-venue`}><SelectValue placeholder="Select venue" /></SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value="none">-- None --</SelectItem>
+              {(venues || []).map((v: Venue) => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
       )} />
       <div className="grid grid-cols-2 gap-4">
         <FormField control={form.control} name="heroImage" render={({ field }: any) => (
@@ -578,7 +629,7 @@ export default function AdminTournaments() {
               </div>
               {expandedId === t.id && (
                 <div className="px-4 pb-4">
-                  <DivisionManager tournamentId={t.id} />
+                  <DivisionManager tournamentId={t.id} venues={venues || []} />
                 </div>
               )}
             </div>

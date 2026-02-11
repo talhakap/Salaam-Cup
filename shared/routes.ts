@@ -561,6 +561,23 @@ export const api = {
         403: errorSchemas.forbidden,
       },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/venues/:id' as const,
+      input: insertVenueSchema.partial(),
+      responses: {
+        200: z.custom<typeof venues.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/venues/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
   },
 
   // === FAQS ===
