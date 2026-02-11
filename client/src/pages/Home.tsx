@@ -2,6 +2,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { useNews } from "@/hooks/use-news";
+import { useFeaturedFaqs } from "@/hooks/use-faqs";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import heroImg from "/images/hero-landing.png";
@@ -53,28 +54,6 @@ const valueCards = [
 ];
 
 
-const faqItems = [
-  {
-    q: "What is Salaam Cup?",
-    a: "Salaam Cup is a premier community sports organization dedicated to hosting high-quality tournaments that unite athletes through competition, faith, and excellence. We aim to foster an environment where sportsmanship, teamwork, and community pride come together on and off the field.",
-  },
-  {
-    q: "What makes Salaam Cup different?",
-    a: "Salaam Cup stands out for its professional-grade tournament organization, commitment to community values, and inclusive approach to sports. We combine competitive excellence with a welcoming environment for athletes of all skill levels.",
-  },
-  {
-    q: "This league looks too good, can a rookie join?",
-    a: "We welcome players of all skill levels. We have divisions designed for competitive play as well as recreational divisions where newer players can develop their skills in a supportive environment.",
-  },
-  {
-    q: "Can I join alone or do I have to have a team?",
-    a: "You can register as a free agent and we will help connect you with teams that are looking for players. Alternatively, you can form your own team and register together.",
-  },
-  {
-    q: "How can I volunteer or sponsor the tournament?",
-    a: "We are always looking for volunteers and sponsors. Please reach out to us through the Contact page or email info@salaamcup.com to learn about opportunities.",
-  },
-];
 
 const divisionImages = [
   "/images/hero-landing.png",
@@ -397,6 +376,7 @@ export default function Home() {
   const { data: tournaments } = useTournaments();
   const { data: newsItems, isLoading: newsLoading } = useNews();
   const { data: sports, isLoading: sportsLoading } = useQuery<Sport[]>({ queryKey: ["/api/sports"] });
+  const { data: featuredFaqs } = useFeaturedFaqs();
 
   const upcomingTournaments = (tournaments || []).filter(t => t.status === "active" || t.status === "upcoming");
 

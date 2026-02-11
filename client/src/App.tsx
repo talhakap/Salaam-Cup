@@ -25,8 +25,10 @@ import AdminNews from "@/pages/AdminNews";
 import AdminSponsors from "@/pages/AdminSponsors";
 import AdminAboutContent from "@/pages/AdminAboutContent";
 import AdminMedia from "@/pages/AdminMedia";
+import AdminFaqs from "@/pages/AdminFaqs";
 import AdminLogin from "@/pages/AdminLogin";
 import Media from "@/pages/Media";
+import Faq from "@/pages/Faq";
 import TournamentAwards from "@/pages/TournamentAwards";
 
 function Router() {
@@ -56,9 +58,10 @@ function Router() {
       <Route path="/admin/sponsors" component={AdminSponsors} />
       <Route path="/admin/about-content" component={AdminAboutContent} />
       <Route path="/admin/media" component={AdminMedia} />
+      <Route path="/admin/faqs" component={AdminFaqs} />
 
       <Route path="/media" component={Media} /> 
-      <Route path="/faq" component={About} />
+      <Route path="/faq" component={Faq} />
 
       <Route component={NotFound} />
     </Switch>

@@ -737,6 +737,48 @@ export async function registerRoutes(
     }
   });
 
+  // === FAQS ===
+  app.get(api.faqs.list.path, async (_req, res) => {
+    const data = await storage.getFaqs();
+    res.json(data);
+  });
+
+  app.get(api.faqs.featured.path, async (_req, res) => {
+    const data = await storage.getFeaturedFaqs();
+    res.json(data);
+  });
+
+  app.post(api.faqs.create.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.faqs.create.input.parse(req.body);
+      const faq = await storage.createFaq(input);
+      res.status(201).json(faq);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.faqs.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.faqs.update.input.parse(req.body);
+      const faq = await storage.updateFaq(Number(req.params.id), input);
+      res.json(faq);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.faqs.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteFaq(Number(req.params.id));
+      res.json({ message: "FAQ deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // Seed database on startup
   seedDatabase();
 

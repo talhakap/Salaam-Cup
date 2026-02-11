@@ -14,6 +14,7 @@ import {
   insertAboutContentSchema,
   insertMediaYearSchema,
   insertMediaItemSchema,
+  insertFaqSchema,
   teams,
   players,
   tournaments,
@@ -28,6 +29,7 @@ import {
   aboutContent,
   mediaYears,
   mediaItems,
+  faqs,
 } from './schema';
 
 export const errorSchemas = {
@@ -554,6 +556,52 @@ export const api = {
       input: insertVenueSchema,
       responses: {
         201: z.custom<typeof venues.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === FAQS ===
+  faqs: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/faqs' as const,
+      responses: {
+        200: z.array(z.custom<typeof faqs.$inferSelect>()),
+      },
+    },
+    featured: {
+      method: 'GET' as const,
+      path: '/api/faqs/featured' as const,
+      responses: {
+        200: z.array(z.custom<typeof faqs.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/faqs' as const,
+      input: insertFaqSchema,
+      responses: {
+        201: z.custom<typeof faqs.$inferSelect>(),
+        400: errorSchemas.validation,
+        403: errorSchemas.forbidden,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/faqs/:id' as const,
+      input: insertFaqSchema.partial(),
+      responses: {
+        200: z.custom<typeof faqs.$inferSelect>(),
+        400: errorSchemas.validation,
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/faqs/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,
       },
     },

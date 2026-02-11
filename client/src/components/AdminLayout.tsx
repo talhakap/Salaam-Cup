@@ -15,6 +15,7 @@ import {
   Handshake,
   FileText,
   Image,
+  HelpCircle,
   Loader2
 } from "lucide-react";
 import { useState } from "react";
@@ -49,6 +50,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Sponsors", href: "/admin/sponsors", icon: Handshake },
     { label: "About Page", href: "/admin/about-content", icon: FileText },
     { label: "Media Gallery", href: "/admin/media", icon: Image },
+    { label: "FAQs", href: "/admin/faqs", icon: HelpCircle },
   ];
 
   return (

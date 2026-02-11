@@ -1,12 +1,12 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, aboutContent, mediaYears, mediaItems,
+  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, aboutContent, mediaYears, mediaItems, faqs,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
   type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertAboutContent,
-  type InsertMediaYear, type InsertMediaItem,
+  type InsertMediaYear, type InsertMediaItem, type InsertFaq,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
   type Standing, type Sport, type Award, type News, type Sponsor, type AboutContent,
-  type MediaYear, type MediaItem, type MediaYearWithItems,
+  type MediaYear, type MediaItem, type MediaYearWithItems, type Faq,
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
@@ -98,6 +98,13 @@ export interface IStorage {
   // Venues
   getVenues(): Promise<Venue[]>;
   createVenue(data: InsertVenue): Promise<Venue>;
+
+  // FAQs
+  getFaqs(): Promise<Faq[]>;
+  getFeaturedFaqs(): Promise<Faq[]>;
+  createFaq(data: InsertFaq): Promise<Faq>;
+  updateFaq(id: number, data: Partial<InsertFaq>): Promise<Faq>;
+  deleteFaq(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -614,6 +621,29 @@ export class DatabaseStorage implements IStorage {
   async createVenue(data: InsertVenue): Promise<Venue> {
     const [venue] = await db.insert(venues).values(data).returning();
     return venue;
+  }
+
+  // FAQs
+  async getFaqs(): Promise<Faq[]> {
+    return await db.select().from(faqs).orderBy(faqs.sortOrder);
+  }
+
+  async getFeaturedFaqs(): Promise<Faq[]> {
+    return await db.select().from(faqs).where(eq(faqs.featured, true)).orderBy(faqs.sortOrder);
+  }
+
+  async createFaq(data: InsertFaq): Promise<Faq> {
+    const [faq] = await db.insert(faqs).values(data).returning();
+    return faq;
+  }
+
+  async updateFaq(id: number, data: Partial<InsertFaq>): Promise<Faq> {
+    const [faq] = await db.update(faqs).set(data).where(eq(faqs.id, id)).returning();
+    return faq;
+  }
+
+  async deleteFaq(id: number): Promise<void> {
+    await db.delete(faqs).where(eq(faqs.id, id));
   }
 }
 
