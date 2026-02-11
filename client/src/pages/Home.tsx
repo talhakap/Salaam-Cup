@@ -137,23 +137,29 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
         >
           {tournaments.map((t) => {
             const sport = t.sportId ? sportMap.get(t.sportId) : null;
-            const icon = sport?.icon || "hockey";
-            const logo = sportLogoMap[icon] || sportLogoMap.hockey;
-            const bg = sportBgMap[icon] || sportBgMap.hockey;
-            const desc = sportDescriptions[icon] || sportDescriptions.hockey;
+            const nameLC = t.name.toLowerCase();
+            const detectedIcon = sport?.icon
+              || (nameLC.includes("hockey") ? "hockey"
+                : nameLC.includes("basketball") ? "basketball"
+                : nameLC.includes("softball") ? "softball"
+                : nameLC.includes("soccer") || nameLC.includes("football") ? "soccer"
+                : "hockey");
+            const logo = sportLogoMap[detectedIcon] || sportLogoMap.hockey;
+            const bg = sportBgMap[detectedIcon] || sportBgMap.hockey;
+            const desc = sportDescriptions[detectedIcon] || sportDescriptions.hockey;
             const dateStr = t.startDate
               ? (() => { try { return format(parseISO(t.startDate), "MMM d, yyyy"); } catch { return t.startDate; } })()
               : "TBD";
 
             return (
               <div key={t.id} className="w-full flex-shrink-0 px-4 md:px-12" data-testid={`card-upcoming-${t.id}`}>
-                <div className="relative rounded-xl overflow-hidden max-w-2xl mx-auto">
+                <div className="relative rounded-xl overflow-hidden max-w-md mx-auto aspect-square">
                   <div className="absolute inset-0">
                     <img src={bg} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50" />
                   </div>
-                  <div className="relative z-10 flex flex-col items-center text-center px-6 pt-10 pb-8">
-                    <div className="w-32 h-32 md:w-40 md:h-40 mb-6">
+                  <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 h-full">
+                    <div className="w-36 h-36 md:w-44 md:h-44 mb-4">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
@@ -163,7 +169,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                     <h3 className="text-xl md:text-2xl font-bold font-display uppercase text-white tracking-wide mb-2" data-testid={`text-upcoming-name-${t.id}`}>
                       {t.name}
                     </h3>
-                    <p className="text-sm text-gray-300 max-w-sm mb-6 leading-relaxed">
+                    <p className="text-sm text-gray-300 max-w-sm mb-4 leading-relaxed">
                       {t.description || desc}
                     </p>
                     <div className="text-sm text-gray-200 font-semibold">
@@ -443,7 +449,7 @@ export default function Home() {
           </h2>
           {sportsLoading ? (
             <div className="flex justify-center py-12">
-              <div className="w-64 h-80 rounded-xl bg-muted animate-pulse" />
+              <div className="w-64h-80 rounded-xl bg-muted animate-pulse" />
             </div>
           ) : upcomingTournaments.length > 0 && sports ? (
             <UpcomingEventsCarousel tournaments={upcomingTournaments} sports={sports} />
