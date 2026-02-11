@@ -131,6 +131,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTournament(id: number): Promise<void> {
+    await db.delete(awards).where(eq(awards.tournamentId, id));
+    await db.delete(news).where(eq(news.tournamentId, id));
     await db.delete(standings).where(eq(standings.tournamentId, id));
     await db.delete(matches).where(eq(matches.tournamentId, id));
     const teamRows = await db.select().from(teams).where(eq(teams.tournamentId, id));
