@@ -15,7 +15,7 @@ export function TournamentNav({ tournamentId }: { tournamentId: number }) {
   const basePath = `/tournaments/${tournamentId}`;
 
   return (
-    <nav className="border-b border-border bg-background sticky top-0 z-30" data-testid="tournament-nav">
+    <nav className="border-b border-border bg-background sticky top-0 z-30 items-center" data-testid="tournament-nav">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-1 overflow-x-auto py-1">
           {navItems.map((item) => {
