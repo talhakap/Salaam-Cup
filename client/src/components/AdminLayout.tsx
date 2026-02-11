@@ -65,7 +65,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold font-display">ADMIN PORTAL</span>
+            <span className="text-stone-900 text-xl font-bold font-display">ADMIN PORTAL</span>
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-1">

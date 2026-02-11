@@ -65,49 +65,70 @@ export async function registerRoutes(
       if (!team) return res.status(404).json({ message: "Team not found" });
       if (team.status === "approved") return res.status(400).json({ message: "Team already approved" });
 
-      const password = generatePassword();
-      const { userId, error } = await createCaptainAccount(team.captainEmail, password);
-
-      if (error) {
-        return res.status(500).json({ message: `Failed to create captain account: ${error}` });
-      }
-
       const { authStorage } = await import("./replit_integrations/auth/storage");
-      await authStorage.upsertUser({
-        id: userId,
-        email: team.captainEmail,
-        firstName: team.captainName?.split(" ")[0] || null,
-        lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
-        role: "captain",
-        password: password,
-      });
+      const { db } = await import("./db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+
+      const [existingUser] = await db.select().from(users).where(eq(users.email, team.captainEmail));
+
+      let userId: string;
+      let password: string | null = null;
+      let isNewAccount = false;
+
+      if (existingUser && existingUser.role === "captain") {
+        userId = existingUser.id;
+      } else {
+        password = generatePassword();
+        const { userId: newUserId, error } = await createCaptainAccount(team.captainEmail, password);
+
+        if (error) {
+          return res.status(500).json({ message: `Failed to create captain account: ${error}` });
+        }
+        userId = newUserId;
+        isNewAccount = true;
+
+        await authStorage.upsertUser({
+          id: userId,
+          email: team.captainEmail,
+          firstName: team.captainName?.split(" ")[0] || null,
+          lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
+          role: "captain",
+          password: password,
+        });
+      }
 
       await storage.updateTeam(teamId, { status: "approved", captainUserId: userId });
 
       await storage.claimTeamsByEmail(team.captainEmail, userId);
 
-      try {
-        const { sendCaptainCredentialsEmail } = await import("./mailgun");
-        const baseUrl = `${req.protocol}://${req.get("host")}`;
-        await sendCaptainCredentialsEmail(
-          team.captainEmail,
-          team.captainName || "Captain",
-          team.name,
-          password,
-          `${baseUrl}/captain-login`
-        );
-        console.log(`Credentials email sent to ${team.captainEmail}`);
-      } catch (emailErr) {
-        console.error("Failed to send credentials email:", emailErr);
+      if (isNewAccount && password) {
+        try {
+          const { sendCaptainCredentialsEmail } = await import("./mailgun");
+          const baseUrl = `${req.protocol}://${req.get("host")}`;
+          await sendCaptainCredentialsEmail(
+            team.captainEmail,
+            team.captainName || "Captain",
+            team.name,
+            password,
+            `${baseUrl}/captain-login`
+          );
+          console.log(`Credentials email sent to ${team.captainEmail}`);
+        } catch (emailErr) {
+          console.error("Failed to send credentials email:", emailErr);
+        }
       }
 
       res.json({
         team: { ...team, status: "approved", captainUserId: userId },
-        credentials: {
+        credentials: isNewAccount && password ? {
           email: team.captainEmail,
           password,
           loginUrl: "/captain-login",
-        },
+        } : null,
+        message: isNewAccount
+          ? `Captain account created for ${team.captainEmail}`
+          : `Team approved. Captain already has an account (${team.captainEmail}) — no new password generated.`,
       });
     } catch (err) {
       console.error("Team approval error:", err);

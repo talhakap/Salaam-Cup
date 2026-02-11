@@ -38,8 +38,8 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-title">Dashboard Overview</h1>
-        <p className="text-muted-foreground">Welcome back, Admin.</p>
+        <h1 className="text-3xl font-bold font-display text-stone-900" data-testid="text-admin-title">Dashboard Overview</h1>
+        <p className="text-stone-900">Welcome back, Admin.</p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
