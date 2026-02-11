@@ -11,9 +11,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { format, parseISO } from "date-fns";
-import type { Tournament, Division, News } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { Tournament, Division, News, Sport } from "@shared/schema";
 
 const valueCards = [
   { title: "Amazing Community", image: "/images/hero-about.png" },
@@ -53,6 +55,167 @@ const divisionImages = [
   "/images/hero-media.png",
   "/images/hero-register.png",
 ];
+
+const sportLogoMap: Record<string, string> = {
+  hockey: "/images/logo-hockey.png",
+  basketball: "/images/logo-basketball.png",
+  softball: "/images/logo-softball.png",
+  soccer: "/images/logo-soccer.png",
+};
+
+const sportBgMap: Record<string, string> = {
+  hockey: "/images/bg-hockey.png",
+  basketball: "/images/bg-basketball.png",
+  softball: "/images/bg-softball.png",
+  soccer: "/images/bg-soccer.png",
+};
+
+const sportDescriptions: Record<string, string> = {
+  hockey: "Fast-paced ball hockey action with skill, speed, and bragging rights on the line.",
+  basketball: "High-flying basketball competition where every dribble, pass, and shot counts.",
+  softball: "Step up to the plate for thrilling softball action with heart and pure determination.",
+  soccer: "Beautiful game meets fierce rivalry on the pitch with speed, skill, and teamwork.",
+};
+
+function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tournament[]; sports: Sport[] }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef(0);
+  const dragOffset = useRef(0);
+
+  const sportMap = new Map(sports.map(s => [s.id, s]));
+
+  const goTo = useCallback((index: number) => {
+    const clamped = Math.max(0, Math.min(index, tournaments.length - 1));
+    setActiveIndex(clamped);
+  }, [tournaments.length]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsDragging(true);
+    dragStartX.current = e.clientX;
+    dragOffset.current = 0;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    dragOffset.current = e.clientX - dragStartX.current;
+  };
+
+  const handlePointerUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (dragOffset.current < -50) goTo(activeIndex + 1);
+    else if (dragOffset.current > 50) goTo(activeIndex - 1);
+  };
+
+  useEffect(() => {
+    if (tournaments.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % tournaments.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [tournaments.length]);
+
+  if (tournaments.length === 0) return null;
+
+  return (
+    <div className="relative">
+      <div
+        className="overflow-hidden touch-pan-y"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        <div
+          ref={trackRef}
+          className="flex transition-transform duration-500 ease-out"
+          style={{
+            transform: `translateX(calc(-${activeIndex * 100}% + ${activeIndex * 0}px))`,
+          }}
+        >
+          {tournaments.map((t) => {
+            const sport = t.sportId ? sportMap.get(t.sportId) : null;
+            const icon = sport?.icon || "hockey";
+            const logo = sportLogoMap[icon] || sportLogoMap.hockey;
+            const bg = sportBgMap[icon] || sportBgMap.hockey;
+            const desc = sportDescriptions[icon] || sportDescriptions.hockey;
+            const dateStr = t.startDate
+              ? (() => { try { return format(parseISO(t.startDate), "MMM d, yyyy"); } catch { return t.startDate; } })()
+              : "TBD";
+
+            return (
+              <div key={t.id} className="w-full flex-shrink-0 px-4 md:px-12" data-testid={`card-upcoming-${t.id}`}>
+                <div className="relative rounded-xl overflow-hidden max-w-2xl mx-auto">
+                  <div className="absolute inset-0">
+                    <img src={bg} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50" />
+                  </div>
+                  <div className="relative z-10 flex flex-col items-center text-center px-6 pt-10 pb-8">
+                    <div className="w-32 h-32 md:w-40 md:h-40 mb-6">
+                      <img
+                        src={logo}
+                        alt={`${sport?.name || t.name} logo`}
+                        className="w-full h-full object-contain drop-shadow-lg"
+                      />
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold font-display uppercase text-white tracking-wide mb-2" data-testid={`text-upcoming-name-${t.id}`}>
+                      {t.name}
+                    </h3>
+                    <p className="text-sm text-gray-300 max-w-sm mb-6 leading-relaxed">
+                      {t.description || desc}
+                    </p>
+                    <div className="text-sm text-gray-200 font-semibold">
+                      Upcoming Tournaments:
+                    </div>
+                    <div className="text-sm text-white font-bold mt-1">
+                      {dateStr}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {tournaments.length > 1 && (
+        <>
+          <button
+            onClick={() => goTo(activeIndex - 1)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 text-muted-foreground/60 hover:text-foreground transition-colors"
+            data-testid="button-upcoming-prev"
+            disabled={activeIndex === 0}
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+          <button
+            onClick={() => goTo(activeIndex + 1)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 text-muted-foreground/60 hover:text-foreground transition-colors"
+            data-testid="button-upcoming-next"
+            disabled={activeIndex === tournaments.length - 1}
+          >
+            <ChevronRight className="w-8 h-8" />
+          </button>
+
+          <div className="flex justify-center gap-2 mt-6">
+            {tournaments.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  i === activeIndex ? "bg-foreground" : "bg-muted-foreground/30"
+                }`}
+                data-testid={`button-upcoming-dot-${i}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 function TournamentAccordionItem({ tournament }: { tournament: Tournament }) {
   const { data: divisions } = useDivisions(tournament.id);
@@ -159,8 +322,9 @@ function NewsCarousel({ newsItems }: { newsItems: News[] }) {
 export default function Home() {
   const { data: tournaments } = useTournaments();
   const { data: newsItems, isLoading: newsLoading } = useNews();
+  const { data: sports, isLoading: sportsLoading } = useQuery<Sport[]>({ queryKey: ["/api/sports"] });
 
-  const upcomingTournaments = tournaments?.filter(t => t.status === 'active' || t.status === 'upcoming').slice(0, 2);
+  const upcomingTournaments = (tournaments || []).filter(t => t.status === "active" || t.status === "upcoming");
 
   return (
     <MainLayout>
@@ -272,26 +436,22 @@ export default function Home() {
         </div>
       </section>
 
-      {upcomingTournaments && upcomingTournaments.length > 0 && (
-        <section className="py-20 bg-foreground text-background">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-4">Upcoming Events</p>
-            <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-8" data-testid="text-upcoming">
-              {upcomingTournaments[0].name.replace('Salaam Cup ', '').toUpperCase()}
-            </h2>
-            <p className="text-gray-400 mb-2 text-sm">
-              Tournament will take place {upcomingTournaments[0].startDate} - {upcomingTournaments[0].endDate}
-            </p>
-            <div className="mt-8">
-              <Link href="/tournaments">
-                <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-upcoming-tournaments">
-                  Upcoming Tournaments
-                </Button>
-              </Link>
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-upcoming-events">
+            Upcoming Events
+          </h2>
+          {sportsLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-64 h-80 rounded-xl bg-muted animate-pulse" />
             </div>
-          </div>
-        </section>
-      )}
+          ) : upcomingTournaments.length > 0 && sports ? (
+            <UpcomingEventsCarousel tournaments={upcomingTournaments} sports={sports} />
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No upcoming events at this time.</p>
+          )}
+        </div>
+      </section>
 
       <section className="py-20 bg-background">
         <div className="container mx-auto px-4 max-w-4xl">
