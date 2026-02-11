@@ -77,6 +77,52 @@ const sportDescriptions: Record<string, string> = {
   soccer: "Beautiful game meets fierce rivalry on the pitch with speed, skill, and teamwork.",
 };
 
+function EventCardMobile({ logo, sportName, name, desc, dateStr, tournamentId }: {
+  logo: string; sportName: string; name: string; desc: string; dateStr: string; tournamentId: number;
+}) {
+  const [showInfo, setShowInfo] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => setShowInfo(prev => !prev), 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="md:hidden relative z-10 h-full">
+      <div
+        className={`absolute inset-0 flex items-center justify-center p-4 transition-opacity duration-700 ease-in-out ${
+          showInfo ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <img
+          src={logo}
+          alt={`${sportName} logo`}
+          className="w-[85%] h-[85%] object-contain drop-shadow-lg"
+        />
+      </div>
+
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center text-center px-6 transition-opacity duration-700 ease-in-out ${
+          showInfo ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <h3 className="text-xl font-bold font-display uppercase text-white tracking-wide mb-2" data-testid={`text-upcoming-name-mobile-${tournamentId}`}>
+          {name}
+        </h3>
+        <p className="text-sm text-gray-300 max-w-xs mb-4 leading-relaxed">
+          {desc}
+        </p>
+        <div className="text-sm text-gray-200 font-semibold">
+          Upcoming Tournaments:
+        </div>
+        <div className="text-sm text-white font-bold mt-1">
+          {dateStr}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tournament[]; sports: Sport[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -158,27 +204,36 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                     <img src={bg} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50" />
                   </div>
-                  <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 h-full">
-                    <div className="w-48 h-48 md:w-[400px] md:h-[400px] mb-4">
+
+                  <div className="hidden md:flex relative z-10 flex-col items-center justify-center text-center px-6 h-full">
+                    <div className="w-[400px] h-[400px] mb-0 -mt-8">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
-                        className="w-500 h-full drop-shadow-lg"
+                        className="w-full h-full object-contain drop-shadow-lg"
                       />
                     </div>
-                    <h3 className="text-xl md:text-2xl font-bold font-display uppercase text-white tracking-wide mb-2" data-testid={`text-upcoming-name-${t.id}`}>
-                      {t.name}
-                    </h3>
-                    <p className="text-sm text-gray-300 max-w-sm mb-4 leading-relaxed">
-                      {t.description || desc}
-                    </p>
-                    <div className="text-sm text-gray-200 font-semibold">
-                      Upcoming Tournaments:
-                    </div>
-                    <div className="text-sm text-white font-bold mt-1">
-                      {dateStr}
+                    <div className="-mt-6">
+                      <h3 className="text-2xl font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
+                        {t.name}
+                      </h3>
+                      <div className="text-sm text-gray-200 font-semibold">
+                        Upcoming Tournaments:
+                      </div>
+                      <div className="text-sm text-white font-bold mt-1">
+                        {dateStr}
+                      </div>
                     </div>
                   </div>
+
+                  <EventCardMobile
+                    logo={logo}
+                    sportName={sport?.name || t.name}
+                    name={t.name}
+                    desc={t.description || desc}
+                    dateStr={dateStr}
+                    tournamentId={t.id}
+                  />
                 </div>
               </div>
             );
