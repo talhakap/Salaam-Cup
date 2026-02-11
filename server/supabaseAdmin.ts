@@ -58,7 +58,13 @@ export async function seedAdminAccounts(): Promise<void> {
 
   const { db } = await import("./db");
   const { users } = await import("@shared/models/auth");
-  const { eq } = await import("drizzle-orm");
+  const { eq, sql } = await import("drizzle-orm");
+
+  try {
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password varchar`);
+  } catch (e) {
+    // column may already exist
+  }
 
   const emails = adminEmails.split(",").map(e => e.trim()).filter(Boolean);
 
@@ -70,12 +76,14 @@ export async function seedAdminAccounts(): Promise<void> {
 
       const customPassword = process.env.ADMIN_PASSWORD;
 
+      let accountPassword: string;
+
       if (!supabaseUser) {
-        const password = customPassword || generatePassword(16);
-        if (!customPassword) generatedPassword = password;
+        accountPassword = customPassword || generatePassword(16);
+        if (!customPassword) generatedPassword = accountPassword;
         const { data: newUser, error } = await supabaseAdmin.auth.admin.createUser({
           email,
-          password,
+          password: accountPassword,
           email_confirm: true,
         });
         if (error) {
@@ -84,7 +92,10 @@ export async function seedAdminAccounts(): Promise<void> {
         }
         supabaseUser = newUser.user;
       } else if (customPassword) {
+        accountPassword = customPassword;
         await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, { password: customPassword });
+      } else {
+        accountPassword = "";
       }
 
       const supabaseId = supabaseUser!.id;
@@ -98,9 +109,10 @@ export async function seedAdminAccounts(): Promise<void> {
           lastName: existing.lastName,
           profileImageUrl: existing.profileImageUrl,
           role: "admin",
+          password: accountPassword || existing.password,
         }).onConflictDoUpdate({
           target: users.id,
-          set: { role: "admin", updatedAt: new Date() },
+          set: { role: "admin", password: accountPassword || existing.password, updatedAt: new Date() },
         });
 
         const { teams } = await import("@shared/schema");
@@ -113,14 +125,16 @@ export async function seedAdminAccounts(): Promise<void> {
           id: supabaseId,
           email,
           role: "admin",
+          password: accountPassword || undefined,
         }).onConflictDoUpdate({
           target: users.id,
-          set: { role: "admin", email, updatedAt: new Date() },
+          set: { role: "admin", email, password: accountPassword || undefined, updatedAt: new Date() },
         });
       } else {
-        if (existing.role !== "admin") {
-          await db.update(users).set({ role: "admin", updatedAt: new Date() }).where(eq(users.id, existing.id));
-        }
+        const updates: any = { updatedAt: new Date() };
+        if (existing.role !== "admin") updates.role = "admin";
+        if (accountPassword) updates.password = accountPassword;
+        await db.update(users).set(updates).where(eq(users.id, existing.id));
       }
 
       if (generatedPassword) {

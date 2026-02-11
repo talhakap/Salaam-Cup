@@ -78,6 +78,7 @@ export async function registerRoutes(
         firstName: team.captainName?.split(" ")[0] || null,
         lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
         role: "captain",
+        password: password,
       });
 
       await storage.updateTeam(teamId, { status: "approved", captainUserId: userId });
