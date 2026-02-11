@@ -87,7 +87,7 @@ export async function registerRoutes(
       await storage.claimTeamsByEmail(team.captainEmail, userId);
 
       try {
-        const { sendCaptainCredentialsEmail } = await import("./mailjet");
+        const { sendCaptainCredentialsEmail } = await import("./mailgun");
         const baseUrl = `${req.protocol}://${req.get("host")}`;
         await sendCaptainCredentialsEmail(
           team.captainEmail,
