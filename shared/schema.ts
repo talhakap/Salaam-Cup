@@ -157,8 +157,8 @@ export type InsertStanding = z.infer<typeof insertStandingSchema>;
 // === AWARDS ===
 export const awards = pgTable("awards", {
   id: serial("id").primaryKey(),
-  tournamentId: integer("tournament_id").references(() => tournaments.id).notNull(),
-  divisionId: integer("division_id").references(() => divisions.id).notNull(),
+  tournamentId: integer("tournament_id").references(() => tournaments.id),
+  divisionId: integer("division_id").references(() => divisions.id),
   year: integer("year").notNull(),
   category: text("category").notNull(),
   teamName: text("team_name"),
