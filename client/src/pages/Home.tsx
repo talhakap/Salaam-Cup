@@ -1,6 +1,6 @@
 import { MainLayout } from "@/components/MainLayout";
 import { SponsorBar } from "@/components/SponsorBar";
-import { useTournaments } from "@/hooks/use-tournaments";
+import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import heroImg from "/images/hero-landing.png";
@@ -10,6 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import type { Tournament, Division } from "@shared/schema";
 
 const valueCards = [
   { title: "Amazing Community", image: "/images/hero-about.png" },
@@ -18,15 +19,6 @@ const valueCards = [
   { title: "Professional Staff", image: "/images/hero-register.png" },
 ];
 
-const divisions = [
-  { name: "Hockey Mens", pools: ["Pool A", "Pool B", "Pool C"] },
-  { name: "Hockey Boys", pools: ["Pool A"] },
-  { name: "Hockey Girls", pools: ["Pool A"] },
-  { name: "Softball Womens", pools: ["Pool A"] },
-  { name: "Softball Mens", pools: ["Pool A"] },
-  { name: "Soccer Mens", pools: ["Pool A"] },
-  { name: "Basketball Mens", pools: ["Pool A", "Pool B"] },
-];
 
 const faqItems = [
   {
@@ -50,6 +42,50 @@ const faqItems = [
     a: "We are always looking for volunteers and sponsors. Please reach out to us through the Contact page or email info@salaamcup.com to learn about opportunities.",
   },
 ];
+
+function TournamentAccordionItem({ tournament }: { tournament: Tournament }) {
+  const { data: divisions } = useDivisions(tournament.id);
+
+  return (
+    <AccordionItem value={String(tournament.id)} className="border-b">
+      <AccordionTrigger
+        className="text-xl md:text-2xl font-bold font-display uppercase py-5 hover:no-underline"
+        data-testid={`accordion-tournament-${tournament.id}`}
+      >
+        {tournament.name}
+      </AccordionTrigger>
+      <AccordionContent>
+        <div className="pb-4 space-y-3">
+          {divisions && divisions.length > 0 ? (
+            divisions.map((div: Division) => (
+              <Link
+                key={div.id}
+                href={`/tournaments/${tournament.id}`}
+                className="block bg-muted rounded-md px-4 py-3"
+                data-testid={`link-division-${div.id}`}
+              >
+                <span className="text-sm font-bold font-display uppercase">{div.name}</span>
+                {div.category && (
+                  <span className="text-xs text-muted-foreground ml-2">{div.category}</span>
+                )}
+                {div.gameFormat && (
+                  <span className="text-xs text-muted-foreground ml-2">({div.gameFormat})</span>
+                )}
+              </Link>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">Divisions coming soon.</p>
+          )}
+          <Link href={`/tournaments/${tournament.id}`}>
+            <Button variant="outline" size="sm" className="mt-2 text-xs font-bold uppercase tracking-wider" data-testid={`button-view-tournament-${tournament.id}`}>
+              View Tournament
+            </Button>
+          </Link>
+        </div>
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
 
 export default function Home() {
   const { data: tournaments } = useTournaments();
@@ -86,7 +122,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
             {valueCards.map((card) => (
               <div key={card.title} className="relative aspect-[4/3] rounded-md overflow-hidden group" data-testid={`card-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
                 <img src={card.image} alt={card.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -109,24 +145,15 @@ export default function Home() {
           </h2>
 
           <div className="max-w-4xl mx-auto">
-            <Accordion type="single" collapsible>
-              {divisions.map((div) => (
-                <AccordionItem key={div.name} value={div.name} className="border-b">
-                  <AccordionTrigger className="text-xl md:text-2xl font-bold font-display uppercase py-5 hover:no-underline" data-testid={`accordion-${div.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                    {div.name}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid grid-cols-3 gap-4 pb-4">
-                      {div.pools.map((pool) => (
-                        <div key={pool} className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                          <span className="text-sm font-medium text-muted-foreground">{pool}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            {tournaments && tournaments.length > 0 ? (
+              <Accordion type="single" collapsible>
+                {tournaments.map((t: Tournament) => (
+                  <TournamentAccordionItem key={t.id} tournament={t} />
+                ))}
+              </Accordion>
+            ) : (
+              <p className="text-center text-muted-foreground">No tournaments available yet.</p>
+            )}
           </div>
         </div>
       </section>
