@@ -153,17 +153,17 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
 
             return (
               <div key={t.id} className="w-full flex-shrink-0 px-4 md:px-12" data-testid={`card-upcoming-${t.id}`}>
-                <div className="relative rounded-xl overflow-hidden max-w-md mx-auto aspect-square">
+                <div className="relative rounded-xl overflow-hidden max-w-lg md:max-w-2xl mx-auto aspect-square">
                   <div className="absolute inset-0">
                     <img src={bg} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50" />
                   </div>
                   <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 h-full">
-                    <div className="w-48 h-48 md:w-56 md:h-56 mb-4">
+                    <div className="w-48 h-48 md:w-[400px] md:h-[400px] mb-4">
                       <img
                         src={logo}
                         alt={`${sport?.name || t.name} logo`}
-                        className="w-full h-full object-contain drop-shadow-lg"
+                        className="w-500 h-full drop-shadow-lg"
                       />
                     </div>
                     <h3 className="text-xl md:text-2xl font-bold font-display uppercase text-white tracking-wide mb-2" data-testid={`text-upcoming-name-${t.id}`}>
