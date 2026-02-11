@@ -136,6 +136,133 @@ export async function registerRoutes(
     }
   });
 
+  // === ADMIN USER MANAGEMENT ===
+  app.get("/api/admin/users", isAuthenticated, async (_req, res) => {
+    try {
+      const { db } = await import("./db");
+      const { users } = await import("@shared/models/auth");
+      const allUsers = await db.select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        createdAt: users.createdAt,
+      }).from(users);
+      res.json(allUsers);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users", isAuthenticated, async (req, res) => {
+    try {
+      const { email, firstName, lastName, role, password } = req.body;
+      if (!email || !password || !role) {
+        return res.status(400).json({ message: "Email, password, and role are required" });
+      }
+      if (!["admin", "captain"].includes(role)) {
+        return res.status(400).json({ message: "Role must be 'admin' or 'captain'" });
+      }
+
+      const { db } = await import("./db");
+      const { users } = await import("@shared/models/auth");
+      const { eq: eqOp } = await import("drizzle-orm");
+      const [existingLocal] = await db.select().from(users).where(eqOp(users.email, email.trim().toLowerCase()));
+      if (existingLocal) {
+        return res.status(409).json({ message: `A user with email ${email} already exists.` });
+      }
+
+      if (!supabaseAdmin) {
+        return res.status(500).json({ message: "Auth service not configured" });
+      }
+
+      const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+      if (createError) {
+        if (createError.message?.includes("already been registered") || createError.status === 422) {
+          return res.status(409).json({ message: `A user with email ${email} already exists in the auth system.` });
+        }
+        return res.status(500).json({ message: `Failed to create auth account: ${createError.message}` });
+      }
+
+      const userId = createData.user.id;
+
+      const { authStorage } = await import("./replit_integrations/auth/storage");
+      await authStorage.upsertUser({
+        id: userId,
+        email,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        role,
+        password,
+      });
+
+      res.json({ id: userId, email, firstName, lastName, role });
+    } catch (err) {
+      console.error("Error creating user:", err);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { role } = req.body;
+      if (!role || !["admin", "captain"].includes(role)) {
+        return res.status(400).json({ message: "Valid role is required" });
+      }
+
+      const userId = String(req.params.id);
+      const { db } = await import("./db");
+      const { users } = await import("@shared/models/auth");
+      const { eq: eqOp } = await import("drizzle-orm");
+
+      const [updated] = await db.update(users)
+        .set({ role, updatedAt: new Date() })
+        .where(eqOp(users.id, userId))
+        .returning();
+
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json(updated);
+    } catch (err) {
+      console.error("Error updating user:", err);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", isAuthenticated, async (req, res) => {
+    try {
+      const userId = String(req.params.id);
+      const { db } = await import("./db");
+      const { users } = await import("@shared/models/auth");
+      const { eq: eqOp } = await import("drizzle-orm");
+
+      const adminUserId = (req.session as any)?.adminUserId;
+      if (userId === adminUserId) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+
+      if (supabaseAdmin) {
+        try {
+          await supabaseAdmin.auth.admin.deleteUser(userId);
+        } catch (e) {
+          console.warn("Could not delete Supabase auth user:", e);
+        }
+      }
+
+      await db.delete(users).where(eqOp(users.id, userId));
+      res.json({ message: "User deleted" });
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // === SPORTS ===
   app.get(api.sports.list.path, async (_req, res) => {
     const data = await storage.getSports();
