@@ -18,7 +18,7 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ toEmail, toName, subject, textPart, htmlPart }: SendEmailOptions) {
-  const senderEmail = process.env.MJ_SENDER_EMAIL || `noreply@${DOMAIN}`;
+  const senderEmail = process.env.MAILGUN_SENDER_EMAIL || `postmaster@${DOMAIN}`;
   const senderName = "Salaam Cup";
 
   const result = await mg.messages.create(DOMAIN, {
