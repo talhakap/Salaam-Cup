@@ -69,7 +69,10 @@ export function useCreateTeam() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to create team");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to create team" }));
+        throw new Error(err.message || "Failed to create team");
+      }
       return api.teams.create.responses[201].parse(await res.json());
     },
     onSuccess: (_, variables) => {
