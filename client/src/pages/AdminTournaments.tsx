@@ -109,6 +109,7 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
       gameFormat: "",
       registrationFee: 0,
       venueId: null as number | null,
+      heroImage: "",
     },
   });
 
@@ -120,6 +121,7 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
       gameFormat: "",
       registrationFee: 0,
       venueId: null as number | null,
+      heroImage: "",
     },
   });
 
@@ -128,7 +130,7 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
       await createDivision.mutateAsync({ ...data, tournamentId });
       toast({ title: "Division created" });
       setCreateOpen(false);
-      createForm.reset({ tournamentId, name: "", category: "", description: "", gameFormat: "", registrationFee: 0, venueId: null });
+      createForm.reset({ tournamentId, name: "", category: "", description: "", gameFormat: "", registrationFee: 0, venueId: null, heroImage: "" });
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -165,6 +167,7 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
       gameFormat: div.gameFormat || "",
       registrationFee: div.registrationFee || 0,
       venueId: div.venueId || null,
+      heroImage: div.heroImage || "",
     });
   };
 
@@ -216,6 +219,20 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
                         {venues.map(v => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={createForm.control} name="heroImage" render={({ field }: any) => (
+                  <FormItem>
+                    <FormLabel>Hero Image</FormLabel>
+                    <FormControl>
+                      <ImageUploadField
+                        label="Hero Image"
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        testIdPrefix="division-hero"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -296,6 +313,15 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
                   {venues.map(v => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Hero Image</label>
+              <ImageUploadField
+                label="Hero Image"
+                value={editForm.watch("heroImage") || ''}
+                onChange={(url: string) => editForm.setValue("heroImage", url)}
+                testIdPrefix="edit-division-hero"
+              />
             </div>
             <DialogFooter>
               <Button type="submit" disabled={updateDivision.isPending} data-testid="button-update-division-submit">

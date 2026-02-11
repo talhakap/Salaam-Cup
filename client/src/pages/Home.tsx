@@ -289,9 +289,9 @@ function TournamentAccordionItem({ tournament }: { tournament: Tournament }) {
           {divisions && divisions.length > 0 ? (
             divisions.map((div: Division, idx: number) => (
               <div key={div.id} className="flex flex-col" data-testid={`card-division-${div.id}`}>
-                <div className="aspect-[4/3] rounded-md overflow-hidden mb-3">
+                <div className="aspect-[4/3] rounded-md overflow-hidden mb-3 bg-muted">
                   <img
-                    src={divisionImages[idx % divisionImages.length]}
+                    src={div.heroImage || divisionImages[idx % divisionImages.length]}
                     alt={div.name}
                     className="w-full h-full object-cover"
                   />
