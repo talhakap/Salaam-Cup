@@ -117,6 +117,22 @@ export async function registerRoutes(
     }
   });
 
+  app.patch(api.sports.update.path, async (req, res) => {
+    try {
+      const input = api.sports.update.input.parse(req.body);
+      const sport = await storage.updateSport(Number(req.params.id), input);
+      res.json(sport);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.sports.delete.path, async (req, res) => {
+    await storage.deleteSport(Number(req.params.id));
+    res.json({ success: true });
+  });
+
   // === TOURNAMENTS ===
   app.get(api.tournaments.list.path, async (_req, res) => {
     const data = await storage.getTournaments();

@@ -68,6 +68,21 @@ export const api = {
         201: z.custom<typeof sports.$inferSelect>(),
       },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/sports/:id' as const,
+      input: insertSportSchema.partial(),
+      responses: {
+        200: z.custom<typeof sports.$inferSelect>(),
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/sports/:id' as const,
+      responses: {
+        200: z.object({ success: z.boolean() }),
+      },
+    },
   },
 
   // === TOURNAMENTS ===

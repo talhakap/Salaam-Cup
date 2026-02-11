@@ -17,7 +17,8 @@ import {
   Image,
   HelpCircle,
   MapPin,
-  Loader2
+  Loader2,
+  Dumbbell
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -51,6 +52,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Sponsors", href: "/admin/sponsors", icon: Handshake },
     { label: "About Page", href: "/admin/about-content", icon: FileText },
     { label: "Media Gallery", href: "/admin/media", icon: Image },
+    { label: "Sports", href: "/admin/sports", icon: Dumbbell },
     { label: "Venues", href: "/admin/venues", icon: MapPin },
     { label: "FAQs", href: "/admin/faqs", icon: HelpCircle },
     { label: "Special Awards", href: "/admin/special-awards", icon: Award },

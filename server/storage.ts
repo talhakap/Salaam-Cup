@@ -16,6 +16,8 @@ export interface IStorage {
   // Sports
   getSports(): Promise<Sport[]>;
   createSport(data: InsertSport): Promise<Sport>;
+  updateSport(id: number, data: Partial<InsertSport>): Promise<Sport>;
+  deleteSport(id: number): Promise<void>;
 
   // Tournaments
   getTournaments(): Promise<Tournament[]>;
@@ -124,6 +126,15 @@ export class DatabaseStorage implements IStorage {
   async createSport(data: InsertSport): Promise<Sport> {
     const [sport] = await db.insert(sports).values(data).returning();
     return sport;
+  }
+
+  async updateSport(id: number, data: Partial<InsertSport>): Promise<Sport> {
+    const [sport] = await db.update(sports).set(data).where(eq(sports.id, id)).returning();
+    return sport;
+  }
+
+  async deleteSport(id: number): Promise<void> {
+    await db.delete(sports).where(eq(sports.id, id));
   }
 
   // Tournaments
