@@ -223,17 +223,17 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                         className="w-full h-full object-contain drop-shadow-lg"
                       />
                     </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800/90 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500">
-                      <h3 className="text-5xl font-bold font-display uppercase text-white tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-200/80 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500">
+                      <h3 className="text-5xl font-bold font-display uppercase text-black tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
                         {t.name}
                       </h3>
-                      <p className="text-md text-gray-300 max-w-sm mb-3 leading-snug">
+                      <p className="text-md text-gray-800 max-w-sm mb-3 leading-snug">
                         {t.description || desc}
                       </p>
-                      <div className="text-lg text-gray-200 font-semibold">
-                        Upcoming Tournaments:
+                      <div className="text-l text-black font-semibold">
+                        Upcoming Tournament:
                       </div>
-                      <div className="text-sm text-white font-bold mt-0.5">
+                      <div className="text-sm text-gray-700 font-bold mt-0.5">
                         {dateStr}
                       </div>
                     </div>

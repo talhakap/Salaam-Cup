@@ -65,7 +65,33 @@ export default function TournamentDetail() {
     .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0))
     .slice(0, 7);
 
-  const approvedTeams = (allTeams || []).filter((t: Team) => t.status === "approved");
+  const filteredTeams = (allTeams || [])
+    .filter((t: Team) => t.status === "approved")
+    .filter((t: Team) => selectedDivision === "all" || t.divisionId === Number(selectedDivision));
+
+  const sortedTeams = [...filteredTeams].sort((a: Team, b: Team) => {
+    if (a.paymentStatus !== b.paymentStatus) {
+      return a.paymentStatus === "paid" ? -1 : 1;
+    }
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateA - dateB;
+  });
+
+  const teamsGroupedByDivision = (() => {
+    if (selectedDivision !== "all") {
+      const div = divisions?.find((d: Division) => String(d.id) === selectedDivision);
+      return [{ division: div, teams: sortedTeams }];
+    }
+    const groups: { division: Division | undefined; teams: Team[] }[] = [];
+    for (const div of (divisions || [])) {
+      const divTeams = sortedTeams.filter((t: Team) => t.divisionId === div.id);
+      if (divTeams.length > 0) {
+        groups.push({ division: div, teams: divTeams });
+      }
+    }
+    return groups;
+  })();
 
   return (
     <MainLayout>
@@ -176,25 +202,50 @@ export default function TournamentDetail() {
             </>
           )}
 
-          {approvedTeams.length > 0 && (
+          {sortedTeams.length > 0 && (
             <div className="mb-16">
-              <h3 className="text-xl font-bold font-display uppercase text-center mb-6">Teams</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                {approvedTeams.slice(0, 8).map((team: Team) => (
-                  <Link key={team.id} href={`/teams/${team.id}`}>
-                    <div className="border border-border rounded-md p-4 text-center hover-elevate cursor-pointer" data-testid={`card-team-${team.id}`}>
-                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center">
-                        {team.logoUrl ? (
-                          <img src={team.logoUrl} alt={team.name} className="w-10 h-10 object-contain rounded-full" />
-                        ) : (
-                          <Users className="h-6 w-6 text-muted-foreground" />
-                        )}
-                      </div>
-                      <p className="font-bold text-sm font-display uppercase">{team.name}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <h3 className="text-xl font-bold font-display uppercase text-center mb-6" data-testid="text-registered-teams">
+                Registered Teams
+              </h3>
+              {teamsGroupedByDivision.map(({ division, teams: divTeams }) => (
+                <div key={division?.id || "unknown"} className="mb-8" data-testid={`team-group-division-${division?.id || "unknown"}`}>
+                  {(selectedDivision === "all" && divisions && divisions.length > 1) && (
+                    <h4 className="text-lg font-bold font-display uppercase mb-3 border-b-2 border-foreground pb-2" data-testid={`text-division-group-${division?.id}`}>
+                      {division?.name || "Unassigned"}
+                    </h4>
+                  )}
+                  <div className="space-y-0">
+                    {divTeams.map((team: Team, idx: number) => (
+                      <Link key={team.id} href={`/teams/${team.id}`}>
+                        <div
+                          className={`flex items-center gap-3 md:gap-4 py-3 px-3 md:px-4 cursor-pointer hover-elevate ${idx < divTeams.length - 1 ? "border-b" : ""}`}
+                          data-testid={`row-team-${team.id}`}
+                        >
+                          <span className="text-xs text-muted-foreground font-bold w-6 shrink-0">{idx + 1}</span>
+                          <div className="w-10 h-10 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                            {team.logoUrl ? (
+                              <img src={team.logoUrl} alt={team.name} className="w-8 h-8 object-contain rounded-full" />
+                            ) : (
+                              <Users className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm font-display uppercase truncate" data-testid={`text-team-name-${team.id}`}>{team.name}</p>
+                            <p className="text-xs text-muted-foreground">{team.captainName}</p>
+                          </div>
+                          <Badge
+                            variant={team.paymentStatus === "paid" ? "default" : "outline"}
+                            className={`shrink-0 text-xs ${team.paymentStatus === "paid" ? "bg-green-600 text-white" : ""}`}
+                            data-testid={`badge-payment-${team.id}`}
+                          >
+                            {team.paymentStatus === "paid" ? "Deposit Paid" : "Unpaid"}
+                          </Badge>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
