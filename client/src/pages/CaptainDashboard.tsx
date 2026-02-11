@@ -1,5 +1,6 @@
 import { MainLayout } from "@/components/MainLayout";
 import { useAuth } from "@/hooks/use-auth";
+import { useCaptainAuth } from "@/hooks/use-captain-auth";
 import { useMyTeams } from "@/hooks/use-teams";
 import { Team, insertPlayerSchema } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -205,20 +206,37 @@ function TeamCard({ team }: { team: Team }) {
 
 export default function CaptainDashboard() {
   const { user } = useAuth();
+  const { captain, isLoading: captainLoading, logout: captainLogout } = useCaptainAuth();
+  const isLoggedIn = !!user || !!captain;
   const { data: myTeams, isLoading, error } = useMyTeams();
 
-  if (!user) {
+  if (captainLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!isLoggedIn) {
     return (
       <MainLayout>
         <div className="container mx-auto px-4 py-20 text-center">
           <LogIn className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-2">Sign In Required</h1>
           <p className="text-muted-foreground mb-6">
-            Please sign in with the same email you used during registration to access your team dashboard.
+            Sign in with the credentials you received when your team was approved.
           </p>
-          <Button asChild>
-            <a href="/api/login" data-testid="link-login">Sign In with Replit</a>
-          </Button>
+          <div className="flex justify-center gap-3 flex-wrap">
+            <Link href="/captain-login">
+              <Button data-testid="link-captain-login">Captain Sign In</Button>
+            </Link>
+            <Button variant="outline" asChild>
+              <a href="/api/login" data-testid="link-login">Admin Sign In</a>
+            </Button>
+          </div>
         </div>
       </MainLayout>
     );
@@ -227,9 +245,19 @@ export default function CaptainDashboard() {
   return (
     <MainLayout>
       <div className="bg-secondary text-white py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold font-display uppercase" data-testid="text-captain-title">Captain's Dashboard</h1>
-          <p className="opacity-80">Manage your teams and rosters.</p>
+        <div className="container mx-auto px-4 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-4xl font-bold font-display uppercase" data-testid="text-captain-title">Captain's Dashboard</h1>
+            <p className="opacity-80">Manage your teams and rosters.</p>
+          </div>
+          {captain && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm opacity-80">{captain.email}</span>
+              <Button variant="outline" size="sm" onClick={() => captainLogout()} data-testid="button-captain-logout" className="border-white/30 text-white">
+                Sign Out
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

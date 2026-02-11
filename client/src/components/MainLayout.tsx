@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useCaptainAuth } from "@/hooks/use-captain-auth";
 import { 
   Menu, 
   X, 
@@ -29,6 +30,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
+  const { captain, logout: captainLogout, isAuthenticated: isCaptainAuth } = useCaptainAuth();
 
   const navItems = [
     { label: "Home", href: "/" },
@@ -106,6 +108,38 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : isCaptainAuth ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="button-captain-menu">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-foreground text-background text-xs font-bold">
+                        {captain?.email?.[0]?.toUpperCase() || "C"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">Team Captain</p>
+                      <p className="text-xs leading-none text-muted-foreground">{captain?.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <Link href="/captain">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="menu-captain-dashboard">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>My Teams</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => captainLogout()} className="text-destructive cursor-pointer" data-testid="button-captain-logout-nav">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <a href="/api/login" className="hidden md:block">
                 <Button className="rounded-full font-bold uppercase text-xs tracking-wider px-6" data-testid="button-login">
@@ -142,7 +176,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 {item.label}
               </Link>
             ))}
-            {!isAuthenticated && (
+            {isCaptainAuth && (
+              <div className="mt-4 pt-4 border-t space-y-2">
+                <Link href="/captain" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full" data-testid="button-captain-dashboard-mobile">My Teams</Button>
+                </Link>
+                <Button variant="ghost" className="w-full text-destructive" onClick={() => { captainLogout(); setIsOpen(false); }} data-testid="button-captain-logout-mobile">
+                  Sign Out
+                </Button>
+              </div>
+            )}
+            {!isAuthenticated && !isCaptainAuth && (
               <div className="mt-4 pt-4 border-t">
                 <a href="/api/login" onClick={() => setIsOpen(false)}>
                   <Button className="w-full rounded-full font-bold uppercase text-xs tracking-wider" data-testid="button-login-mobile">

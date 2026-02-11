@@ -14,6 +14,7 @@ import TournamentRules from "@/pages/TournamentRules";
 import TeamDetail from "@/pages/TeamDetail";
 import Register from "@/pages/Register";
 import CaptainDashboard from "@/pages/CaptainDashboard";
+import CaptainLogin from "@/pages/CaptainLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminTournaments from "@/pages/AdminTournaments";
 import AdminTeams from "@/pages/AdminTeams";
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/register" component={Register} />
       
+      <Route path="/captain-login" component={CaptainLogin} />
       <Route path="/captain" component={CaptainDashboard} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/tournaments" component={AdminTournaments} />

@@ -5,6 +5,7 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin } from "./supabaseAdmin";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -13,6 +14,78 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
+
+  // === CAPTAIN AUTH (Supabase Auth - email/password) ===
+  app.post("/api/captain/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+      const result = await verifyCaptainCredentials(email, password);
+      if (result.error) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+      (req.session as any).captainUserId = result.userId;
+      (req.session as any).captainEmail = email;
+      req.session.save((err) => {
+        if (err) return res.status(500).json({ message: "Session error" });
+        res.json({ userId: result.userId, email });
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/captain/logout", (req, res) => {
+    (req.session as any).captainUserId = null;
+    (req.session as any).captainEmail = null;
+    req.session.save(() => {
+      res.json({ message: "Logged out" });
+    });
+  });
+
+  app.get("/api/captain/me", (req, res) => {
+    const captainUserId = (req.session as any)?.captainUserId;
+    const captainEmail = (req.session as any)?.captainEmail;
+    if (captainUserId && captainEmail) {
+      return res.json({ userId: captainUserId, email: captainEmail });
+    }
+    res.status(401).json({ message: "Not authenticated" });
+  });
+
+  // === TEAM APPROVAL (creates captain account) ===
+  app.post("/api/admin/teams/:id/approve", isAuthenticated, async (req, res) => {
+    try {
+      const teamId = Number(req.params.id);
+      const team = await storage.getTeam(teamId);
+      if (!team) return res.status(404).json({ message: "Team not found" });
+      if (team.status === "approved") return res.status(400).json({ message: "Team already approved" });
+
+      const password = generatePassword();
+      const { userId, error } = await createCaptainAccount(team.captainEmail, password);
+
+      if (error) {
+        return res.status(500).json({ message: `Failed to create captain account: ${error}` });
+      }
+
+      await storage.updateTeam(teamId, { status: "approved", captainUserId: userId });
+
+      await storage.claimTeamsByEmail(team.captainEmail, userId);
+
+      res.json({
+        team: { ...team, status: "approved", captainUserId: userId },
+        credentials: {
+          email: team.captainEmail,
+          password,
+          loginUrl: "/captain-login",
+        },
+      });
+    } catch (err) {
+      console.error("Team approval error:", err);
+      res.status(500).json({ message: "Failed to approve team" });
+    }
+  });
 
   // === SPORTS ===
   app.get(api.sports.list.path, async (_req, res) => {
@@ -160,18 +233,24 @@ export async function registerRoutes(
     }
   });
 
-  // === MY TEAMS (captain - requires auth) ===
-  app.get(api.myTeams.list.path, isAuthenticated, async (req, res) => {
-    const user = req.user as any;
-    const userId = user.claims?.sub;
-    const email = user.claims?.email;
-    
+  // === MY TEAMS (captain - requires Replit or captain auth) ===
+  app.get(api.myTeams.list.path, async (req, res) => {
+    const captainUserId = (req.session as any)?.captainUserId;
+    const captainEmail = (req.session as any)?.captainEmail;
+
+    const replitUser = req.user as any;
+    const replitUserId = replitUser?.claims?.sub;
+    const replitEmail = replitUser?.claims?.email;
+
+    const userId = captainUserId || replitUserId;
+    const email = captainEmail || replitEmail;
+
     if (!userId) return res.status(401).json({ message: "Not authenticated" });
-    
+
     if (email) {
       await storage.claimTeamsByEmail(email, userId);
     }
-    
+
     const myTeams = await storage.getTeamsByCaptainUserId(userId);
     res.json(myTeams);
   });
