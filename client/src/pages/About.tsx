@@ -185,13 +185,22 @@ function PdfEmbed({ url }: { url: string }) {
     src = src.replace("/api/uploads/", "");
     if (!src.startsWith("/")) src = "/" + src;
   }
+  const cleanSrc = src + "#toolbar=0&navpanes=0&scrollbar=0&view=FitH";
   return (
     <div className="w-full" data-testid="about-pdf-embed">
-      <iframe
-        src={src}
-        className="w-full min-h-[600px] md:min-h-[800px] border border-border rounded-md"
+      <object
+        data={cleanSrc}
+        type="application/pdf"
+        className="w-full min-h-[700px] md:min-h-[900px] rounded-md"
         title="About Us Letter"
-      />
+      >
+        <iframe
+          src={cleanSrc}
+          className="w-full min-h-[700px] md:min-h-[900px] rounded-md"
+          title="About Us Letter"
+          style={{ border: "none" }}
+        />
+      </object>
     </div>
   );
 }
