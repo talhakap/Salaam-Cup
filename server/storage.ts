@@ -427,6 +427,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Matches
+  async getMatch(id: number): Promise<Match | undefined> {
+    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    return match;
+  }
+
   async getMatches(tournamentId: number): Promise<MatchWithTeams[]> {
     const matchRows = await db.select().from(matches).where(eq(matches.tournamentId, tournamentId));
     const enriched = await Promise.all(matchRows.map(async (m) => {
