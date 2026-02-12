@@ -567,7 +567,8 @@ export async function registerRoutes(
 
   // === MATCHES ===
   app.get(api.matches.list.path, async (req, res) => {
-    const data = await storage.getMatches(Number(req.params.tournamentId));
+    const includeDrafts = req.query.includeDrafts === "true";
+    const data = await storage.getMatches(Number(req.params.tournamentId), includeDrafts);
     res.json(data);
   });
 
@@ -764,6 +765,7 @@ export async function registerRoutes(
           matchNumber: row.matchNumber ? parseInt(row.matchNumber) || null : null,
           venueId,
           fieldLocation: row.fieldLocation?.trim() || null,
+          draft: true,
         });
       }
 
@@ -789,6 +791,17 @@ export async function registerRoutes(
   app.post(api.standings.recalculate.path, async (req, res) => {
     await storage.recalculateStandings(Number(req.params.tournamentId));
     res.json({ message: "Standings recalculated" });
+  });
+
+  app.post("/api/tournaments/:tournamentId/matches/publish", isAuthenticated, async (req, res) => {
+    try {
+      const tournamentId = Number(req.params.tournamentId);
+      const published = await storage.publishMatches(tournamentId);
+      await storage.recalculateStandings(tournamentId);
+      res.json({ message: "Matches published", published });
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
+    }
   });
 
   // === AWARDS ===

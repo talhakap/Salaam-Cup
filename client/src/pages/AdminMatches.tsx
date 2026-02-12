@@ -1,6 +1,6 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
-import { useMatches, useCreateMatch, useUpdateMatch, useDeleteMatch, useImportMatches } from "@/hooks/use-matches";
+import { useMatches, useCreateMatch, useUpdateMatch, useDeleteMatch, useImportMatches, usePublishMatches } from "@/hooks/use-matches";
 import { useAllTeams } from "@/hooks/use-teams";
 import { useVenues } from "@/hooks/use-venues";
 import { Card, CardContent } from "@/components/ui/card";
@@ -200,12 +200,13 @@ export default function AdminMatches() {
   const { data: tournaments, isLoading: tournamentsLoading } = useTournaments();
   const [selectedTournamentId, setSelectedTournamentId] = useState<number | null>(null);
   const activeTournamentId = selectedTournamentId || (tournaments?.[0]?.id ?? 0);
-  const { data: matches, isLoading: matchesLoading } = useMatches(activeTournamentId);
+  const { data: matches, isLoading: matchesLoading } = useMatches(activeTournamentId, true);
   const { data: divisions } = useDivisions(activeTournamentId);
   const { data: allTeams } = useAllTeams();
   const { data: venues } = useVenues();
   const deleteMatch = useDeleteMatch();
   const importMatches = useImportMatches();
+  const publishMatches = usePublishMatches();
   const { toast } = useToast();
   const [filterDivision, setFilterDivision] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
@@ -311,6 +312,18 @@ export default function AdminMatches() {
     }
   };
 
+  const draftCount = matches?.filter(m => m.draft).length ?? 0;
+
+  const handlePublish = async () => {
+    if (!activeTournamentId) return;
+    try {
+      const result = await publishMatches.mutateAsync(activeTournamentId);
+      toast({ title: `${result.published} match${result.published !== 1 ? "es" : ""} published and standings updated` });
+    } catch (err) {
+      toast({ title: "Error publishing", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
   const statusBadge = (status: string) => {
     switch (status) {
       case "live": return "destructive" as const;
@@ -340,6 +353,17 @@ export default function AdminMatches() {
           <Button className="gap-2" onClick={() => setCreateOpen(true)} disabled={!activeTournamentId} data-testid="button-create-match">
             <Plus className="h-4 w-4" /> Create Match
           </Button>
+          {draftCount > 0 && (
+            <Button
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+              onClick={handlePublish}
+              disabled={publishMatches.isPending}
+              data-testid="button-publish-matches"
+            >
+              {publishMatches.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              Publish ({draftCount})
+            </Button>
+          )}
         </div>
       </div>
 
@@ -393,10 +417,11 @@ export default function AdminMatches() {
       ) : (
         <div className="space-y-3">
           {sortedFilteredMatches.map((match: MatchWithTeams) => (
-            <Card key={match.id} className={match.pulled ? "opacity-60" : ""} data-testid={`card-match-${match.id}`}>
+            <Card key={match.id} className={`${match.pulled ? "opacity-60" : ""} ${match.draft ? "border-dashed border-amber-400" : ""}`} data-testid={`card-match-${match.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center flex-wrap gap-2 mb-1">
+                    {match.draft && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Draft</Badge>}
                     <Badge variant={statusBadge(match.status)}>{match.status}</Badge>
                     {match.pulled && <Badge variant="secondary">Pulled</Badge>}
                     <Badge variant="outline">{getDivisionName(match.divisionId)}</Badge>

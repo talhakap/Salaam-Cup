@@ -55,11 +55,13 @@ export interface IStorage {
 
   // Matches
   getMatch(id: number): Promise<Match | undefined>;
-  getMatches(tournamentId: number): Promise<MatchWithTeams[]>;
+  getMatches(tournamentId: number, includeDrafts?: boolean): Promise<MatchWithTeams[]>;
   createMatch(data: InsertMatch): Promise<Match>;
   bulkCreateMatches(data: InsertMatch[]): Promise<Match[]>;
   updateMatch(id: number, data: Partial<InsertMatch>): Promise<Match>;
   deleteMatch(id: number): Promise<void>;
+
+  publishMatches(tournamentId: number): Promise<number>;
 
   // Standings
   getStandings(tournamentId: number): Promise<StandingWithTeam[]>;
@@ -432,8 +434,12 @@ export class DatabaseStorage implements IStorage {
     return match;
   }
 
-  async getMatches(tournamentId: number): Promise<MatchWithTeams[]> {
-    const matchRows = await db.select().from(matches).where(eq(matches.tournamentId, tournamentId));
+  async getMatches(tournamentId: number, includeDrafts: boolean = false): Promise<MatchWithTeams[]> {
+    const conditions = [eq(matches.tournamentId, tournamentId)];
+    if (!includeDrafts) {
+      conditions.push(eq(matches.draft, false));
+    }
+    const matchRows = await db.select().from(matches).where(and(...conditions));
     const enriched = await Promise.all(matchRows.map(async (m) => {
       let homeTeam: Team | null = null;
       let awayTeam: Team | null = null;
@@ -468,6 +474,14 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMatch(id: number): Promise<void> {
     await db.delete(matches).where(eq(matches.id, id));
+  }
+
+  async publishMatches(tournamentId: number): Promise<number> {
+    const result = await db.update(matches)
+      .set({ draft: false })
+      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.draft, true)))
+      .returning();
+    return result.length;
   }
 
   // Standings
@@ -511,7 +525,7 @@ export class DatabaseStorage implements IStorage {
   async recalculateStandings(tournamentId: number): Promise<void> {
     // Get all final matches for this tournament
     const finalMatches = await db.select().from(matches)
-      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final"), eq(matches.pulled, false)));
+      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final"), eq(matches.pulled, false), eq(matches.draft, false)));
 
     // Get all approved teams
     const allTeams = await db.select().from(teams)

@@ -3,12 +3,12 @@ import { api, buildUrl } from "@shared/routes";
 import { apiRequest } from "@/lib/queryClient";
 import type { InsertMatch, Match } from "@shared/schema";
 
-export function useMatches(tournamentId: number) {
+export function useMatches(tournamentId: number, includeDrafts: boolean = false) {
   return useQuery({
-    queryKey: [api.matches.list.path, tournamentId],
+    queryKey: [api.matches.list.path, tournamentId, { includeDrafts }],
     queryFn: async () => {
       const url = buildUrl(api.matches.list.path, { tournamentId });
-      const res = await fetch(url);
+      const res = await fetch(`${url}${includeDrafts ? "?includeDrafts=true" : ""}`);
       if (!res.ok) throw new Error("Failed to fetch matches");
       return api.matches.list.responses[200].parse(await res.json());
     },
@@ -54,6 +54,20 @@ export function useDeleteMatch() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [api.matches.list.path, data.tournamentId] });
+    },
+  });
+}
+
+export function usePublishMatches() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (tournamentId: number) => {
+      const res = await apiRequest("POST", `/api/tournaments/${tournamentId}/matches/publish`);
+      return res.json() as Promise<{ message: string; published: number }>;
+    },
+    onSuccess: (_, tournamentId) => {
+      queryClient.invalidateQueries({ queryKey: [api.matches.list.path, tournamentId] });
+      queryClient.invalidateQueries({ queryKey: [api.standings.list.path, tournamentId] });
     },
   });
 }
