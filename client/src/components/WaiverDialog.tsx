@@ -7,6 +7,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+
+const DEFAULT_WAIVER = `<p><strong>SALAAM CUP WAIVER AND RELEASE OF LIABILITY</strong></p>
+<p>By registering and participating in the Salaam Cup tournament ("Event"), I acknowledge and agree to the following terms and conditions:</p>
+<p><strong>1. ASSUMPTION OF RISK</strong></p>
+<p>I understand that participation in sports activities involves inherent risks, including but not limited to physical injury, disability, and death. I voluntarily assume all risks associated with my participation in the Event.</p>
+<p><strong>2. RELEASE AND WAIVER</strong></p>
+<p>I hereby release, waive, and discharge the Salaam Cup organizing committee, its directors, officers, employees, volunteers, sponsors, and affiliated organizations from any and all liability.</p>
+<p><strong>3. MEDICAL ACKNOWLEDGMENT</strong></p>
+<p>I confirm that I am physically fit to participate in the Event and am responsible for my own medical coverage.</p>
+<p><strong>4. CODE OF CONDUCT</strong></p>
+<p>I agree to abide by all rules and regulations and conduct myself in a sportsmanlike manner.</p>
+<p><strong>5. MEDIA RELEASE</strong></p>
+<p>I grant permission to use my name, likeness, and image for promotional materials and social media.</p>
+<p><strong>6. PERSONAL PROPERTY</strong></p>
+<p>The Event organizers are not responsible for any lost, stolen, or damaged personal property.</p>
+<p><strong>7. REFUND POLICY</strong></p>
+<p>Registration fees are non-refundable unless the Event is cancelled by the organizers.</p>
+<p><strong>8. INDEMNIFICATION</strong></p>
+<p>I agree to indemnify and hold harmless the Salaam Cup organizing committee from any claims made by third parties.</p>
+<p><strong>9. GOVERNING LAW</strong></p>
+<p>This waiver shall be governed by the laws of the province/state in which the Event is held.</p>
+<p><strong>10. ACKNOWLEDGMENT</strong></p>
+<p>I have read this waiver, fully understand its terms, and acknowledge that I am agreeing freely and voluntarily.</p>`;
 
 interface WaiverDialogProps {
   open: boolean;
@@ -18,6 +43,13 @@ export function WaiverDialog({ open, onOpenChange, onRead }: WaiverDialogProps) 
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const { data: waiverData, isLoading } = useQuery<{ id: number; content: string; updatedAt: string } | null>({
+    queryKey: ["/api/waiver-content"],
+    enabled: open,
+  });
+
+  const waiverHtml = waiverData?.content || DEFAULT_WAIVER;
+
   useEffect(() => {
     if (open) {
       setHasScrolledToBottom(false);
@@ -28,7 +60,7 @@ export function WaiverDialog({ open, onOpenChange, onRead }: WaiverDialogProps) 
         }
       });
     }
-  }, [open]);
+  }, [open, waiverHtml]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -61,43 +93,21 @@ export function WaiverDialog({ open, onOpenChange, onRead }: WaiverDialogProps) 
             className="h-[50vh] overflow-y-auto rounded-md border p-4"
             data-testid="waiver-scroll-container"
           >
-            <div className="space-y-4 text-sm text-muted-foreground pr-2" data-testid="waiver-content">
-              <p className="font-semibold text-foreground">SALAAM CUP WAIVER AND RELEASE OF LIABILITY</p>
-
-              <p>By registering and participating in the Salaam Cup tournament ("Event"), I acknowledge and agree to the following terms and conditions:</p>
-
-              <p className="font-semibold text-foreground">1. ASSUMPTION OF RISK</p>
-              <p>I understand that participation in sports activities involves inherent risks, including but not limited to physical injury, disability, and death. I voluntarily assume all risks associated with my participation in the Event, whether or not caused by the negligence of the organizers, officials, volunteers, or other participants.</p>
-
-              <p className="font-semibold text-foreground">2. RELEASE AND WAIVER</p>
-              <p>I hereby release, waive, and discharge the Salaam Cup organizing committee, its directors, officers, employees, volunteers, sponsors, and affiliated organizations from any and all liability, claims, demands, or causes of action arising out of or related to any loss, damage, or injury, including death, that may be sustained by me during or as a result of my participation in the Event.</p>
-
-              <p className="font-semibold text-foreground">3. MEDICAL ACKNOWLEDGMENT</p>
-              <p>I confirm that I am physically fit to participate in the Event. I understand that the Event organizers do not provide medical insurance, and I am responsible for my own medical coverage. I consent to receiving medical treatment that may be deemed advisable in the event of injury, accident, or illness during the Event.</p>
-
-              <p className="font-semibold text-foreground">4. CODE OF CONDUCT</p>
-              <p>I agree to abide by all rules and regulations of the Event and to conduct myself in a sportsmanlike manner. I understand that unsportsmanlike conduct, including but not limited to verbal abuse, physical violence, discrimination, or harassment, may result in immediate disqualification and removal from the Event without refund.</p>
-
-              <p className="font-semibold text-foreground">5. MEDIA RELEASE</p>
-              <p>I grant the Salaam Cup organizing committee permission to use my name, likeness, image, voice, and/or appearance as such may be embodied in any photographs, videos, recordings, or other media taken during the Event for any purpose, including promotional materials, social media, and website content, without compensation.</p>
-
-              <p className="font-semibold text-foreground">6. PERSONAL PROPERTY</p>
-              <p>I understand that the Event organizers are not responsible for any lost, stolen, or damaged personal property during the Event.</p>
-
-              <p className="font-semibold text-foreground">7. REFUND POLICY</p>
-              <p>Registration fees are non-refundable unless the Event is cancelled by the organizers. In the event of cancellation, refunds will be issued at the discretion of the organizing committee.</p>
-
-              <p className="font-semibold text-foreground">8. INDEMNIFICATION</p>
-              <p>I agree to indemnify and hold harmless the Salaam Cup organizing committee and its affiliates from any claims made by third parties arising out of my participation in the Event.</p>
-
-              <p className="font-semibold text-foreground">9. GOVERNING LAW</p>
-              <p>This waiver shall be governed by and construed in accordance with the laws of the province/state in which the Event is held.</p>
-
-              <p className="font-semibold text-foreground">10. ACKNOWLEDGMENT</p>
-              <p>I have read this waiver and release of liability, fully understand its terms, and understand that I am giving up substantial rights by agreeing to it. I acknowledge that I am signing this agreement freely and voluntarily, and intend my agreement to be a complete and unconditional release of all liability to the greatest extent allowed by law.</p>
-
-              <p className="text-xs italic mt-6">Please scroll to the bottom of this agreement and click "Read" to confirm that you have read and understood these terms.</p>
-            </div>
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            ) : (
+              <div
+                className="prose prose-sm max-w-none text-muted-foreground [&_strong]:text-foreground pr-2"
+                data-testid="waiver-content"
+                dangerouslySetInnerHTML={{ __html: waiverHtml }}
+              />
+            )}
           </div>
         </div>
         <div className="p-6 pt-4 flex items-center gap-3">

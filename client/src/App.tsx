@@ -24,6 +24,7 @@ import AdminAwards from "@/pages/AdminAwards";
 import AdminNews from "@/pages/AdminNews";
 import AdminSponsors from "@/pages/AdminSponsors";
 import AdminAboutContent from "@/pages/AdminAboutContent";
+import AdminWaiverContent from "@/pages/AdminWaiverContent";
 import AdminMedia from "@/pages/AdminMedia";
 import AdminFaqs from "@/pages/AdminFaqs";
 import AdminSpecialAwards from "@/pages/AdminSpecialAwards";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/admin/news" component={AdminNews} />
       <Route path="/admin/sponsors" component={AdminSponsors} />
       <Route path="/admin/about-content" component={AdminAboutContent} />
+      <Route path="/admin/waiver" component={AdminWaiverContent} />
       <Route path="/admin/media" component={AdminMedia} />
       <Route path="/admin/faqs" component={AdminFaqs} />
       <Route path="/admin/special-awards" component={AdminSpecialAwards} />
