@@ -263,6 +263,17 @@ export const insertSpecialAwardSchema = createInsertSchema(specialAwards).omit({
 export type SpecialAward = typeof specialAwards.$inferSelect;
 export type InsertSpecialAward = z.infer<typeof insertSpecialAwardSchema>;
 
+// === WAIVER CONTENT ===
+export const waiverContent = pgTable("waiver_content", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertWaiverContentSchema = createInsertSchema(waiverContent).omit({ id: true, updatedAt: true });
+export type WaiverContent = typeof waiverContent.$inferSelect;
+export type InsertWaiverContent = z.infer<typeof insertWaiverContentSchema>;
+
 // === ABOUT CONTENT ===
 export const aboutContent = pgTable("about_content", {
   id: serial("id").primaryKey(),

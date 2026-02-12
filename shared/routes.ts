@@ -13,6 +13,8 @@ import {
   insertSponsorSchema,
   insertSpecialAwardSchema,
   insertAboutContentSchema,
+  insertWaiverContentSchema,
+  waiverContent,
   insertMediaYearSchema,
   insertMediaItemSchema,
   insertFaqSchema,
@@ -470,6 +472,26 @@ export const api = {
       path: '/api/sponsors/:id' as const,
       responses: {
         200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === WAIVER CONTENT ===
+  waiverContent: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/waiver-content' as const,
+      responses: {
+        200: z.custom<typeof waiverContent.$inferSelect>().nullable(),
+      },
+    },
+    upsert: {
+      method: 'POST' as const,
+      path: '/api/waiver-content' as const,
+      input: insertWaiverContentSchema,
+      responses: {
+        200: z.custom<typeof waiverContent.$inferSelect>(),
         403: errorSchemas.forbidden,
       },
     },

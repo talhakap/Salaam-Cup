@@ -1,8 +1,9 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, specialAwards, aboutContent, mediaYears, mediaItems, faqs,
+  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, specialAwards, aboutContent, waiverContent, mediaYears, mediaItems, faqs,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
   type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertSpecialAward, type InsertAboutContent,
+  type InsertWaiverContent, type WaiverContent,
   type InsertMediaYear, type InsertMediaItem, type InsertFaq,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
   type Standing, type Sport, type Award, type News, type Sponsor, type SpecialAward, type AboutContent,
@@ -91,6 +92,10 @@ export interface IStorage {
   createSpecialAward(data: InsertSpecialAward): Promise<SpecialAward>;
   updateSpecialAward(id: number, data: Partial<InsertSpecialAward>): Promise<SpecialAward>;
   deleteSpecialAward(id: number): Promise<void>;
+
+  // Waiver Content
+  getWaiverContent(): Promise<WaiverContent | undefined>;
+  upsertWaiverContent(data: InsertWaiverContent): Promise<WaiverContent>;
 
   // About Content
   getAboutContent(): Promise<AboutContent | undefined>;
@@ -686,6 +691,22 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSpecialAward(id: number): Promise<void> {
     await db.delete(specialAwards).where(eq(specialAwards.id, id));
+  }
+
+  // Waiver Content
+  async getWaiverContent(): Promise<WaiverContent | undefined> {
+    const [content] = await db.select().from(waiverContent).limit(1);
+    return content;
+  }
+
+  async upsertWaiverContent(data: InsertWaiverContent): Promise<WaiverContent> {
+    const existing = await this.getWaiverContent();
+    if (existing) {
+      const [updated] = await db.update(waiverContent).set({ ...data, updatedAt: new Date() }).where(eq(waiverContent.id, existing.id)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(waiverContent).values(data).returning();
+    return created;
   }
 
   // About Content

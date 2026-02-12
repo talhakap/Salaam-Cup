@@ -957,6 +957,23 @@ export async function registerRoutes(
     }
   });
 
+  // === WAIVER CONTENT ===
+  app.get(api.waiverContent.get.path, async (_req, res) => {
+    const data = await storage.getWaiverContent();
+    res.json(data || null);
+  });
+
+  app.post(api.waiverContent.upsert.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.waiverContent.upsert.input.parse(req.body);
+      const content = await storage.upsertWaiverContent(input);
+      res.json(content);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
   // === ABOUT CONTENT ===
   app.get(api.aboutContent.get.path, async (_req, res) => {
     const data = await storage.getAboutContent();
