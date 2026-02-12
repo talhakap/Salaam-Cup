@@ -396,6 +396,21 @@ export const awardsRelations = relations(awards, ({ one }) => ({
   }),
 }));
 
+// === ACTIVATION TOKENS ===
+export const activationTokens = pgTable("activation_tokens", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").references(() => teams.id).notNull(),
+  captainEmail: text("captain_email").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertActivationTokenSchema = createInsertSchema(activationTokens).omit({ id: true, createdAt: true });
+export type ActivationToken = typeof activationTokens.$inferSelect;
+export type InsertActivationToken = z.infer<typeof insertActivationTokenSchema>;
+
 // === API TYPES ===
 export type CreateTeamRequest = InsertTeam;
 export type UpdateTeamRequest = Partial<InsertTeam>;

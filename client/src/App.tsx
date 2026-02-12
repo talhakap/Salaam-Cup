@@ -31,6 +31,7 @@ import AdminVenues from "@/pages/AdminVenues";
 import AdminSports from "@/pages/AdminSports";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminLogin from "@/pages/AdminLogin";
+import ActivateAccount from "@/pages/ActivateAccount";
 import Media from "@/pages/Media";
 import Faq from "@/pages/Faq";
 import TournamentAwards from "@/pages/TournamentAwards";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/register" component={Register} />
       
+      <Route path="/activate" component={ActivateAccount} />
       <Route path="/captain-login" component={CaptainLogin} />
       <Route path="/captain" component={CaptainDashboard} />
       <Route path="/admin-login" component={AdminLogin} />

@@ -80,7 +80,7 @@ export default function CaptainLogin() {
             </div>
             <CardTitle>Team Captain Sign In</CardTitle>
             <CardDescription>
-              Use the email and password provided when your team was approved
+              Sign in with the email and password you set during account activation
             </CardDescription>
           </CardHeader>
           <CardContent>

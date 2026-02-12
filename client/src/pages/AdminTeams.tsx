@@ -9,79 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, Eye, Pencil, Trash2, Copy, Key } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, Pencil, Trash2, Mail } from "lucide-react";
 import { Link } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import type { Team, Division } from "@shared/schema";
-
-interface ApprovalCredentials {
-  email: string;
-  password: string;
-  loginUrl: string;
-}
-
-function CredentialsDialog({ credentials, onClose }: { credentials: ApprovalCredentials; onClose: () => void }) {
-  const { toast } = useToast();
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: `${label} copied to clipboard` });
-  };
-
-  const copyAll = () => {
-    const text = `Captain Login Credentials\n\nEmail: ${credentials.email}\nPassword: ${credentials.password}\nLogin URL: ${window.location.origin}${credentials.loginUrl}`;
-    navigator.clipboard.writeText(text);
-    toast({ title: "All credentials copied to clipboard" });
-  };
-
-  return (
-    <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-md" data-testid="dialog-credentials">
-        <DialogHeader>
-          <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-            <Key className="h-6 w-6 text-green-600" />
-          </div>
-          <DialogTitle className="text-center">Team Approved</DialogTitle>
-          <DialogDescription className="text-center">
-            A captain account has been created. Share these credentials with the team captain so they can log in and manage their roster.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3 bg-muted rounded-md p-4">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-xs text-muted-foreground">Email</p>
-              <p className="font-mono text-sm" data-testid="text-credential-email">{credentials.email}</p>
-            </div>
-            <Button size="icon" variant="ghost" onClick={() => copyToClipboard(credentials.email, "Email")} data-testid="button-copy-email">
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-xs text-muted-foreground">Password</p>
-              <p className="font-mono text-sm" data-testid="text-credential-password">{credentials.password}</p>
-            </div>
-            <Button size="icon" variant="ghost" onClick={() => copyToClipboard(credentials.password, "Password")} data-testid="button-copy-password">
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Login URL</p>
-            <p className="font-mono text-sm">{window.location.origin}{credentials.loginUrl}</p>
-          </div>
-        </div>
-        <DialogFooter className="flex-col gap-2 sm:flex-col">
-          <Button onClick={copyAll} className="w-full gap-2" data-testid="button-copy-all-credentials">
-            <Copy className="h-4 w-4" /> Copy All Credentials
-          </Button>
-          <Button variant="outline" onClick={onClose} className="w-full">
-            Done
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 const STATUS_FILTERS = ["all", "pending", "approved", "rejected"] as const;
 
@@ -212,8 +143,8 @@ export default function AdminTeams() {
   const { toast } = useToast();
   const [editTeam, setEditTeam] = useState<Team | null>(null);
   const [deleteTeamState, setDeleteTeamState] = useState<Team | null>(null);
-  const [credentials, setCredentials] = useState<ApprovalCredentials | null>(null);
   const [approvingTeamId, setApprovingTeamId] = useState<number | null>(null);
+  const [resendingTeamId, setResendingTeamId] = useState<number | null>(null);
 
   const handleApprove = async (teamId: number) => {
     setApprovingTeamId(teamId);
@@ -227,13 +158,32 @@ export default function AdminTeams() {
         throw new Error(data.message || "Approval failed");
       }
       const data = await res.json();
-      setCredentials(data.credentials);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
-      toast({ title: "Team approved and captain account created" });
+      toast({ title: data.message });
     } catch (err) {
       toast({ title: "Approval failed", description: (err as Error).message, variant: "destructive" });
     } finally {
       setApprovingTeamId(null);
+    }
+  };
+
+  const handleResendActivation = async (teamId: number) => {
+    setResendingTeamId(teamId);
+    try {
+      const res = await fetch(`/api/admin/teams/${teamId}/resend-activation`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to resend");
+      }
+      const data = await res.json();
+      toast({ title: data.message });
+    } catch (err) {
+      toast({ title: "Resend failed", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setResendingTeamId(null);
     }
   };
 
@@ -352,6 +302,17 @@ export default function AdminTeams() {
                       </Button>
                     </>
                   )}
+                  {team.status === "approved" && !team.captainUserId && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleResendActivation(team.id)}
+                      disabled={resendingTeamId === team.id}
+                      data-testid={`button-resend-activation-${team.id}`}
+                    >
+                      {resendingTeamId === team.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Mail className="h-4 w-4 mr-1" />} Resend Activation
+                    </Button>
+                  )}
                   <Button size="icon" variant="ghost" onClick={() => setDeleteTeamState(team)} data-testid={`button-delete-team-${team.id}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -383,9 +344,6 @@ export default function AdminTeams() {
         </DialogContent>
       </Dialog>
 
-      {credentials && (
-        <CredentialsDialog credentials={credentials} onClose={() => setCredentials(null)} />
-      )}
     </AdminLayout>
   );
 }

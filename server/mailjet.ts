@@ -42,26 +42,25 @@ export async function sendEmail({ toEmail, toName, subject, textPart, htmlPart }
   return result.body;
 }
 
-export async function sendCaptainCredentialsEmail(
+export async function sendCaptainActivationEmail(
   captainEmail: string,
   captainName: string,
   teamName: string,
-  password: string,
-  loginUrl: string
+  activationUrl: string
 ) {
-  const subject = `Your Salaam Cup Captain Account - ${teamName}`;
+  const subject = `Activate Your Salaam Cup Captain Account - ${teamName}`;
 
   const textPart = `Hi ${captainName},
 
 Congratulations! Your team "${teamName}" has been approved for Salaam Cup.
 
-A captain account has been created for you. Use the credentials below to log in and manage your team:
+To get started, please activate your captain account by clicking the link below and setting your password:
 
-Email: ${captainEmail}
-Password: ${password}
-Login: ${loginUrl}
+${activationUrl}
 
-Please change your password after your first login.
+This link will expire in 30 minutes and can only be used once.
+
+If you did not expect this email, you can safely ignore it.
 
 Thank you,
 Salaam Cup Team`;
@@ -77,18 +76,14 @@ Salaam Cup Team`;
     
     <p style="font-size: 16px;">Congratulations! Your team <strong>"${teamName}"</strong> has been approved for Salaam Cup.</p>
     
-    <p style="font-size: 16px;">A captain account has been created for you. Use the credentials below to log in and manage your team:</p>
-    
-    <div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
-      <p style="margin: 5px 0; font-size: 15px;"><strong>Email:</strong> ${captainEmail}</p>
-      <p style="margin: 5px 0; font-size: 15px;"><strong>Password:</strong> ${password}</p>
-    </div>
+    <p style="font-size: 16px;">To get started, please activate your captain account by clicking the button below and setting your password:</p>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${loginUrl}" style="background-color: #111; color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 6px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">Log In Now</a>
+      <a href="${activationUrl}" style="background-color: #111; color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 6px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">Activate My Account</a>
     </div>
     
-    <p style="font-size: 14px; color: #666;">Please change your password after your first login.</p>
+    <p style="font-size: 14px; color: #666;">This link will expire in 30 minutes and can only be used once.</p>
+    <p style="font-size: 14px; color: #666;">If you did not expect this email, you can safely ignore it.</p>
   </div>
   
   <div style="border-top: 1px solid #eee; padding-top: 20px; text-align: center;">

@@ -7,6 +7,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import type { InsertMatch } from "@shared/schema";
 import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin, seedAdminAccounts } from "./supabaseAdmin";
+import { randomBytes, createHash } from "crypto";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -57,7 +58,153 @@ export async function registerRoutes(
     res.status(401).json({ message: "Not authenticated" });
   });
 
-  // === TEAM APPROVAL (creates captain account) ===
+  // === ACCOUNT ACTIVATION ===
+  app.post("/api/auth/activate", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and password are required" });
+      }
+      if (password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
+      }
+
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+
+      const { db } = await import("./db");
+      const { activationTokens } = await import("@shared/schema");
+      const { eq, and, isNull, gt } = await import("drizzle-orm");
+
+      const [tokenRecord] = await db
+        .select()
+        .from(activationTokens)
+        .where(
+          and(
+            eq(activationTokens.tokenHash, tokenHash),
+            isNull(activationTokens.usedAt),
+            gt(activationTokens.expiresAt, new Date())
+          )
+        );
+
+      if (!tokenRecord) {
+        return res.status(400).json({ message: "Invalid or expired activation link. Please contact the admin to resend." });
+      }
+
+      const captainEmail = tokenRecord.captainEmail;
+      const teamId = tokenRecord.teamId;
+
+      const team = await storage.getTeam(teamId);
+
+      if (team?.captainUserId) {
+        await db.update(activationTokens)
+          .set({ usedAt: new Date() })
+          .where(eq(activationTokens.id, tokenRecord.id));
+        return res.status(400).json({ message: "This team already has an active captain account." });
+      }
+
+      const { users } = await import("@shared/models/auth");
+      const [existingCaptain] = await db.select().from(users).where(eq(users.email, captainEmail));
+      if (existingCaptain) {
+        await storage.updateTeam(teamId, { captainUserId: existingCaptain.id });
+        await storage.claimTeamsByEmail(captainEmail, existingCaptain.id);
+        await db.update(activationTokens)
+          .set({ usedAt: new Date() })
+          .where(eq(activationTokens.id, tokenRecord.id));
+        return res.status(400).json({ message: "An account already exists for this email. Please log in instead." });
+      }
+
+      const { userId: newUserId, error } = await createCaptainAccount(captainEmail, password);
+      if (error) {
+        return res.status(500).json({ message: `Failed to create account: ${error}` });
+      }
+
+      const { authStorage } = await import("./replit_integrations/auth/storage");
+      await authStorage.upsertUser({
+        id: newUserId,
+        email: captainEmail,
+        firstName: team?.captainName?.split(" ")[0] || null,
+        lastName: team?.captainName?.split(" ").slice(1).join(" ") || null,
+        role: "captain",
+      });
+
+      await storage.updateTeam(teamId, { captainUserId: newUserId });
+      await storage.claimTeamsByEmail(captainEmail, newUserId);
+
+      await db.update(activationTokens)
+        .set({ usedAt: new Date() })
+        .where(
+          and(
+            eq(activationTokens.teamId, teamId),
+            isNull(activationTokens.usedAt)
+          )
+        );
+
+      res.json({ message: "Account activated successfully. You can now log in." });
+    } catch (err) {
+      console.error("Activation error:", err);
+      res.status(500).json({ message: "Failed to activate account" });
+    }
+  });
+
+  // === RESEND ACTIVATION (admin-only) ===
+  app.post("/api/admin/teams/:id/resend-activation", isAuthenticated, async (req, res) => {
+    try {
+      const teamId = Number(req.params.id);
+      const team = await storage.getTeam(teamId);
+      if (!team) return res.status(404).json({ message: "Team not found" });
+      if (team.status !== "approved") return res.status(400).json({ message: "Team must be approved first" });
+
+      const { db } = await import("./db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+
+      const [existingUser] = await db.select().from(users).where(eq(users.email, team.captainEmail));
+      if (existingUser) {
+        return res.status(400).json({ message: "Captain already has an active account." });
+      }
+
+      const { activationTokens } = await import("@shared/schema");
+      const { and, isNull } = await import("drizzle-orm");
+
+      await db.update(activationTokens)
+        .set({ usedAt: new Date() })
+        .where(
+          and(
+            eq(activationTokens.teamId, teamId),
+            isNull(activationTokens.usedAt)
+          )
+        );
+
+      const rawToken = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+      await db.insert(activationTokens).values({
+        teamId,
+        captainEmail: team.captainEmail,
+        tokenHash,
+        expiresAt,
+      });
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const activationUrl = `${baseUrl}/activate?token=${rawToken}`;
+
+      const { sendCaptainActivationEmail } = await import("./mailjet");
+      await sendCaptainActivationEmail(
+        team.captainEmail,
+        team.captainName || "Captain",
+        team.name,
+        activationUrl
+      );
+
+      res.json({ message: `Activation email resent to ${team.captainEmail}` });
+    } catch (err) {
+      console.error("Resend activation error:", err);
+      res.status(500).json({ message: "Failed to resend activation email" });
+    }
+  });
+
+  // === TEAM APPROVAL (sends activation link) ===
   app.post("/api/admin/teams/:id/approve", isAuthenticated, async (req, res) => {
     try {
       const teamId = Number(req.params.id);
@@ -65,78 +212,58 @@ export async function registerRoutes(
       if (!team) return res.status(404).json({ message: "Team not found" });
       if (team.status === "approved") return res.status(400).json({ message: "Team already approved" });
 
-      const { authStorage } = await import("./replit_integrations/auth/storage");
       const { db } = await import("./db");
       const { users } = await import("@shared/models/auth");
       const { eq } = await import("drizzle-orm");
 
       const [existingUser] = await db.select().from(users).where(eq(users.email, team.captainEmail));
 
-      let userId: string;
-      let password: string | null = null;
-      let isNewAccount = false;
+      await storage.updateTeam(teamId, { status: "approved", captainUserId: existingUser?.id || null });
 
       if (existingUser) {
-        userId = existingUser.id;
-      } else {
-        password = generatePassword();
-        const { userId: newUserId, error } = await createCaptainAccount(team.captainEmail, password);
-
-        if (error) {
-          return res.status(500).json({ message: `Failed to create captain account: ${error}` });
-        }
-        userId = newUserId;
-        isNewAccount = true;
-
-        await authStorage.upsertUser({
-          id: userId,
-          email: team.captainEmail,
-          firstName: team.captainName?.split(" ")[0] || null,
-          lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
-          role: "captain",
-          password: password,
-        });
+        await storage.claimTeamsByEmail(team.captainEmail, existingUser.id);
       }
 
-      await storage.updateTeam(teamId, { status: "approved", captainUserId: userId });
+      if (!existingUser) {
+        const rawToken = randomBytes(32).toString("hex");
+        const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
-      await storage.claimTeamsByEmail(team.captainEmail, userId);
+        const { activationTokens } = await import("@shared/schema");
+        await db.insert(activationTokens).values({
+          teamId,
+          captainEmail: team.captainEmail,
+          tokenHash,
+          expiresAt,
+        });
 
-      console.log(`Team approval - isNewAccount: ${isNewAccount}, hasPassword: ${!!password}, captainEmail: ${team.captainEmail}`);
-      if (isNewAccount && password) {
+        const baseUrl = `${req.protocol}://${req.get("host")}`;
+        const activationUrl = `${baseUrl}/activate?token=${rawToken}`;
+
         try {
-          const { sendCaptainCredentialsEmail } = await import("./mailjet");
-          const baseUrl = `${req.protocol}://${req.get("host")}`;
-          console.log(`Sending credentials email via Mailjet to ${team.captainEmail}...`);
-          const result = await sendCaptainCredentialsEmail(
+          const { sendCaptainActivationEmail } = await import("./mailjet");
+          console.log(`Sending activation email to ${team.captainEmail}...`);
+          const result = await sendCaptainActivationEmail(
             team.captainEmail,
             team.captainName || "Captain",
             team.name,
-            password,
-            `${baseUrl}/captain-login`
+            activationUrl
           );
           console.log(`Mailjet send result:`, JSON.stringify(result));
         } catch (emailErr: any) {
-          console.error("Failed to send credentials email:", emailErr?.message || emailErr);
-          if (emailErr?.response) {
-            console.error("Mailjet error response:", JSON.stringify(emailErr.response?.data || emailErr.statusCode));
-          }
+          console.error("Failed to send activation email:", emailErr?.message || emailErr);
         }
-      } else {
-        console.log(`Skipping email: existing captain account for ${team.captainEmail}`);
-      }
 
-      res.json({
-        team: { ...team, status: "approved", captainUserId: userId },
-        credentials: isNewAccount && password ? {
-          email: team.captainEmail,
-          password,
-          loginUrl: "/captain-login",
-        } : null,
-        message: isNewAccount
-          ? `Captain account created for ${team.captainEmail}`
-          : `Team approved. Captain already has an account (${team.captainEmail}) — no new password generated.`,
-      });
+        res.json({
+          team: { ...team, status: "approved" },
+          message: `Team approved. An activation email has been sent to ${team.captainEmail}.`,
+        });
+      } else {
+        res.json({
+          team: { ...team, status: "approved", captainUserId: existingUser.id },
+          message: `Team approved. Captain already has an account (${team.captainEmail}).`,
+        });
+      }
     } catch (err) {
       console.error("Team approval error:", err);
       res.status(500).json({ message: "Failed to approve team" });
