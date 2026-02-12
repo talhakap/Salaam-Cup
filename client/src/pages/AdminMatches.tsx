@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Loader2, Plus, Pencil, Trash2, Calendar, Upload, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -205,6 +205,7 @@ export default function AdminMatches() {
   const deleteMatch = useDeleteMatch();
   const importMatches = useImportMatches();
   const { toast } = useToast();
+  const [filterDivision, setFilterDivision] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [editMatch, setEditMatch] = useState<MatchWithTeams | null>(null);
   const [deleteMatchState, setDeleteMatchState] = useState<MatchWithTeams | null>(null);
@@ -214,6 +215,19 @@ export default function AdminMatches() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tournamentTeams = allTeams?.filter(t => t.tournamentId === activeTournamentId && t.status === "approved") || [];
+
+  const sortedFilteredMatches = useMemo(() => {
+    if (!matches) return [];
+    let filtered = matches as MatchWithTeams[];
+    if (filterDivision !== "all") {
+      filtered = filtered.filter(m => m.divisionId === Number(filterDivision));
+    }
+    return [...filtered].sort((a, b) => {
+      const timeA = a.startTime ? new Date(a.startTime).getTime() : Infinity;
+      const timeB = b.startTime ? new Date(b.startTime).getTime() : Infinity;
+      return timeA - timeB;
+    });
+  }, [matches, filterDivision]);
 
   const handleDelete = async () => {
     if (!deleteMatchState) return;
@@ -311,40 +325,56 @@ export default function AdminMatches() {
         </div>
       </div>
 
-      <div className="mb-6">
-        <label className="text-sm font-medium mr-2">Tournament:</label>
-        {tournamentsLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin inline" />
-        ) : (
-          <Select
-            value={String(activeTournamentId)}
-            onValueChange={v => setSelectedTournamentId(Number(v))}
-          >
-            <SelectTrigger className="w-[260px] inline-flex">
-              <SelectValue placeholder="Select tournament" />
+      <div className="flex gap-4 mb-6 flex-wrap items-end">
+        <div>
+          <label className="text-sm font-medium block mb-1">Tournament</label>
+          {tournamentsLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin inline" />
+          ) : (
+            <Select
+              value={String(activeTournamentId)}
+              onValueChange={v => { setSelectedTournamentId(Number(v)); setFilterDivision("all"); }}
+            >
+              <SelectTrigger className="w-[260px]" data-testid="select-admin-tournament">
+                <SelectValue placeholder="Select tournament" />
+              </SelectTrigger>
+              <SelectContent>
+                {tournaments?.map(t => (
+                  <SelectItem key={t.id} value={String(t.id)}>{t.name} ({t.year})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <div>
+          <label className="text-sm font-medium block mb-1">Division</label>
+          <Select value={filterDivision} onValueChange={setFilterDivision}>
+            <SelectTrigger className="w-[200px]" data-testid="select-admin-division-filter">
+              <SelectValue placeholder="All Divisions" />
             </SelectTrigger>
             <SelectContent>
-              {tournaments?.map(t => (
-                <SelectItem key={t.id} value={String(t.id)}>{t.name} ({t.year})</SelectItem>
+              <SelectItem value="all">All Divisions</SelectItem>
+              {divisions?.map(d => (
+                <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        )}
+        </div>
       </div>
 
       {matchesLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : !matches || matches.length === 0 ? (
+      ) : sortedFilteredMatches.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
           <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No matches scheduled</p>
-          <p className="text-sm mt-1">Create your first match to get started.</p>
+          <p className="text-lg font-medium">No matches found</p>
+          <p className="text-sm mt-1">{matches && matches.length > 0 ? "Try changing the division filter." : "Create your first match to get started."}</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {matches.map((match: MatchWithTeams) => (
+          {sortedFilteredMatches.map((match: MatchWithTeams) => (
             <Card key={match.id} data-testid={`card-match-${match.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">

@@ -45,16 +45,23 @@ export default function TournamentSchedule() {
 
   const filteredMatches = useMemo(() => {
     if (!allMatches) return [];
-    return allMatches.filter((m: MatchWithTeams) => {
-      if (filterDivision !== "all" && m.divisionId !== Number(filterDivision)) return false;
-      if (filterStatus !== "all" && m.status !== filterStatus) return false;
-      if (filterDate !== "all") {
-        if (!m.startTime) return false;
-        const mDate = new Date(m.startTime).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-        if (mDate !== filterDate) return false;
-      }
-      return true;
-    });
+    return allMatches
+      .filter((m: MatchWithTeams) => {
+        if (filterDivision !== "all" && m.divisionId !== Number(filterDivision)) return false;
+        if (filterStatus !== "all" && m.status !== filterStatus) return false;
+        if (filterDate !== "all") {
+          if (!m.startTime) return false;
+          const mDate = new Date(m.startTime).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+          if (mDate !== filterDate) return false;
+        }
+        return true;
+      })
+      .slice()
+      .sort((a, b) => {
+        const timeA = a.startTime ? new Date(a.startTime).getTime() : Infinity;
+        const timeB = b.startTime ? new Date(b.startTime).getTime() : Infinity;
+        return timeA - timeB;
+      });
   }, [allMatches, filterDivision, filterDate, filterStatus]);
 
   if (isLoading) {
