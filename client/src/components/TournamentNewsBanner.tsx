@@ -40,7 +40,7 @@ export function TournamentNewsBanner({ newsItems }: TournamentNewsBannerProps) {
   const currentItem = newsItems[currentIndex];
 
   return (
-    <section className="relative w-full h-[300px] md:h-[400px] overflow-hidden" data-testid="tournament-news-banner">
+    <section className="relative w-full h-[600px] md:h-[800px] overflow-hidden" data-testid="tournament-news-banner">
       <div
         className={`absolute inset-0 bg-cover bg-center transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}
         style={{ backgroundImage: `url(${currentItem.imageUrl})` }}
