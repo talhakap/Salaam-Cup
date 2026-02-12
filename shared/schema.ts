@@ -133,6 +133,7 @@ export const matches = pgTable("matches", {
   round: text("round"),
   matchNumber: integer("match_number"),
   pulled: boolean("pulled").default(false).notNull(),
+  draft: boolean("draft").default(false).notNull(),
 });
 
 export const insertMatchSchema = createInsertSchema(matches).omit({ id: true }).extend({
