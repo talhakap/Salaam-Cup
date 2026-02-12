@@ -65,7 +65,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-muted flex font-sans">
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-secondary text-white min-h-screen fixed left-0 top-0 z-20">
+      <aside className="hidden md:flex flex-col w-64 bg-secondary text-stone-900 min-h-screen fixed left-0 top-0 z-20">
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-primary" />
@@ -104,8 +104,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
         {/* Mobile Header */}
-        <header className="md:hidden h-16 bg-secondary text-white flex items-center justify-between px-4 sticky top-0 z-10">
-          <span className="font-bold font-display text-lg">ADMIN</span>
+        <header className="md:hidden h-16 bg-secondary text-stone-900 flex items-center justify-between px-4 sticky top-0 z-10">
+          <span className="text-stone-900 font-bold font-display text-lg">ADMIN</span>
           <button onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X /> : <Menu />}
           </button>
@@ -114,8 +114,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         {/* Mobile Sidebar Overlay */}
         {isOpen && (
           <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setIsOpen(false)}>
-            <div className="bg-secondary w-64 h-full p-4" onClick={e => e.stopPropagation()}>
-               <nav className="space-y-2 mt-12">
+            <div className="bg-secondary w-64 h-full flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="p-4 pt-6 flex items-center justify-between border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  <span className="text-stone-900 font-bold font-display">ADMIN</span>
+                </div>
+                <button onClick={() => setIsOpen(false)}>
+                  <X className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+              <nav className="flex-1 overflow-y-auto p-4 space-y-1">
                 {sidebarItems.map((item) => (
                   <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)} className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
@@ -125,10 +134,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 ))}
-                 <div className="pt-4 mt-4 border-t border-white/10">
-                    <Button variant="destructive" className="w-full" onClick={() => logout()}>Logout</Button>
-                 </div>
-               </nav>
+              </nav>
+              <div className="p-4 border-t border-white/10 space-y-2 flex-shrink-0">
+                <Link href="/" onClick={() => setIsOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white">
+                    Back to Public Site
+                  </Button>
+                </Link>
+                <Button variant="destructive" className="w-full justify-start gap-2" onClick={() => logout()}>
+                  <LogOut className="h-4 w-4" /> Logout
+                </Button>
+              </div>
             </div>
           </div>
         )}
