@@ -714,16 +714,17 @@ export async function registerRoutes(
           awayTeamId = at.id;
         }
 
-        let startTime: string | null = null;
+        let startTime: Date | null = null;
         if (row.date) {
           const dateStr = row.date.trim();
           const timeStr = (row.time || "").trim();
           try {
-            if (timeStr) {
-              startTime = new Date(`${dateStr} ${timeStr}`).toISOString();
-            } else {
-              startTime = new Date(dateStr).toISOString();
+            const parsed = timeStr ? new Date(`${dateStr} ${timeStr}`) : new Date(dateStr);
+            if (isNaN(parsed.getTime())) {
+              errors.push(`Row ${rowNum}: Invalid date/time "${dateStr} ${timeStr}"`);
+              continue;
             }
+            startTime = parsed;
           } catch {
             errors.push(`Row ${rowNum}: Invalid date/time "${dateStr} ${timeStr}"`);
             continue;
