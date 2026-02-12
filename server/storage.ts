@@ -476,18 +476,16 @@ export class DatabaseStorage implements IStorage {
     const approvedTeams = await db.select().from(teams)
       .where(and(eq(teams.tournamentId, tournamentId), eq(teams.status, "approved")));
 
-    const teamIdsWithStandings = new Set(rows.map(r => r.teamId));
+    const teamIdsWithStandings = new Set(rows.map(r => Number(r.teamId)));
 
-    const allTournamentTeams = await db.select().from(teams)
-      .where(eq(teams.tournamentId, tournamentId));
     const enriched: StandingWithTeam[] = [];
     for (const s of rows) {
-      const team = allTournamentTeams.find(t => t.id === s.teamId);
+      const team = approvedTeams.find(t => Number(t.id) === Number(s.teamId));
       if (team) enriched.push({ ...s, team });
     }
 
     for (const team of approvedTeams) {
-      if (!teamIdsWithStandings.has(team.id)) {
+      if (!teamIdsWithStandings.has(Number(team.id))) {
         enriched.push({
           id: 0,
           tournamentId,
@@ -522,10 +520,10 @@ export class DatabaseStorage implements IStorage {
     // Clear existing standings
     await db.delete(standings).where(eq(standings.tournamentId, tournamentId));
 
-    // Build standings map
+    // Build standings map (coerce IDs to number for consistent lookups)
     const statsMap = new Map<number, InsertStanding>();
     for (const team of allTeams) {
-      statsMap.set(team.id, {
+      statsMap.set(Number(team.id), {
         tournamentId,
         divisionId: team.divisionId,
         teamId: team.id,
@@ -543,8 +541,8 @@ export class DatabaseStorage implements IStorage {
 
     for (const m of finalMatches) {
       if (!m.homeTeamId || !m.awayTeamId) continue;
-      const home = statsMap.get(m.homeTeamId);
-      const away = statsMap.get(m.awayTeamId);
+      const home = statsMap.get(Number(m.homeTeamId));
+      const away = statsMap.get(Number(m.awayTeamId));
       if (!home || !away) continue;
 
       const hs = m.homeScore ?? 0;

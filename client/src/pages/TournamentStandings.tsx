@@ -118,7 +118,7 @@ export default function TournamentStandings() {
               </TableHeader>
               <TableBody>
                 {filteredStandings.map((s: StandingWithTeam, index: number) => (
-                  <TableRow key={s.id} className="border-b" data-testid={`row-standing-${s.id}`}>
+                  <TableRow key={`${s.divisionId}-${s.teamId}`} className="border-b" data-testid={`row-standing-${s.teamId}`}>
                     <TableCell className="font-bold">{s.position || index + 1}</TableCell>
                     <TableCell>
                       <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline flex items-center gap-2">
