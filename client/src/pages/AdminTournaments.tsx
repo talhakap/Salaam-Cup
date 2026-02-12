@@ -478,7 +478,7 @@ export default function AdminTournaments() {
 
   const TournamentFormFields = ({ form, prefix = "" }: { form: any; prefix?: string; }) => (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField control={form.control} name="name" render={({ field }: any) => (
           <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} data-testid={`${prefix}input-tournament-name`} /></FormControl><FormMessage /></FormItem>
         )} />
@@ -486,7 +486,7 @@ export default function AdminTournaments() {
           <FormItem><FormLabel>Slug</FormLabel><FormControl><Input {...field} data-testid={`${prefix}input-tournament-slug`} /></FormControl><FormMessage /></FormItem>
         )} />
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <FormField control={form.control} name="year" render={({ field }: any) => (
           <FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" {...field} onChange={(e: any) => field.onChange(parseInt(e.target.value))} /></FormControl><FormMessage /></FormItem>
         )} />
@@ -497,7 +497,7 @@ export default function AdminTournaments() {
           <FormItem><FormLabel>End Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField control={form.control} name="status" render={({ field }: any) => (
           <FormItem>
             <FormLabel>Status</FormLabel>
@@ -549,7 +549,7 @@ export default function AdminTournaments() {
           <FormMessage />
         </FormItem>
       )} />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField control={form.control} name="heroImage" render={({ field }: any) => (
           <FormItem>
             <FormLabel>Hero Image</FormLabel>
@@ -620,7 +620,7 @@ export default function AdminTournaments() {
         <div className="space-y-3">
           {tournaments.map((t) => (
             <div key={t.id} className="bg-card rounded-lg shadow border" data-testid={`card-tournament-${t.id}`}>
-              <div className="p-4 flex items-center justify-between gap-4">
+              <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center flex-wrap gap-2 mb-1">
                     <h3 className="font-bold text-lg truncate">{t.name}</h3>
@@ -629,10 +629,10 @@ export default function AdminTournaments() {
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {t.year} &middot; {format(new Date(t.startDate), 'MMM d')} - {format(new Date(t.endDate), 'MMM d, yyyy')}
-                    {t.description && <span className="ml-2">&middot; {t.description.slice(0, 60)}{t.description.length > 60 ? '...' : ''}</span>}
+                    {t.description && <span className="hidden sm:inline ml-2">&middot; {t.description.slice(0, 60)}{t.description.length > 60 ? '...' : ''}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={!!t.registrationOpen}

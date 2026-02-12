@@ -159,6 +159,7 @@ export default function TournamentDetail() {
 
           {!standingsLoading && filteredStandings.length > 0 && (
             <>
+              <div className="overflow-x-auto -mx-4 px-4">
               <Table>
                 <TableHeader>
                   <TableRow className="border-b-2 border-foreground">
@@ -196,6 +197,7 @@ export default function TournamentDetail() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
 
               <div className="text-center mt-6 mb-16">
                 <Link href={`/tournaments/${tournamentId}/standings`}>

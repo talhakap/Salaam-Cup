@@ -337,24 +337,25 @@ export default function AdminMatches() {
 
   return (
     <AdminLayout>
-      <div className="flex justify-between items-center flex-wrap gap-2 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-matches-title">Match Management</h1>
-          <p className="text-muted-foreground mt-1">Schedule and manage matches</p>
+          <h1 className="text-2xl md:text-3xl font-bold font-display text-secondary" data-testid="text-admin-matches-title">Match Management</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Schedule and manage matches</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" className="gap-2" onClick={handleDownloadTemplate} data-testid="button-download-csv-template">
-            <Download className="h-4 w-4" /> CSV Template
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadTemplate} data-testid="button-download-csv-template">
+            <Download className="h-4 w-4" /> <span className="hidden sm:inline">CSV</span> Template
           </Button>
-          <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={!activeTournamentId} data-testid="button-import-csv">
-            <Upload className="h-4 w-4" /> Import CSV
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={!activeTournamentId} data-testid="button-import-csv">
+            <Upload className="h-4 w-4" /> Import
           </Button>
           <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileSelect} />
-          <Button className="gap-2" onClick={() => setCreateOpen(true)} disabled={!activeTournamentId} data-testid="button-create-match">
-            <Plus className="h-4 w-4" /> Create Match
+          <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)} disabled={!activeTournamentId} data-testid="button-create-match">
+            <Plus className="h-4 w-4" /> Create
           </Button>
           {draftCount > 0 && (
             <Button
+              size="sm"
               className="gap-2"
               onClick={handlePublish}
               disabled={publishMatches.isPending}
@@ -367,7 +368,7 @@ export default function AdminMatches() {
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6 flex-wrap items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div>
           <label className="text-sm font-medium block mb-1">Tournament</label>
           {tournamentsLoading ? (
@@ -377,7 +378,7 @@ export default function AdminMatches() {
               value={String(activeTournamentId)}
               onValueChange={v => { setSelectedTournamentId(Number(v)); setFilterDivision("all"); }}
             >
-              <SelectTrigger className="w-[260px]" data-testid="select-admin-tournament">
+              <SelectTrigger className="w-full" data-testid="select-admin-tournament">
                 <SelectValue placeholder="Select tournament" />
               </SelectTrigger>
               <SelectContent>
@@ -391,7 +392,7 @@ export default function AdminMatches() {
         <div>
           <label className="text-sm font-medium block mb-1">Division</label>
           <Select value={filterDivision} onValueChange={setFilterDivision}>
-            <SelectTrigger className="w-[200px]" data-testid="select-admin-division-filter">
+            <SelectTrigger className="w-full" data-testid="select-admin-division-filter">
               <SelectValue placeholder="All Divisions" />
             </SelectTrigger>
             <SelectContent>

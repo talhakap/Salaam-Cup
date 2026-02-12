@@ -2,18 +2,14 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Trophy, ShieldCheck, Calendar, Loader2 } from "lucide-react";
 import { useTournaments } from "@/hooks/use-tournaments";
-import { useAllTeams, useUpdateTeam } from "@/hooks/use-teams";
+import { useAllTeams } from "@/hooks/use-teams";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 
 export default function AdminDashboard() {
   const { data: tournaments } = useTournaments();
   const { data: allTeams } = useAllTeams();
   const { data: pendingTeams } = useAllTeams("pending");
-  const updateTeam = useUpdateTeam();
-  const { toast } = useToast();
 
   const pendingCount = pendingTeams?.length || 0;
   const approvedCount = allTeams?.filter(t => t.status === "approved").length || 0;
@@ -25,16 +21,6 @@ export default function AdminDashboard() {
     { label: "Total Teams", value: allTeams?.length || 0, icon: Calendar, color: "text-muted-foreground" },
   ];
 
-  const handleApprove = (teamId: number) => {
-    updateTeam.mutate(
-      { id: teamId, status: "approved" },
-      {
-        onSuccess: () => toast({ title: "Team approved" }),
-        onError: () => toast({ title: "Error", variant: "destructive" }),
-      }
-    );
-  };
-
   return (
     <AdminLayout>
       <div className="mb-8">
@@ -42,23 +28,23 @@ export default function AdminDashboard() {
         <p className="text-stone-900">Welcome back, Admin.</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         {stats.map((stat, i) => (
           <Card key={i} data-testid={`card-stat-${i}`}>
-            <CardContent className="p-6 flex items-center justify-between gap-2">
+            <CardContent className="p-4 md:p-6 flex items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                <p className="text-3xl font-bold mt-2" data-testid={`text-stat-value-${i}`}>{stat.value}</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl md:text-3xl font-bold mt-1 md:mt-2" data-testid={`text-stat-value-${i}`}>{stat.value}</p>
               </div>
-              <div className={`p-3 rounded-full bg-gray-100 ${stat.color}`}>
-                <stat.icon className="h-6 w-6" />
+              <div className={`p-2 md:p-3 rounded-full bg-gray-100 ${stat.color} hidden sm:flex`}>
+                <stat.icon className="h-5 w-5 md:h-6 md:w-6" />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
         <Card>
           <CardHeader>
             <CardTitle>Recent Registrations</CardTitle>
@@ -75,14 +61,11 @@ export default function AdminDashboard() {
                   <div key={team.id} className="flex items-center justify-between gap-2 border-b pb-4 last:border-0" data-testid={`row-pending-team-${team.id}`}>
                     <div className="min-w-0">
                       <p className="font-medium truncate">{team.name}</p>
-                      <p className="text-sm text-muted-foreground">{team.captainName}</p>
+                      <p className="text-sm text-muted-foreground truncate">{team.captainName}</p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Link href={`/teams/${team.id}`}>
-                        <Button size="sm" variant="outline" data-testid={`button-review-${team.id}`}>Review</Button>
-                      </Link>
-                      <Button size="sm" onClick={() => handleApprove(team.id)} disabled={updateTeam.isPending} data-testid={`button-quick-approve-${team.id}`}>Approve</Button>
-                    </div>
+                    <Link href="/admin/teams" className="flex-shrink-0">
+                      <Button size="sm" variant="outline" data-testid={`button-review-${team.id}`}>Review</Button>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -98,7 +81,7 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Tournaments</CardTitle>
-            <CardDescription>Quick actions</CardDescription>
+            <CardDescription>Overview</CardDescription>
           </CardHeader>
           <CardContent>
              <div className="space-y-4">
@@ -108,8 +91,8 @@ export default function AdminDashboard() {
                      <p className="font-medium truncate">{t.name}</p>
                      <p className="text-sm text-muted-foreground capitalize">{t.status}</p>
                    </div>
-                   <Link href={`/tournaments/${t.id}`}>
-                      <Button size="sm" variant="secondary">Manage</Button>
+                   <Link href={`/tournaments/${t.id}`} className="flex-shrink-0">
+                      <Button size="sm" variant="secondary">View</Button>
                    </Link>
                  </div>
                ))}

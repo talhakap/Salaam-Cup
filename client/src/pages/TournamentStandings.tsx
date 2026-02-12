@@ -95,6 +95,7 @@ export default function TournamentStandings() {
           </div>
 
           {filteredStandings.length > 0 ? (
+            <div className="overflow-x-auto -mx-4 px-4">
             <Table>
               <TableHeader>
                 <TableRow className="border-b-2 border-foreground">
@@ -132,6 +133,7 @@ export default function TournamentStandings() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <p className="text-muted-foreground text-center py-12">No standings available yet.</p>
           )}
