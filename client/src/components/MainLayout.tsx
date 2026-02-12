@@ -383,7 +383,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div className="col-span-1">
               <span className="text-2xl font-bold font-display tracking-tight block mb-4">
-                SALAAM CUP
+                <img
+                  src="/images/salaam-cup-logo-white.png"
+                  alt="Sport Cup Manager Logo"
+                  className="h-20 w-auto"
+                />
               </span>
               <p className="text-sm text-gray-400 leading-relaxed">
                 Salaam Cup is a premier sports organization uniting athletes through competition, faith, and community.
@@ -405,10 +409,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="col-span-1">
               <h4 className="font-bold mb-4 text-sm tracking-wider">Sports</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/tournaments" className="hover:text-white transition-colors">HOCKEY</Link></li>
-                <li><Link href="/tournaments" className="hover:text-white transition-colors">BASKETBALL</Link></li>
-                <li><Link href="/tournaments" className="hover:text-white transition-colors">SOCCER</Link></li>
-                <li><Link href="/tournaments" className="hover:text-white transition-colors">SOFTBALL</Link></li>
+                {(sports || []).map((sport: Sport) => {
+                  const sportTournament = (tournaments || []).find((t: Tournament) => Number(t.sportId) === Number(sport.id));
+                  return (
+                    <li key={sport.id}>
+                      <Link 
+                        href={sportTournament ? `/tournaments/${sportTournament.id}` : "/tournaments"} 
+                        className="hover:text-white transition-colors"
+                        data-testid={`footer-sport-${sport.id}`}
+                      >
+                        {sport.name.toUpperCase()}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
