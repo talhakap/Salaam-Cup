@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
 import { Users, ArrowRight } from "lucide-react";
 import { useState } from "react";
+import { format, eachDayOfInterval, parseISO } from "date-fns";
 import type { Division, Team, StandingWithTeam, MatchWithTeams, Venue } from "@shared/schema";
 
 export default function TournamentDetail() {
@@ -103,6 +104,10 @@ export default function TournamentDetail() {
       />
       <SponsorBar />
       <TournamentNav tournamentId={tournamentId} />
+
+      {tournament.showInfoBanner && (
+        <TournamentInfoBanner tournament={tournament} divisions={divisions} venues={venues} />
+      )}
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
@@ -270,6 +275,103 @@ export default function TournamentDetail() {
       <ReadyToCompete />
       <FAQSection />
     </MainLayout>
+  );
+}
+
+function formatTournamentDates(startDate: string, endDate: string): string {
+  const start = parseISO(startDate);
+  const end = parseISO(endDate);
+
+  const startMonth = format(start, "MMMM").toUpperCase();
+  const endMonth = format(end, "MMMM").toUpperCase();
+  const startYear = format(start, "yyyy");
+  const endYear = format(end, "yyyy");
+
+  if (startDate === endDate) {
+    return format(start, "MMMM d, yyyy").toUpperCase();
+  }
+
+  if (startYear !== endYear) {
+    return `${startMonth} ${format(start, "d")}, ${startYear} - ${endMonth} ${format(end, "d")}, ${endYear}`;
+  }
+
+  if (startMonth !== endMonth) {
+    return `${startMonth} ${format(start, "d")} - ${endMonth} ${format(end, "d")}, ${endYear}`;
+  }
+
+  const days = eachDayOfInterval({ start, end });
+  const dayNumbers = days.map(d => format(d, "d"));
+
+  if (days.length === 2) {
+    return `${startMonth} ${dayNumbers[0]} & ${dayNumbers[1]}, ${endYear}`;
+  }
+
+  const allButLast = dayNumbers.slice(0, -1).join(", ");
+  return `${startMonth} ${allButLast} & ${dayNumbers[dayNumbers.length - 1]}, ${endYear}`;
+}
+
+function TournamentInfoBanner({ 
+  tournament, 
+  divisions, 
+  venues 
+}: { 
+  tournament: any; 
+  divisions?: Division[]; 
+  venues?: Venue[] 
+}) {
+  const venue = tournament.venueId && venues 
+    ? venues.find((v: Venue) => Number(v.id) === Number(tournament.venueId)) 
+    : null;
+
+  return (
+    <section className="py-12 bg-muted/30" data-testid="tournament-info-banner">
+      <div className="container mx-auto px-4 text-center space-y-5">
+        <h2 className="text-2xl md:text-4xl font-bold font-display uppercase tracking-wide" data-testid="banner-title">
+          {tournament.year} SALAAM CUP {tournament.name.toUpperCase().replace("SALAAM CUP ", "").replace("MENS ", "").replace("WOMENS ", "")} TOURNAMENT
+        </h2>
+
+        {tournament.startDate && tournament.endDate && (
+          <p className="text-xl md:text-2xl font-bold font-display" data-testid="banner-dates">
+            {formatTournamentDates(tournament.startDate, tournament.endDate)}
+          </p>
+        )}
+
+        {venue && (
+          <div data-testid="banner-venue">
+            {venue.mapLink ? (
+              <a 
+                href={venue.mapLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-lg md:text-xl font-bold text-primary underline underline-offset-2 font-display"
+              >
+                {venue.name}
+              </a>
+            ) : (
+              <p className="text-lg md:text-xl font-bold text-primary font-display">{venue.name}</p>
+            )}
+            {venue.address && (
+              <p className="text-sm md:text-base text-muted-foreground mt-1">{venue.address}</p>
+            )}
+          </div>
+        )}
+
+        {divisions && divisions.length > 0 && (
+          <div data-testid="banner-divisions">
+            <p className="text-base md:text-lg font-bold font-display uppercase tracking-wide mb-1">Divisions:</p>
+            {divisions.map((div: Division) => (
+              <p 
+                key={div.id} 
+                className="text-sm md:text-base font-bold font-display uppercase"
+                data-testid={`banner-division-${div.id}`}
+              >
+                {div.name}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

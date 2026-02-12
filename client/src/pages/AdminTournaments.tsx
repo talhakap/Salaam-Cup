@@ -380,6 +380,7 @@ export default function AdminTournaments() {
       logoUrl: "",
       isFeatured: false,
       venueId: null as number | null,
+      showInfoBanner: false,
     },
   });
 
@@ -396,6 +397,7 @@ export default function AdminTournaments() {
       logoUrl: "",
       isFeatured: false,
       venueId: null as number | null,
+      showInfoBanner: false,
     },
   });
 
@@ -424,6 +426,7 @@ export default function AdminTournaments() {
       logoUrl: t.logoUrl || "",
       isFeatured: t.isFeatured || false,
       venueId: t.venueId || null,
+      showInfoBanner: t.showInfoBanner || false,
     });
   };
 
@@ -517,6 +520,14 @@ export default function AdminTournaments() {
               <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" />
             </FormControl>
             <FormLabel className="!mt-0">Featured</FormLabel>
+          </FormItem>
+        )} />
+        <FormField control={form.control} name="showInfoBanner" render={({ field }: any) => (
+          <FormItem className="flex items-end gap-2 pb-2">
+            <FormControl>
+              <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" data-testid={`${prefix}checkbox-show-info-banner`} />
+            </FormControl>
+            <FormLabel className="!mt-0">Show Info Banner</FormLabel>
           </FormItem>
         )} />
       </div>
