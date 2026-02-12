@@ -586,6 +586,7 @@ export async function registerRoutes(
     try {
       const input = api.matches.update.input.parse(req.body);
       const match = await storage.updateMatch(Number(req.params.id), input);
+      await storage.recalculateStandings(match.tournamentId);
       res.json(match);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
@@ -595,7 +596,9 @@ export async function registerRoutes(
 
   app.delete(api.matches.delete.path, isAuthenticated, async (req, res) => {
     try {
+      const match = await storage.getMatch(Number(req.params.id));
       await storage.deleteMatch(Number(req.params.id));
+      if (match) await storage.recalculateStandings(match.tournamentId);
       res.json({ message: "Match deleted" });
     } catch (err) {
       throw err;

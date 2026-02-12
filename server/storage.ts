@@ -54,6 +54,7 @@ export interface IStorage {
   createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]>;
 
   // Matches
+  getMatch(id: number): Promise<Match | undefined>;
   getMatches(tournamentId: number): Promise<MatchWithTeams[]>;
   createMatch(data: InsertMatch): Promise<Match>;
   bulkCreateMatches(data: InsertMatch[]): Promise<Match[]>;
