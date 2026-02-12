@@ -554,11 +554,11 @@ export class DatabaseStorage implements IStorage {
       if (hs > as) {
         home.wins!++;
         away.losses!++;
-        home.points! += 3;
+        home.points! += 2;
       } else if (hs < as) {
         away.wins!++;
         home.losses!++;
-        away.points! += 3;
+        away.points! += 2;
       } else {
         home.ties!++;
         away.ties!++;
