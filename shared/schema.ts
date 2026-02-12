@@ -132,6 +132,7 @@ export const matches = pgTable("matches", {
   status: text("status", { enum: ["scheduled", "live", "final", "cancelled"] }).default("scheduled").notNull(),
   round: text("round"),
   matchNumber: integer("match_number"),
+  pulled: boolean("pulled").default(false).notNull(),
 });
 
 export const insertMatchSchema = createInsertSchema(matches).omit({ id: true }).extend({

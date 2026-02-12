@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useRef, useMemo } from "react";
 import { Loader2, Plus, Pencil, Trash2, Calendar, Upload, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -229,6 +231,22 @@ export default function AdminMatches() {
     });
   }, [matches, filterDivision]);
 
+  const togglePull = useUpdateMatch();
+
+  const handleTogglePull = async (match: MatchWithTeams) => {
+    try {
+      await togglePull.mutateAsync({
+        id: match.id,
+        tournamentId: match.tournamentId,
+        divisionId: match.divisionId,
+        pulled: !match.pulled,
+      });
+      toast({ title: match.pulled ? "Match restored to standings" : "Match pulled from standings" });
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteMatchState) return;
     try {
@@ -375,11 +393,12 @@ export default function AdminMatches() {
       ) : (
         <div className="space-y-3">
           {sortedFilteredMatches.map((match: MatchWithTeams) => (
-            <Card key={match.id} data-testid={`card-match-${match.id}`}>
+            <Card key={match.id} className={match.pulled ? "opacity-60" : ""} data-testid={`card-match-${match.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center flex-wrap gap-2 mb-1">
                     <Badge variant={statusBadge(match.status)}>{match.status}</Badge>
+                    {match.pulled && <Badge variant="secondary">Pulled</Badge>}
                     <Badge variant="outline">{getDivisionName(match.divisionId)}</Badge>
                     {match.round && <Badge variant="secondary">{match.round}</Badge>}
                     {match.matchNumber ? <span className="text-xs text-muted-foreground">Match #{match.matchNumber}</span> : null}
@@ -402,7 +421,18 @@ export default function AdminMatches() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <Switch
+                      id={`pull-${match.id}`}
+                      checked={match.pulled}
+                      onCheckedChange={() => handleTogglePull(match)}
+                      data-testid={`switch-pull-match-${match.id}`}
+                    />
+                    <Label htmlFor={`pull-${match.id}`} className="text-xs text-muted-foreground cursor-pointer">
+                      Pull
+                    </Label>
+                  </div>
                   <Button size="icon" variant="ghost" onClick={() => setEditMatch(match)} data-testid={`button-edit-match-${match.id}`}>
                     <Pencil className="h-4 w-4" />
                   </Button>

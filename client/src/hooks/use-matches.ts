@@ -39,6 +39,7 @@ export function useUpdateMatch() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [api.matches.list.path, data.tournamentId] });
+      queryClient.invalidateQueries({ queryKey: [api.standings.list.path, data.tournamentId] });
     },
   });
 }

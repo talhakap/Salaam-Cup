@@ -511,7 +511,7 @@ export class DatabaseStorage implements IStorage {
   async recalculateStandings(tournamentId: number): Promise<void> {
     // Get all final matches for this tournament
     const finalMatches = await db.select().from(matches)
-      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final")));
+      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final"), eq(matches.pulled, false)));
 
     // Get all approved teams
     const allTeams = await db.select().from(teams)
