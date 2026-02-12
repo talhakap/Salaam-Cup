@@ -53,11 +53,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const activeSport = selectedSportId ?? (sports && sports.length > 0 ? sports[0].id : null);
-  const sportTournaments = (tournaments || []).filter((t: Tournament) => 
-    activeSport ? Number(t.sportId) === Number(activeSport) : true
-  );
-  const activeTournament = selectedTournamentId ?? (sportTournaments.length > 0 ? Number(sportTournaments[0].id) : null);
+  const allTournaments = tournaments || [];
+  const activeTournament = selectedTournamentId ?? (allTournaments.length > 0 ? Number(allTournaments[0].id) : null);
 
   const handleDropdownEnter = () => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
@@ -120,39 +117,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                   {tournamentDropdownOpen && (
                     <div 
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-background border border-border rounded-md shadow-lg min-w-[500px] z-50"
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-background border border-border rounded-md shadow-lg min-w-[420px] z-50"
                       onMouseEnter={handleDropdownEnter}
                       onMouseLeave={handleDropdownLeave}
                       data-testid="dropdown-tournaments"
                     >
                       <div className="flex divide-x divide-border">
-                        <div className="p-4 min-w-[160px]">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">Sports</h4>
-                          <ul className="space-y-1">
-                            {(sports || []).map((sport: Sport) => (
-                              <li key={sport.id}>
-                                <button
-                                  className={cn(
-                                    "w-full text-left text-sm py-1.5 px-2 rounded-md flex items-center justify-between gap-2 transition-colors",
-                                    Number(activeSport) === Number(sport.id)
-                                      ? "text-foreground font-medium bg-muted"
-                                      : "text-muted-foreground hover:text-foreground"
-                                  )}
-                                  onMouseEnter={() => { setSelectedSportId(sport.id); setSelectedTournamentId(null); }}
-                                  data-testid={`dropdown-sport-${sport.id}`}
-                                >
-                                  {sport.name}
-                                  <ChevronRight className="h-3 w-3" />
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div className="p-4 min-w-[170px]">
+                        <div className="p-4 min-w-[200px]">
                           <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">Tournaments</h4>
                           <ul className="space-y-1">
-                            {sportTournaments.length > 0 ? sportTournaments.map((t: Tournament) => (
+                            {allTournaments.length > 0 ? allTournaments.map((t: Tournament) => (
                               <li key={t.id}>
                                 <Link
                                   href={`/tournaments/${t.id}`}
@@ -166,7 +140,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                   onClick={() => { setTournamentDropdownOpen(false); setSelectedSportId(null); setSelectedTournamentId(null); }}
                                   data-testid={`dropdown-tournament-${t.id}`}
                                 >
-                                  {t.name.replace("Salaam Cup ", "")}
+                                  {t.name}
                                   <ChevronRight className="h-3 w-3" />
                                 </Link>
                               </li>
@@ -409,20 +383,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="col-span-1">
               <h4 className="font-bold mb-4 text-sm tracking-wider">Sports</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                {(sports || []).map((sport: Sport) => {
-                  const sportTournament = (tournaments || []).find((t: Tournament) => Number(t.sportId) === Number(sport.id));
-                  return (
-                    <li key={sport.id}>
-                      <Link 
-                        href={sportTournament ? `/tournaments/${sportTournament.id}` : "/tournaments"} 
-                        className="hover:text-white transition-colors"
-                        data-testid={`footer-sport-${sport.id}`}
-                      >
-                        {sport.name.toUpperCase()}
-                      </Link>
-                    </li>
-                  );
-                })}
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">HOCKEY</Link></li>
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">BASKETBALL</Link></li>
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">SOCCER</Link></li>
+                <li><Link href="/tournaments" className="hover:text-white transition-colors">SOFTBALL</Link></li>
               </ul>
             </div>
 
