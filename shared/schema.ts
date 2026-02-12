@@ -134,7 +134,9 @@ export const matches = pgTable("matches", {
   matchNumber: integer("match_number"),
 });
 
-export const insertMatchSchema = createInsertSchema(matches).omit({ id: true });
+export const insertMatchSchema = createInsertSchema(matches).omit({ id: true }).extend({
+  startTime: z.coerce.date().nullable().optional(),
+});
 export type Match = typeof matches.$inferSelect;
 export type InsertMatch = z.infer<typeof insertMatchSchema>;
 
