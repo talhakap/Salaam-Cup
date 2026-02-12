@@ -616,12 +616,15 @@ export async function registerRoutes(
         status?: string;
         homeScore?: string;
         awayScore?: string;
+        venue?: string;
+        fieldLocation?: string;
       }>;
       if (!Array.isArray(rows) || rows.length === 0) {
         return res.status(400).json({ message: "No match rows provided" });
       }
       const allDivisions = await storage.getDivisions(tournamentId);
       const allTeams = await storage.getTeams(tournamentId);
+      const allVenues = await storage.getVenues();
 
       const errors: string[] = [];
       const matchData: InsertMatch[] = [];
@@ -682,6 +685,18 @@ export async function registerRoutes(
           ? row.status.toLowerCase().trim() as "scheduled" | "live" | "final" | "cancelled"
           : "scheduled";
 
+        let venueId: number | null = null;
+        if (row.venue && row.venue.trim()) {
+          const v = allVenues.find(
+            (v) => v.name.toLowerCase().trim() === row.venue!.toLowerCase().trim()
+          );
+          if (v) {
+            venueId = v.id;
+          } else {
+            errors.push(`Row ${rowNum}: Venue "${row.venue}" not found`);
+          }
+        }
+
         matchData.push({
           tournamentId,
           divisionId: division.id,
@@ -693,6 +708,8 @@ export async function registerRoutes(
           status,
           round: row.round || null,
           matchNumber: row.matchNumber ? parseInt(row.matchNumber) || null : null,
+          venueId,
+          fieldLocation: row.fieldLocation?.trim() || null,
         });
       }
 
