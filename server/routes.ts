@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import type { InsertMatch } from "@shared/schema";
-import { verifyCaptainCredentials, supabaseAdmin, seedAdminAccounts } from "./supabaseAdmin";
+import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin, seedAdminAccounts } from "./supabaseAdmin";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -57,139 +57,7 @@ export async function registerRoutes(
     res.status(401).json({ message: "Not authenticated" });
   });
 
-  // === ACCOUNT ACTIVATION (set password after Supabase invite) ===
-  app.post("/api/auth/activate", async (req, res) => {
-    try {
-      const { access_token, password } = req.body;
-      if (!access_token || !password) {
-        return res.status(400).json({ message: "Access token and password are required" });
-      }
-      if (password.length < 8) {
-        return res.status(400).json({ message: "Password must be at least 8 characters" });
-      }
-
-      if (!supabaseAdmin) {
-        return res.status(500).json({ message: "Supabase Auth is not configured" });
-      }
-
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabaseWithToken = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: { autoRefreshToken: false, persistSession: false },
-          global: { headers: { Authorization: `Bearer ${access_token}` } },
-        }
-      );
-
-      const { data: tokenUser, error: tokenErr } = await supabaseWithToken.auth.getUser(access_token);
-      if (tokenErr || !tokenUser?.user) {
-        return res.status(400).json({ message: "Invalid or expired invitation. Please contact the admin to resend." });
-      }
-
-      const userId = tokenUser.user.id;
-      const email = tokenUser.user.email;
-      if (!email) {
-        return res.status(400).json({ message: "Invalid token: missing email" });
-      }
-
-      const userMeta = tokenUser.user.user_metadata || {};
-
-      const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        password,
-        email_confirm: true,
-      });
-
-      if (updateErr) {
-        return res.status(500).json({ message: `Failed to set password: ${updateErr.message}` });
-      }
-
-      const { db } = await import("./db");
-      const { users } = await import("@shared/models/auth");
-      const { eq } = await import("drizzle-orm");
-
-      const [existingUser] = await db.select().from(users).where(eq(users.id, userId));
-      if (!existingUser) {
-        const { authStorage } = await import("./replit_integrations/auth/storage");
-        await authStorage.upsertUser({
-          id: userId,
-          email,
-          firstName: userMeta.captainName?.split(" ")[0] || null,
-          lastName: userMeta.captainName?.split(" ").slice(1).join(" ") || null,
-          role: "captain",
-        });
-      }
-
-      if (userMeta.teamId) {
-        await storage.updateTeam(Number(userMeta.teamId), { captainUserId: userId });
-      }
-      await storage.claimTeamsByEmail(email, userId);
-
-      res.json({ message: "Account activated successfully. You can now log in." });
-    } catch (err) {
-      console.error("Activation error:", err);
-      res.status(500).json({ message: "Failed to activate account" });
-    }
-  });
-
-  // === RESEND ACTIVATION (admin-only, uses Supabase invite) ===
-  app.post("/api/admin/teams/:id/resend-activation", isAuthenticated, async (req, res) => {
-    try {
-      const teamId = Number(req.params.id);
-      const team = await storage.getTeam(teamId);
-      if (!team) return res.status(404).json({ message: "Team not found" });
-      if (team.status !== "approved") return res.status(400).json({ message: "Team must be approved first" });
-
-      if (!supabaseAdmin) {
-        return res.status(500).json({ message: "Supabase Auth is not configured" });
-      }
-
-      const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const existingSupaUser = listData?.users?.find(u => u.email === team.captainEmail);
-
-      if (existingSupaUser) {
-        if (existingSupaUser.email_confirmed_at) {
-          return res.status(400).json({ message: "Captain already has an active account." });
-        }
-        await supabaseAdmin.auth.admin.deleteUser(existingSupaUser.id);
-      }
-
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
-      const redirectTo = `${baseUrl}/activate`;
-
-      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-        team.captainEmail,
-        {
-          data: { teamId, teamName: team.name, captainName: team.captainName },
-          redirectTo,
-        }
-      );
-
-      if (inviteError) {
-        return res.status(500).json({ message: `Failed to resend invite: ${inviteError.message}` });
-      }
-
-      const newUserId = inviteData.user.id;
-      const { authStorage } = await import("./replit_integrations/auth/storage");
-      await authStorage.upsertUser({
-        id: newUserId,
-        email: team.captainEmail,
-        firstName: team.captainName?.split(" ")[0] || null,
-        lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
-        role: "captain",
-      });
-
-      await storage.updateTeam(teamId, { captainUserId: newUserId });
-      await storage.claimTeamsByEmail(team.captainEmail, newUserId);
-
-      res.json({ message: `Invitation email resent to ${team.captainEmail}` });
-    } catch (err) {
-      console.error("Resend activation error:", err);
-      res.status(500).json({ message: "Failed to resend invitation email" });
-    }
-  });
-
-  // === TEAM APPROVAL (sends Supabase invite email) ===
+  // === TEAM APPROVAL (creates captain account) ===
   app.post("/api/admin/teams/:id/approve", isAuthenticated, async (req, res) => {
     try {
       const teamId = Number(req.params.id);
@@ -197,73 +65,77 @@ export async function registerRoutes(
       if (!team) return res.status(404).json({ message: "Team not found" });
       if (team.status === "approved") return res.status(400).json({ message: "Team already approved" });
 
+      const { authStorage } = await import("./replit_integrations/auth/storage");
       const { db } = await import("./db");
       const { users } = await import("@shared/models/auth");
       const { eq } = await import("drizzle-orm");
 
       const [existingUser] = await db.select().from(users).where(eq(users.email, team.captainEmail));
 
-      await storage.updateTeam(teamId, { status: "approved", captainUserId: existingUser?.id || null });
+      let userId: string;
+      let password: string | null = null;
+      let isNewAccount = false;
 
       if (existingUser) {
-        await storage.claimTeamsByEmail(team.captainEmail, existingUser.id);
-        return res.json({
-          team: { ...team, status: "approved", captainUserId: existingUser.id },
-          message: `Team approved. Captain already has an account (${team.captainEmail}).`,
-        });
-      }
+        userId = existingUser.id;
+      } else {
+        password = generatePassword();
+        const { userId: newUserId, error } = await createCaptainAccount(team.captainEmail, password);
 
-      if (!supabaseAdmin) {
-        return res.status(500).json({ message: "Team approved but Supabase Auth is not configured. Cannot send invite." });
-      }
-
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
-      const redirectTo = `${baseUrl}/activate`;
-
-      try {
-        const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-        const existingSupaUser = listData?.users?.find(u => u.email === team.captainEmail);
-        if (existingSupaUser && !existingSupaUser.email_confirmed_at) {
-          await supabaseAdmin.auth.admin.deleteUser(existingSupaUser.id);
+        if (error) {
+          return res.status(500).json({ message: `Failed to create captain account: ${error}` });
         }
+        userId = newUserId;
+        isNewAccount = true;
 
-        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-          team.captainEmail,
-          {
-            data: { teamId, teamName: team.name, captainName: team.captainName },
-            redirectTo,
-          }
-        );
-
-        if (inviteError) {
-          console.error("Supabase invite error:", inviteError.message);
-          return res.json({
-            team: { ...team, status: "approved" },
-            message: `Team approved but failed to send invite email: ${inviteError.message}`,
-          });
-        }
-
-        const supabaseUserId = inviteData.user.id;
-        const { authStorage } = await import("./replit_integrations/auth/storage");
         await authStorage.upsertUser({
-          id: supabaseUserId,
+          id: userId,
           email: team.captainEmail,
           firstName: team.captainName?.split(" ")[0] || null,
           lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
           role: "captain",
+          password: password,
         });
+      }
 
-        await storage.updateTeam(teamId, { captainUserId: supabaseUserId });
-        await storage.claimTeamsByEmail(team.captainEmail, supabaseUserId);
+      await storage.updateTeam(teamId, { status: "approved", captainUserId: userId });
 
-        console.log(`Supabase invite sent to ${team.captainEmail} for team "${team.name}"`);
-      } catch (emailErr: any) {
-        console.error("Failed to send Supabase invite:", emailErr?.message || emailErr);
+      await storage.claimTeamsByEmail(team.captainEmail, userId);
+
+      console.log(`Team approval - isNewAccount: ${isNewAccount}, hasPassword: ${!!password}, captainEmail: ${team.captainEmail}`);
+      if (isNewAccount && password) {
+        try {
+          const { sendCaptainCredentialsEmail } = await import("./mailjet");
+          const baseUrl = `${req.protocol}://${req.get("host")}`;
+          console.log(`Sending credentials email via Mailjet to ${team.captainEmail}...`);
+          const result = await sendCaptainCredentialsEmail(
+            team.captainEmail,
+            team.captainName || "Captain",
+            team.name,
+            password,
+            `${baseUrl}/captain-login`
+          );
+          console.log(`Mailjet send result:`, JSON.stringify(result));
+        } catch (emailErr: any) {
+          console.error("Failed to send credentials email:", emailErr?.message || emailErr);
+          if (emailErr?.response) {
+            console.error("Mailjet error response:", JSON.stringify(emailErr.response?.data || emailErr.statusCode));
+          }
+        }
+      } else {
+        console.log(`Skipping email: existing captain account for ${team.captainEmail}`);
       }
 
       res.json({
-        team: { ...team, status: "approved" },
-        message: `Team approved. An invitation email has been sent to ${team.captainEmail}.`,
+        team: { ...team, status: "approved", captainUserId: userId },
+        credentials: isNewAccount && password ? {
+          email: team.captainEmail,
+          password,
+          loginUrl: "/captain-login",
+        } : null,
+        message: isNewAccount
+          ? `Captain account created for ${team.captainEmail}`
+          : `Team approved. Captain already has an account (${team.captainEmail}) — no new password generated.`,
       });
     } catch (err) {
       console.error("Team approval error:", err);
