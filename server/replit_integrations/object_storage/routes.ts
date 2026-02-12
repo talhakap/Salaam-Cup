@@ -38,7 +38,7 @@ export function registerObjectStorageRoutes(app: Express): void {
    */
   app.post("/api/uploads/request-url", isAuthenticated, async (req, res) => {
     try {
-      const { name, size, contentType } = req.body;
+      const { name, size, contentType, folder } = req.body;
 
       if (!name) {
         return res.status(400).json({
@@ -46,15 +46,16 @@ export function registerObjectStorageRoutes(app: Express): void {
         });
       }
 
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      const allowedFolders = ["news", "tournaments", "sponsors", "media", "special-awards", "about", "teams"];
+      const sanitizedFolder = folder && allowedFolders.includes(folder) ? folder : "general";
 
-      // Extract object path from the presigned URL for later reference
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL(sanitizedFolder);
+
       const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
 
       res.json({
         uploadURL,
         objectPath,
-        // Echo back the metadata for client convenience
         metadata: { name, size, contentType },
       });
     } catch (error) {

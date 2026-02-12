@@ -30,6 +30,7 @@ function SponsorDialog({
   const [sortOrder, setSortOrder] = useState(item?.sortOrder ?? 0);
 
   const { uploadFile, isUploading } = useUpload({
+    folder: "sponsors",
     onSuccess: (response) => {
       setLogoUrl(response.objectPath);
       toast({ title: "Logo uploaded" });

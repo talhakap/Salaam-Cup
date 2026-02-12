@@ -31,6 +31,7 @@ function SpecialAwardDialog({
   const [sortOrder, setSortOrder] = useState(item?.sortOrder ?? 0);
 
   const { uploadFile, isUploading } = useUpload({
+    folder: "special-awards",
     onSuccess: (response) => {
       setImageUrl(response.objectPath);
       toast({ title: "Image uploaded" });

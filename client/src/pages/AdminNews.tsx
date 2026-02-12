@@ -34,6 +34,7 @@ function NewsDialog({
   const [tournamentId, setTournamentId] = useState<string>(item?.tournamentId ? String(item.tournamentId) : "none");
 
   const { uploadFile, isUploading } = useUpload({
+    folder: "news",
     onSuccess: (response) => {
       setImageUrl(response.objectPath);
       toast({ title: "Image uploaded" });

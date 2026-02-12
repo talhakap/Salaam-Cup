@@ -34,6 +34,7 @@ function ImageUploadField({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { uploadFile, isUploading } = useUpload({
+    folder: "tournaments",
     onSuccess: (response) => {
       onChange(response.objectPath);
       toast({ title: `${label} uploaded` });

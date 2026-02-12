@@ -16,6 +16,7 @@ interface UploadResponse {
 interface UseUploadOptions {
   onSuccess?: (response: UploadResponse) => void;
   onError?: (error: Error) => void;
+  folder?: string;
 }
 
 /**
@@ -71,6 +72,7 @@ export function useUpload(options: UseUploadOptions = {}) {
           name: file.name,
           size: file.size,
           contentType: file.type || "application/octet-stream",
+          folder: options.folder,
         }),
       });
 
@@ -81,7 +83,7 @@ export function useUpload(options: UseUploadOptions = {}) {
 
       return response.json();
     },
-    []
+    [options.folder]
   );
 
   /**
@@ -161,7 +163,6 @@ export function useUpload(options: UseUploadOptions = {}) {
       url: string;
       headers?: Record<string, string>;
     }> => {
-      // Use the actual file properties to request a per-file presigned URL
       const response = await fetch("/api/uploads/request-url", {
         method: "POST",
         headers: {
@@ -171,6 +172,7 @@ export function useUpload(options: UseUploadOptions = {}) {
           name: file.name,
           size: file.size,
           contentType: file.type || "application/octet-stream",
+          folder: options.folder,
         }),
       });
 
@@ -185,7 +187,7 @@ export function useUpload(options: UseUploadOptions = {}) {
         headers: { "Content-Type": file.type || "application/octet-stream" },
       };
     },
-    []
+    [options.folder]
   );
 
   return {

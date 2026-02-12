@@ -52,6 +52,7 @@ function MediaItemDialog({
   const [sortOrder, setSortOrder] = useState(item?.sortOrder ?? 0);
 
   const { uploadFile, isUploading } = useUpload({
+    folder: "media",
     onSuccess: (response) => {
       setImageUrl(response.objectPath);
       toast({ title: "Image uploaded" });

@@ -12,7 +12,7 @@ const ReactQuill = lazy(() => import("react-quill-new"));
 export default function AdminAboutContent() {
   const { data: aboutContent, isLoading } = useAboutContent();
   const upsertMutation = useUpsertAboutContent();
-  const { uploadFile, isUploading } = useUpload();
+  const { uploadFile, isUploading } = useUpload({ folder: "about" });
   const { toast } = useToast();
 
   const [contentType, setContentType] = useState<"pdf" | "richtext">("richtext");
