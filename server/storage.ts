@@ -467,10 +467,40 @@ export class DatabaseStorage implements IStorage {
   // Standings
   async getStandings(tournamentId: number): Promise<StandingWithTeam[]> {
     const rows = await db.select().from(standings).where(eq(standings.tournamentId, tournamentId));
-    const enriched = await Promise.all(rows.map(async (s) => {
-      const [team] = await db.select().from(teams).where(eq(teams.id, s.teamId));
-      return { ...s, team };
-    }));
+    const approvedTeams = await db.select().from(teams)
+      .where(and(eq(teams.tournamentId, tournamentId), eq(teams.status, "approved")));
+
+    const teamIdsWithStandings = new Set(rows.map(r => r.teamId));
+
+    const allTournamentTeams = await db.select().from(teams)
+      .where(eq(teams.tournamentId, tournamentId));
+    const enriched: StandingWithTeam[] = [];
+    for (const s of rows) {
+      const team = allTournamentTeams.find(t => t.id === s.teamId);
+      if (team) enriched.push({ ...s, team });
+    }
+
+    for (const team of approvedTeams) {
+      if (!teamIdsWithStandings.has(team.id)) {
+        enriched.push({
+          id: 0,
+          tournamentId,
+          divisionId: team.divisionId,
+          teamId: team.id,
+          gamesPlayed: 0,
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          points: 0,
+          position: 0,
+          team,
+        });
+      }
+    }
+
     return enriched.sort((a, b) => (b.points - a.points) || (b.goalDifference - a.goalDifference));
   }
 
@@ -551,9 +581,9 @@ export class DatabaseStorage implements IStorage {
       if (!byDiv.has(s.divisionId)) byDiv.set(s.divisionId, []);
       byDiv.get(s.divisionId)!.push(s);
     }
-    for (const divStandings of byDiv.values()) {
-      divStandings.forEach((s, i) => { s.position = i + 1; });
-    }
+    Array.from(byDiv.values()).forEach(divStandings => {
+      divStandings.forEach((s: InsertStanding, i: number) => { s.position = i + 1; });
+    });
 
     if (standingsArr.length > 0) {
       await db.insert(standings).values(standingsArr);
