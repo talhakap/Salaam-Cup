@@ -210,7 +210,7 @@ export default function AdminMatches() {
   const [deleteMatchState, setDeleteMatchState] = useState<MatchWithTeams | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importPreview, setImportPreview] = useState<Record<string, string>[] | null>(null);
-  const [importResult, setImportResult] = useState<{ created: number; errors: string[]; total: number } | null>(null);
+  const [importResult, setImportResult] = useState<{ created: number; errors: string[]; total: number; createdDivisions?: string[]; createdTeams?: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tournamentTeams = allTeams?.filter(t => t.tournamentId === activeTournamentId && t.status === "approved") || [];
@@ -450,6 +450,16 @@ export default function AdminMatches() {
                   )}
                 </div>
               </div>
+              {(importResult.createdDivisions?.length || importResult.createdTeams?.length) ? (
+                <div className="space-y-1">
+                  {importResult.createdDivisions && importResult.createdDivisions.length > 0 && (
+                    <p className="text-sm text-muted-foreground">Auto-created divisions: {importResult.createdDivisions.join(", ")}</p>
+                  )}
+                  {importResult.createdTeams && importResult.createdTeams.length > 0 && (
+                    <p className="text-sm text-muted-foreground">Auto-created teams: {importResult.createdTeams.join(", ")}</p>
+                  )}
+                </div>
+              ) : null}
               {importResult.errors.length > 0 && (
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-destructive">Errors:</p>

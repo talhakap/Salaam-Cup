@@ -622,44 +622,94 @@ export async function registerRoutes(
       if (!Array.isArray(rows) || rows.length === 0) {
         return res.status(400).json({ message: "No match rows provided" });
       }
-      const allDivisions = await storage.getDivisions(tournamentId);
-      const allTeams = await storage.getTeams(tournamentId);
+      let allDivisions = await storage.getDivisions(tournamentId);
+      let allTeams = await storage.getTeams(tournamentId);
       const allVenues = await storage.getVenues();
 
       const errors: string[] = [];
       const matchData: InsertMatch[] = [];
+      const createdDivisions: string[] = [];
+      const createdTeams: string[] = [];
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const rowNum = i + 1;
 
-        const division = allDivisions.find(
-          (d) => d.name.toLowerCase().trim() === (row.division || "").toLowerCase().trim()
+        if (!row.division || !row.division.trim()) {
+          errors.push(`Row ${rowNum}: Division name is required`);
+          continue;
+        }
+
+        let division = allDivisions.find(
+          (d) => d.name.toLowerCase().trim() === row.division.toLowerCase().trim()
         );
         if (!division) {
-          errors.push(`Row ${rowNum}: Division "${row.division}" not found`);
-          continue;
+          try {
+            division = await storage.createDivision({
+              tournamentId,
+              name: row.division.trim(),
+              category: null,
+              description: null,
+              gameFormat: null,
+              registrationFee: 0,
+              venueId: null,
+              heroImage: null,
+            });
+            allDivisions = [...allDivisions, division];
+            createdDivisions.push(division.name);
+          } catch (err) {
+            errors.push(`Row ${rowNum}: Failed to create division "${row.division}"`);
+            continue;
+          }
         }
 
         let homeTeamId: number | null = null;
         let awayTeamId: number | null = null;
         if (row.homeTeam && row.homeTeam.trim()) {
-          const ht = allTeams.find(
-            (t) => t.name.toLowerCase().trim() === row.homeTeam.toLowerCase().trim() && t.divisionId === division.id
+          let ht = allTeams.find(
+            (t) => t.name.toLowerCase().trim() === row.homeTeam.toLowerCase().trim() && t.divisionId === division!.id
           );
           if (!ht) {
-            errors.push(`Row ${rowNum}: Home team "${row.homeTeam}" not found in division "${division.name}"`);
-            continue;
+            try {
+              ht = await storage.createTeam({
+                tournamentId,
+                divisionId: division.id,
+                name: row.homeTeam.trim(),
+                captainName: "",
+                captainEmail: "",
+                captainPhone: "",
+                status: "approved",
+              });
+              allTeams = [...allTeams, ht];
+              createdTeams.push(ht.name);
+            } catch (err) {
+              errors.push(`Row ${rowNum}: Failed to create home team "${row.homeTeam}"`);
+              continue;
+            }
           }
           homeTeamId = ht.id;
         }
         if (row.awayTeam && row.awayTeam.trim()) {
-          const at = allTeams.find(
-            (t) => t.name.toLowerCase().trim() === row.awayTeam.toLowerCase().trim() && t.divisionId === division.id
+          let at = allTeams.find(
+            (t) => t.name.toLowerCase().trim() === row.awayTeam.toLowerCase().trim() && t.divisionId === division!.id
           );
           if (!at) {
-            errors.push(`Row ${rowNum}: Away team "${row.awayTeam}" not found in division "${division.name}"`);
-            continue;
+            try {
+              at = await storage.createTeam({
+                tournamentId,
+                divisionId: division.id,
+                name: row.awayTeam.trim(),
+                captainName: "",
+                captainEmail: "",
+                captainPhone: "",
+                status: "approved",
+              });
+              allTeams = [...allTeams, at];
+              createdTeams.push(at.name);
+            } catch (err) {
+              errors.push(`Row ${rowNum}: Failed to create away team "${row.awayTeam}"`);
+              continue;
+            }
           }
           awayTeamId = at.id;
         }
@@ -718,6 +768,8 @@ export async function registerRoutes(
         created: created.length,
         errors,
         total: rows.length,
+        createdDivisions: Array.from(new Set(createdDivisions)),
+        createdTeams: Array.from(new Set(createdTeams)),
       });
     } catch (err) {
       res.status(500).json({ message: (err as Error).message });
