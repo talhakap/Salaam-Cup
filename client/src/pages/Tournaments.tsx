@@ -3,8 +3,9 @@ import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useTournaments } from "@/hooks/use-tournaments";
-import { Loader2 } from "lucide-react";
+import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
+import { Loader2, Calendar } from "lucide-react";
+import { format } from "date-fns";
 import heroImg from "/images/tournament-hero-home.png";
 
 const fallbackImages = [
@@ -17,7 +18,7 @@ const fallbackImages = [
 
 function TournamentCard({ tournament, index }: { tournament: any; index: number }) {
   const bgImage = tournament.heroImage || fallbackImages[index % fallbackImages.length];
-  const statusLabel = tournament.status === "upcoming" ? "TBD" : tournament.status === "active" ? "Live" : "Completed";
+  const { data: divisions } = useDivisions(Number(tournament.id));
 
   return (
     <Link href={`/tournaments/${tournament.id}`}>
@@ -41,32 +42,52 @@ function TournamentCard({ tournament, index }: { tournament: any; index: number 
               {tournament.name}
             </h3>
 
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
               {tournament.logoUrl ? (
                 <img
                   src={tournament.logoUrl}
                   alt={`${tournament.name} logo`}
-                  className="max-h-28 md:max-h-36 w-auto object-contain drop-shadow-lg"
+                  className="max-h-24 md:max-h-28 w-auto object-contain drop-shadow-lg"
                   data-testid={`img-tournament-logo-${tournament.id}`}
                 />
               ) : (
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">
-                  <span className="text-white/60 font-display text-3xl md:text-4xl font-bold uppercase">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">
+                  <span className="text-white/60 font-display text-2xl md:text-3xl font-bold uppercase">
                     {tournament.name.charAt(0)}
                   </span>
                 </div>
               )}
+
+              {divisions && divisions.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5" data-testid={`divisions-list-${tournament.id}`}>
+                  {divisions.map((div: any) => (
+                    <span
+                      key={div.id}
+                      className="text-[10px] md:text-xs text-white/80 bg-white/15 px-2 py-0.5 rounded-full font-medium"
+                      data-testid={`division-tag-${div.id}`}
+                    >
+                      {div.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="w-full text-center space-y-2">
-              {tournament.description && (
-                <p className="text-white/70 text-xs md:text-sm line-clamp-2 leading-relaxed">
-                  {tournament.description}
+            <div className="w-full text-center space-y-1.5">
+              {tournament.status === "upcoming" && tournament.startDate && (
+                <div className="flex items-center justify-center gap-1.5 text-white/80" data-testid={`date-${tournament.id}`}>
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span className="text-xs md:text-sm font-medium">
+                    {format(new Date(tournament.startDate), 'MMM d')}
+                    {tournament.endDate && ` - ${format(new Date(tournament.endDate), 'MMM d, yyyy')}`}
+                  </span>
+                </div>
+              )}
+              {tournament.status !== "upcoming" && (
+                <p className="text-white/50 text-xs">
+                  {tournament.status === "active" ? "Live Now" : "Completed"}
                 </p>
               )}
-              <p className="text-white/50 text-xs">
-                Upcoming Tournaments: <span className="font-semibold text-white/80">{statusLabel}</span>
-              </p>
             </div>
           </div>
         </div>
