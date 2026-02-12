@@ -22,7 +22,11 @@ export default function TournamentStandings() {
   const { data: divisions } = useDivisions(tournamentId);
   const { data: allStandings } = useStandings(tournamentId);
 
-  const [selectedDivision, setSelectedDivision] = useState<string>("all");
+  const divisionTabsReady = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  if (selectedDivision === "" && divisionTabsReady.length > 0) {
+    setSelectedDivision(divisionTabsReady[0].id);
+  }
 
   if (isLoading) {
     return (
@@ -49,10 +53,8 @@ export default function TournamentStandings() {
     );
   }
 
-  const divisionTabs = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
-
   const filteredStandings = (allStandings || [])
-    .filter((s: StandingWithTeam) => selectedDivision === "all" || s.divisionId === Number(selectedDivision))
+    .filter((s: StandingWithTeam) => s.divisionId === Number(selectedDivision))
     .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0));
 
   return (
@@ -70,18 +72,10 @@ export default function TournamentStandings() {
             Compete And Win.
           </h2>
 
-          {divisionTabs.length > 0 && (
+          {divisionTabsReady.length > 0 && (
             <div className="flex justify-center mb-10">
               <div className="flex gap-2 flex-wrap justify-center">
-                <Button
-                  variant={selectedDivision === "all" ? "default" : "outline"}
-                  className="rounded-full text-xs font-bold uppercase tracking-wider"
-                  onClick={() => setSelectedDivision("all")}
-                  data-testid="filter-standing-all"
-                >
-                  All
-                </Button>
-                {divisionTabs.map((tab) => (
+                {divisionTabsReady.map((tab) => (
                   <Button
                     key={tab.id}
                     variant={selectedDivision === tab.id ? "default" : "outline"}

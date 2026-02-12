@@ -30,7 +30,11 @@ export default function TournamentDetail() {
   const { data: venues } = useVenues();
   const { data: allStandings, isLoading: standingsLoading } = useStandings(tournamentId);
 
-  const [selectedDivision, setSelectedDivision] = useState<string>("all");
+  const divisionTabsReady = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  if (selectedDivision === "" && divisionTabsReady.length > 0) {
+    setSelectedDivision(divisionTabsReady[0].id);
+  }
 
   if (isLoading) {
     return (
@@ -57,20 +61,18 @@ export default function TournamentDetail() {
     );
   }
 
-  const divisionTabs = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
-
   const filteredMatches = (allMatches || [])
-    .filter((m: MatchWithTeams) => selectedDivision === "all" || m.divisionId === Number(selectedDivision))
+    .filter((m: MatchWithTeams) => m.divisionId === Number(selectedDivision))
     .slice(0, 4);
 
   const filteredStandings = (allStandings || [])
-    .filter((s: StandingWithTeam) => selectedDivision === "all" || s.divisionId === Number(selectedDivision))
+    .filter((s: StandingWithTeam) => s.divisionId === Number(selectedDivision))
     .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0))
     .slice(0, 7);
 
   const filteredTeams = (allTeams || [])
     .filter((t: Team) => t.status === "approved")
-    .filter((t: Team) => selectedDivision === "all" || t.divisionId === Number(selectedDivision));
+    .filter((t: Team) => t.divisionId === Number(selectedDivision));
 
   const sortedTeams = [...filteredTeams].sort((a: Team, b: Team) => {
     if (a.paymentStatus !== b.paymentStatus) {
@@ -82,18 +84,8 @@ export default function TournamentDetail() {
   });
 
   const teamsGroupedByDivision = (() => {
-    if (selectedDivision !== "all") {
-      const div = divisions?.find((d: Division) => String(d.id) === selectedDivision);
-      return [{ division: div, teams: sortedTeams }];
-    }
-    const groups: { division: Division | undefined; teams: Team[] }[] = [];
-    for (const div of (divisions || [])) {
-      const divTeams = sortedTeams.filter((t: Team) => String(t.divisionId) === String(div.id));
-      if (divTeams.length > 0) {
-        groups.push({ division: div, teams: divTeams });
-      }
-    }
-    return groups;
+    const div = divisions?.find((d: Division) => String(d.id) === selectedDivision);
+    return [{ division: div, teams: sortedTeams }];
   })();
 
   return (
@@ -115,18 +107,10 @@ export default function TournamentDetail() {
             Compete And Win.
           </h2>
 
-          {divisionTabs.length > 0 && (
+          {divisionTabsReady.length > 0 && (
             <div className="flex justify-center mb-10">
               <div className="flex gap-2 flex-wrap justify-center">
-                <Button
-                  variant={selectedDivision === "all" ? "default" : "outline"}
-                  className="rounded-full text-xs font-bold uppercase tracking-wider"
-                  onClick={() => setSelectedDivision("all")}
-                  data-testid="filter-all"
-                >
-                  All
-                </Button>
-                {divisionTabs.map((tab) => (
+                {divisionTabsReady.map((tab) => (
                   <Button
                     key={tab.id}
                     variant={selectedDivision === tab.id ? "default" : "outline"}
@@ -230,11 +214,6 @@ export default function TournamentDetail() {
               </h3>
               {teamsGroupedByDivision.map(({ division, teams: divTeams }) => (
                 <div key={division?.id || "unknown"} className="mb-8" data-testid={`team-group-division-${division?.id || "unknown"}`}>
-                  {(selectedDivision === "all" && divisions && divisions.length > 1) && (
-                    <h4 className="text-lg font-bold font-display uppercase mb-3 border-b-2 border-foreground pb-2" data-testid={`text-division-group-${division?.id}`}>
-                      {division?.name || "Unassigned"}
-                    </h4>
-                  )}
                   <div className="space-y-0">
                     {divTeams.map((team: Team, idx: number) => (
                       <Link key={team.id} href={`/teams/${team.id}`}>
