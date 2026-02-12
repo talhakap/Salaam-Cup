@@ -130,18 +130,17 @@ export class ObjectStorageService {
     }
   }
 
+  getPublicUploadDir(): string {
+    const paths = this.getPublicObjectSearchPaths();
+    return paths[0];
+  }
+
   async getObjectEntityUploadURL(folder?: string): Promise<string> {
-    const privateObjectDir = this.getPrivateObjectDir();
-    if (!privateObjectDir) {
-      throw new Error(
-        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
-          "tool and set PRIVATE_OBJECT_DIR env var."
-      );
-    }
+    const publicDir = this.getPublicUploadDir();
 
     const objectId = randomUUID();
-    const subFolder = folder ? `uploads/${folder}` : "uploads";
-    const fullPath = `${privateObjectDir}/${subFolder}/${objectId}`;
+    const subFolder = folder ? `uploads/${folder}` : "uploads/general";
+    const fullPath = `${publicDir}/${subFolder}/${objectId}`;
 
     const { bucketName, objectName } = parseObjectPath(fullPath);
 
@@ -154,7 +153,6 @@ export class ObjectStorageService {
     });
   }
 
-  // Gets the object entity file from the object path.
   async getObjectEntityFile(objectPath: string): Promise<File> {
     if (!objectPath.startsWith("/objects/")) {
       throw new ObjectNotFoundError();
@@ -166,19 +164,28 @@ export class ObjectStorageService {
     }
 
     const entityId = parts.slice(1).join("/");
-    let entityDir = this.getPrivateObjectDir();
-    if (!entityDir.endsWith("/")) {
-      entityDir = `${entityDir}/`;
+
+    const dirsToSearch = [
+      this.getPublicUploadDir(),
+      this.getPrivateObjectDir(),
+    ];
+
+    for (const dir of dirsToSearch) {
+      let entityDir = dir;
+      if (!entityDir.endsWith("/")) {
+        entityDir = `${entityDir}/`;
+      }
+      const objectEntityPath = `${entityDir}${entityId}`;
+      const { bucketName, objectName } = parseObjectPath(objectEntityPath);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const objectFile = bucket.file(objectName);
+      const [exists] = await objectFile.exists();
+      if (exists) {
+        return objectFile;
+      }
     }
-    const objectEntityPath = `${entityDir}${entityId}`;
-    const { bucketName, objectName } = parseObjectPath(objectEntityPath);
-    const bucket = objectStorageClient.bucket(bucketName);
-    const objectFile = bucket.file(objectName);
-    const [exists] = await objectFile.exists();
-    if (!exists) {
-      throw new ObjectNotFoundError();
-    }
-    return objectFile;
+
+    throw new ObjectNotFoundError();
   }
 
   normalizeObjectEntityPath(
@@ -188,22 +195,26 @@ export class ObjectStorageService {
       return rawPath;
     }
   
-    // Extract the path from the URL by removing query parameters and domain
     const url = new URL(rawPath);
     const rawObjectPath = url.pathname;
   
-    let objectEntityDir = this.getPrivateObjectDir();
-    if (!objectEntityDir.endsWith("/")) {
-      objectEntityDir = `${objectEntityDir}/`;
+    const dirsToCheck = [
+      this.getPublicUploadDir(),
+      this.getPrivateObjectDir(),
+    ];
+
+    for (const dir of dirsToCheck) {
+      let objectEntityDir = dir;
+      if (!objectEntityDir.endsWith("/")) {
+        objectEntityDir = `${objectEntityDir}/`;
+      }
+      if (rawObjectPath.startsWith(objectEntityDir)) {
+        const entityId = rawObjectPath.slice(objectEntityDir.length);
+        return `/objects/${entityId}`;
+      }
     }
   
-    if (!rawObjectPath.startsWith(objectEntityDir)) {
-      return rawObjectPath;
-    }
-  
-    // Extract the entity ID from the path
-    const entityId = rawObjectPath.slice(objectEntityDir.length);
-    return `/objects/${entityId}`;
+    return rawObjectPath;
   }
 
   // Tries to set the ACL policy for the object entity and return the normalized path.
