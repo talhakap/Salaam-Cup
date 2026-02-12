@@ -205,8 +205,11 @@ function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) 
 
 export default function AdminTeams() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [tournamentFilter, setTournamentFilter] = useState<string>("all");
+  const [divisionFilter, setDivisionFilter] = useState<string>("all");
   const { data: teams, isLoading } = useAllTeams(statusFilter === "all" ? undefined : statusFilter);
   const { data: tournaments } = useTournaments();
+  const { data: divisions } = useDivisions(tournamentFilter !== "all" ? Number(tournamentFilter) : 0);
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();
   const { toast } = useToast();
@@ -214,6 +217,12 @@ export default function AdminTeams() {
   const [deleteTeamState, setDeleteTeamState] = useState<Team | null>(null);
   const [credentials, setCredentials] = useState<ApprovalCredentials | null>(null);
   const [approvingTeamId, setApprovingTeamId] = useState<number | null>(null);
+
+  const filteredTeams = teams?.filter((team) => {
+    if (tournamentFilter !== "all" && team.tournamentId !== Number(tournamentFilter)) return false;
+    if (divisionFilter !== "all" && team.divisionId !== Number(divisionFilter)) return false;
+    return true;
+  });
 
   const handleApprove = async (teamId: number) => {
     setApprovingTeamId(teamId);
@@ -278,7 +287,7 @@ export default function AdminTeams() {
         <p className="text-muted-foreground mt-1">Review and manage team registrations</p>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-4">
         {STATUS_FILTERS.map((s) => (
           <Button
             key={s}
@@ -292,20 +301,47 @@ export default function AdminTeams() {
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Select value={tournamentFilter} onValueChange={(val) => { setTournamentFilter(val); setDivisionFilter("all"); }}>
+          <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-filter-tournament">
+            <SelectValue placeholder="All Tournaments" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tournaments</SelectItem>
+            {tournaments?.map((t) => (
+              <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={divisionFilter} onValueChange={setDivisionFilter} disabled={tournamentFilter === "all"}>
+          <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-filter-division">
+            <SelectValue placeholder="All Divisions" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Divisions</SelectItem>
+            {divisions?.map((d) => (
+              <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : !teams || teams.length === 0 ? (
+      ) : !filteredTeams || filteredTeams.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
           <p className="text-lg font-medium">No teams found</p>
           <p className="text-sm mt-1">
-            {statusFilter !== "all" ? `No ${statusFilter} teams at this time.` : "No teams have registered yet."}
+            {statusFilter !== "all" || tournamentFilter !== "all" || divisionFilter !== "all"
+              ? "No teams match the selected filters."
+              : "No teams have registered yet."}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {teams.map((team) => (
+          {filteredTeams.map((team) => (
             <Card key={team.id} data-testid={`card-team-${team.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">

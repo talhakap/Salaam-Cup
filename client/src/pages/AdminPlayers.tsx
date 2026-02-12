@@ -1,5 +1,7 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { useAdminPlayers, useUpdatePlayer, useDeletePlayer } from "@/hooks/use-players";
+import { useAllTeams } from "@/hooks/use-teams";
+import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Loader2, User, Users, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -122,11 +124,42 @@ function EditPlayerDialog({ player, onClose }: { player: PlayerWithTeam; onClose
 
 export default function AdminPlayers() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [tournamentFilter, setTournamentFilter] = useState<string>("all");
+  const [divisionFilter, setDivisionFilter] = useState<string>("all");
+  const [teamFilter, setTeamFilter] = useState<string>("all");
   const { data: players, isLoading } = useAdminPlayers(statusFilter === "all" ? undefined : statusFilter);
+  const { data: tournaments } = useTournaments();
+  const { data: divisions } = useDivisions(tournamentFilter !== "all" ? Number(tournamentFilter) : 0);
+  const { data: allTeams } = useAllTeams();
   const deletePlayer = useDeletePlayer();
   const { toast } = useToast();
   const [editPlayer, setEditPlayer] = useState<PlayerWithTeam | null>(null);
   const [deletePlayerState, setDeletePlayerState] = useState<PlayerWithTeam | null>(null);
+
+  const teamsForFilter = useMemo(() => {
+    if (!allTeams) return [];
+    return allTeams.filter((t) => {
+      if (tournamentFilter !== "all" && t.tournamentId !== Number(tournamentFilter)) return false;
+      if (divisionFilter !== "all" && t.divisionId !== Number(divisionFilter)) return false;
+      return true;
+    });
+  }, [allTeams, tournamentFilter, divisionFilter]);
+
+  const filteredPlayers = useMemo(() => {
+    if (!players) return [];
+    return players.filter((p) => {
+      if (tournamentFilter !== "all") {
+        if (!p.team || p.team.tournamentId !== Number(tournamentFilter)) return false;
+      }
+      if (divisionFilter !== "all") {
+        if (!p.team || p.team.divisionId !== Number(divisionFilter)) return false;
+      }
+      if (teamFilter !== "all") {
+        if (!p.teamId || p.teamId !== Number(teamFilter)) return false;
+      }
+      return true;
+    });
+  }, [players, tournamentFilter, divisionFilter, teamFilter]);
 
   const handleDelete = async () => {
     if (!deletePlayerState) return;
@@ -164,7 +197,7 @@ export default function AdminPlayers() {
         <p className="text-muted-foreground mt-1">Review player and free agent registrations</p>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-4">
         {STATUS_FILTERS.map((s) => (
           <Button
             key={s}
@@ -178,21 +211,59 @@ export default function AdminPlayers() {
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Select value={tournamentFilter} onValueChange={(val) => { setTournamentFilter(val); setDivisionFilter("all"); setTeamFilter("all"); }}>
+          <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-filter-player-tournament">
+            <SelectValue placeholder="All Tournaments" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tournaments</SelectItem>
+            {tournaments?.map((t) => (
+              <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={divisionFilter} onValueChange={(val) => { setDivisionFilter(val); setTeamFilter("all"); }} disabled={tournamentFilter === "all"}>
+          <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-filter-player-division">
+            <SelectValue placeholder="All Divisions" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Divisions</SelectItem>
+            {divisions?.map((d) => (
+              <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={teamFilter} onValueChange={setTeamFilter}>
+          <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-filter-player-team">
+            <SelectValue placeholder="All Teams" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Teams</SelectItem>
+            {teamsForFilter.map((t) => (
+              <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : !players || players.length === 0 ? (
+      ) : filteredPlayers.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium">No player registrations found</p>
           <p className="text-sm mt-1">
-            {statusFilter !== "all" ? `No ${statusFilter} players at this time.` : "No players or free agents have registered yet."}
+            {statusFilter !== "all" || tournamentFilter !== "all" || divisionFilter !== "all" || teamFilter !== "all"
+              ? "No players match the selected filters."
+              : "No players or free agents have registered yet."}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {players.map((player) => (
+          {filteredPlayers.map((player) => (
             <Card key={player.id} data-testid={`card-player-${player.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
