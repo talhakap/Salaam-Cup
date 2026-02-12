@@ -10,6 +10,7 @@ import { useCreateTeam, useTeams } from "@/hooks/use-teams";
 import { useRegisterPlayer } from "@/hooks/use-players";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { WaiverDialog } from "@/components/WaiverDialog";
 import {
   Form,
   FormControl,
@@ -77,6 +78,8 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
   const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
   const { data: divisions } = useDivisions(selectedTournament || 0);
   const createTeam = useCreateTeam();
+  const [waiverRead, setWaiverRead] = useState(false);
+  const [waiverOpen, setWaiverOpen] = useState(false);
 
   const form = useForm<z.infer<typeof teamRegistrationSchema>>({
     resolver: zodResolver(teamRegistrationSchema),
@@ -174,14 +177,39 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
         <FormField control={form.control} name="waiverAgreed" render={({ field }) => (
           <FormItem className="flex flex-row items-start space-x-3 space-y-0">
             <FormControl>
-              <Checkbox checked={field.value} onCheckedChange={field.onChange} data-testid="checkbox-waiver" />
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => {
+                  if (!waiverRead && checked) {
+                    setWaiverOpen(true);
+                    return;
+                  }
+                  field.onChange(checked);
+                }}
+                data-testid="checkbox-waiver"
+              />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel>I have read and agree to the <span className="underline cursor-pointer">waiver and terms</span>*</FormLabel>
+              <FormLabel>
+                I have read and agree to the{" "}
+                <span
+                  className="underline cursor-pointer"
+                  onClick={(e) => { e.preventDefault(); setWaiverOpen(true); }}
+                  data-testid="link-waiver-terms"
+                >
+                  waiver and terms
+                </span>*
+              </FormLabel>
             </div>
             <FormMessage />
           </FormItem>
         )} />
+
+        <WaiverDialog
+          open={waiverOpen}
+          onOpenChange={setWaiverOpen}
+          onRead={() => { setWaiverRead(true); form.setValue("waiverAgreed", true); }}
+        />
 
         <div className="flex justify-end">
           <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={createTeam.isPending} data-testid="button-submit-registration">
@@ -202,6 +230,8 @@ function PlayerRegistrationForm({ onSuccess }: { onSuccess: (status: string) => 
   const { data: divisions } = useDivisions(selectedTournament || 0);
   const { data: availableTeams } = useTeams(selectedTournament || 0, selectedDivision ? { status: "approved", divisionId: selectedDivision.toString() } : { status: "approved" });
   const registerPlayer = useRegisterPlayer();
+  const [waiverRead, setWaiverRead] = useState(false);
+  const [waiverOpen, setWaiverOpen] = useState(false);
 
   const form = useForm<z.infer<typeof playerRegistrationSchema>>({
     resolver: zodResolver(playerRegistrationSchema),
@@ -315,14 +345,39 @@ function PlayerRegistrationForm({ onSuccess }: { onSuccess: (status: string) => 
         <FormField control={form.control} name="waiverAgreed" render={({ field }) => (
           <FormItem className="flex flex-row items-start space-x-3 space-y-0">
             <FormControl>
-              <Checkbox checked={field.value} onCheckedChange={field.onChange} data-testid="checkbox-player-waiver" />
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => {
+                  if (!waiverRead && checked) {
+                    setWaiverOpen(true);
+                    return;
+                  }
+                  field.onChange(checked);
+                }}
+                data-testid="checkbox-player-waiver"
+              />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel>I have read and agree to the <span className="underline cursor-pointer">waiver and terms</span>*</FormLabel>
+              <FormLabel>
+                I have read and agree to the{" "}
+                <span
+                  className="underline cursor-pointer"
+                  onClick={(e) => { e.preventDefault(); setWaiverOpen(true); }}
+                  data-testid="link-player-waiver-terms"
+                >
+                  waiver and terms
+                </span>*
+              </FormLabel>
             </div>
             <FormMessage />
           </FormItem>
         )} />
+
+        <WaiverDialog
+          open={waiverOpen}
+          onOpenChange={setWaiverOpen}
+          onRead={() => { setWaiverRead(true); form.setValue("waiverAgreed", true); }}
+        />
 
         <div className="flex justify-end">
           <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-player-registration">
@@ -341,6 +396,8 @@ function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) 
   const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
   const { data: divisions } = useDivisions(selectedTournament || 0);
   const registerPlayer = useRegisterPlayer();
+  const [waiverRead, setWaiverRead] = useState(false);
+  const [waiverOpen, setWaiverOpen] = useState(false);
 
   const form = useForm<z.infer<typeof freeAgentRegistrationSchema>>({
     resolver: zodResolver(freeAgentRegistrationSchema),
@@ -437,14 +494,39 @@ function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) 
         <FormField control={form.control} name="waiverAgreed" render={({ field }) => (
           <FormItem className="flex flex-row items-start space-x-3 space-y-0">
             <FormControl>
-              <Checkbox checked={field.value} onCheckedChange={field.onChange} data-testid="checkbox-freeagent-waiver" />
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => {
+                  if (!waiverRead && checked) {
+                    setWaiverOpen(true);
+                    return;
+                  }
+                  field.onChange(checked);
+                }}
+                data-testid="checkbox-freeagent-waiver"
+              />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel>I have read and agree to the <span className="underline cursor-pointer">waiver and terms</span>*</FormLabel>
+              <FormLabel>
+                I have read and agree to the{" "}
+                <span
+                  className="underline cursor-pointer"
+                  onClick={(e) => { e.preventDefault(); setWaiverOpen(true); }}
+                  data-testid="link-freeagent-waiver-terms"
+                >
+                  waiver and terms
+                </span>*
+              </FormLabel>
             </div>
             <FormMessage />
           </FormItem>
         )} />
+
+        <WaiverDialog
+          open={waiverOpen}
+          onOpenChange={setWaiverOpen}
+          onRead={() => { setWaiverRead(true); form.setValue("waiverAgreed", true); }}
+        />
 
         <div className="flex justify-end">
           <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-freeagent-registration">
