@@ -98,11 +98,11 @@ The project uses a monorepo layout with three top-level code directories:
   - Admin accounts seeded on startup via `ADMIN_EMAILS` env var (comma-separated). If the Supabase Auth account doesn't exist, one is created with a generated password logged to the console
   - Admin auth endpoints: POST `/api/admin/login`, POST `/api/admin/logout`, GET `/api/auth/user`
   - Captain auth endpoints: POST `/api/captain/login`, POST `/api/captain/logout`, GET `/api/captain/me`
-  - Team approval endpoint: POST `/api/admin/teams/:id/approve` approves the team and sends an activation email with a one-time token link (no passwords generated or displayed)
-  - Account activation endpoint: POST `/api/auth/activate` validates token, lets captain set their own password, creates Supabase Auth user
-  - Resend activation endpoint: POST `/api/admin/teams/:id/resend-activation` generates a new activation token and resends the email
-  - Activation tokens stored in `activation_tokens` table with SHA-256 hashed tokens, 30-minute expiry, single-use
-  - Activation page: `/activate?token=...` — captain sets their password
+  - Team approval endpoint: POST `/api/admin/teams/:id/approve` approves the team and sends a Supabase invite email via `inviteUserByEmail` (no passwords generated or displayed)
+  - Account activation endpoint: POST `/api/auth/activate` accepts `access_token` (from Supabase invite redirect) + `password`, decodes JWT, sets password via Supabase admin API
+  - Resend activation endpoint: POST `/api/admin/teams/:id/resend-activation` deletes unconfirmed Supabase user and re-invites
+  - Activation page: `/activate` — Supabase redirects here with `#access_token=...` after captain clicks invite link; captain sets their password
+  - Supabase invite emails use Supabase's built-in email templates (configurable in Supabase dashboard). Note: free tier limits ~4 emails/hour; configure custom SMTP in Supabase for production volume
   - Admin login page: `/admin-login`, Admin dashboard: `/admin`
   - Captain login page: `/captain-login`, Captain dashboard: `/captain`
   - AdminLayout gates all admin pages behind auth check, redirects to `/admin-login` if not authenticated

@@ -4,14 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Loader2, ShieldCheck, AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function ActivateAccount() {
-  const search = useSearch();
-  const params = new URLSearchParams(search);
-  const token = params.get("token");
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [tokenChecked, setTokenChecked] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +19,30 @@ export default function ActivateAccount() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
-  if (!token) {
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1));
+      const token = params.get("access_token");
+      if (token) {
+        setAccessToken(token);
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    }
+    setTokenChecked(true);
+  }, []);
+
+  if (!tokenChecked) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-20 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!accessToken) {
     return (
       <MainLayout>
         <div className="container mx-auto px-4 py-20 flex justify-center">
@@ -96,7 +118,7 @@ export default function ActivateAccount() {
       const res = await fetch("/api/auth/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ access_token: accessToken, password }),
       });
       const data = await res.json();
       if (!res.ok) {
