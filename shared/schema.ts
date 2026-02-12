@@ -48,6 +48,7 @@ export const tournaments = pgTable("tournaments", {
   registrationOpen: boolean("registration_open").default(false),
   venueId: integer("venue_id").references(() => venues.id),
   showInfoBanner: boolean("show_info_banner").default(false),
+  showNewsBanner: boolean("show_news_banner").default(false),
 });
 
 export const insertTournamentSchema = createInsertSchema(tournaments).omit({ id: true });

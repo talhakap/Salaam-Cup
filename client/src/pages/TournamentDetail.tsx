@@ -4,18 +4,20 @@ import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { ReadyToCompete } from "@/components/ReadyToCompete";
 import { FAQSection } from "@/components/FAQSection";
+import { TournamentNewsBanner } from "@/components/TournamentNewsBanner";
 import { useTournament, useDivisions } from "@/hooks/use-tournaments";
 import { useTeams } from "@/hooks/use-teams";
 import { useMatches } from "@/hooks/use-matches";
 import { useVenues } from "@/hooks/use-venues";
 import { useStandings } from "@/hooks/use-standings";
+import { useNews } from "@/hooks/use-news";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
 import { Users, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 import type { Division, Team, StandingWithTeam, MatchWithTeams, Venue } from "@shared/schema";
 
@@ -29,6 +31,12 @@ export default function TournamentDetail() {
   const { data: allMatches, isLoading: matchesLoading } = useMatches(tournamentId);
   const { data: venues } = useVenues();
   const { data: allStandings, isLoading: standingsLoading } = useStandings(tournamentId);
+  const { data: allNews } = useNews();
+
+  const tournamentNews = useMemo(() => {
+    if (!allNews || !tournamentId) return [];
+    return allNews.filter((n) => n.tournamentId === tournamentId);
+  }, [allNews, tournamentId]);
 
   const divisionTabsReady = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
   const [selectedDivision, setSelectedDivision] = useState<string>("");
@@ -96,6 +104,10 @@ export default function TournamentDetail() {
       />
       <SponsorBar />
       <TournamentNav tournamentId={tournamentId} />
+
+      {tournament.showNewsBanner && tournamentNews.length > 0 && (
+        <TournamentNewsBanner newsItems={tournamentNews} />
+      )}
 
       {tournament.showInfoBanner && (
         <TournamentInfoBanner tournament={tournament} divisions={divisions} venues={venues} />
