@@ -355,7 +355,7 @@ export default function AdminMatches() {
           </Button>
           {draftCount > 0 && (
             <Button
-              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+              className="gap-2"
               onClick={handlePublish}
               disabled={publishMatches.isPending}
               data-testid="button-publish-matches"
@@ -417,11 +417,11 @@ export default function AdminMatches() {
       ) : (
         <div className="space-y-3">
           {sortedFilteredMatches.map((match: MatchWithTeams) => (
-            <Card key={match.id} className={`${match.pulled ? "opacity-60" : ""} ${match.draft ? "border-dashed border-amber-400" : ""}`} data-testid={`card-match-${match.id}`}>
+            <Card key={match.id} className={`${match.pulled ? "opacity-60" : ""} ${match.draft ? "border-dashed" : ""}`} data-testid={`card-match-${match.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center flex-wrap gap-2 mb-1">
-                    {match.draft && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Draft</Badge>}
+                    {match.draft && <Badge variant="secondary">Draft</Badge>}
                     <Badge variant={statusBadge(match.status)}>{match.status}</Badge>
                     {match.pulled && <Badge variant="secondary">Pulled</Badge>}
                     <Badge variant="outline">{getDivisionName(match.divisionId)}</Badge>
