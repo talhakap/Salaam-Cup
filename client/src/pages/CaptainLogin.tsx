@@ -65,7 +65,7 @@ export default function CaptainLogin() {
 
   return (
     <MainLayout>
-      <div className="bg-secondary text-white py-12">
+      <div className="bg-secondary text-stone-900 py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold font-display uppercase" data-testid="text-captain-login-title">Captain Login</h1>
           <p className="opacity-80">Sign in to manage your team roster</p>

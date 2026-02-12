@@ -254,7 +254,7 @@ export default function CaptainDashboard() {
 
   return (
     <MainLayout>
-      <div className="bg-secondary text-white py-12">
+      <div className="bg-secondary text--stone-900 py-12">
         <div className="container mx-auto px-4 flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-4xl font-bold font-display uppercase" data-testid="text-captain-title">Captain's Dashboard</h1>
