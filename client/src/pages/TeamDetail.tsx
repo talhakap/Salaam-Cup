@@ -143,7 +143,7 @@ export default function TeamDetail() {
                   const isScheduled = m.status === "scheduled";
                   const isLive = m.status === "live";
                   const isFinal = m.status === "final";
-                  const venue = m.venueId ? venues?.find((v: Venue) => v.id === m.venueId) : null;
+                  const venue = m.venueId ? venues?.find((v: Venue) => Number(v.id) === Number(m.venueId)) : null;
 
                   return (
                     <div key={m.id} className="py-4 border-b" data-testid={`team-match-${m.id}`}>
