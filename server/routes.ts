@@ -450,6 +450,94 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/teams/create", isAuthenticated, async (req, res) => {
+    try {
+      const input = api.teams.create.input.parse(req.body);
+
+      const existingTeams = await storage.getTeams(input.tournamentId, undefined, input.divisionId);
+      const emailNormalized = input.captainEmail.trim().toLowerCase();
+      const duplicate = existingTeams.find(t => t.captainEmail.trim().toLowerCase() === emailNormalized);
+      if (duplicate) {
+        return res.status(409).json({ message: "This email has already been used to register a team in this division." });
+      }
+
+      const team = await storage.createTeam(input);
+
+      if (input.status === "approved") {
+        const { authStorage } = await import("./replit_integrations/auth/storage");
+        const { db } = await import("./db");
+        const { users } = await import("@shared/models/auth");
+        const { eq } = await import("drizzle-orm");
+
+        const [existingUser] = await db.select().from(users).where(eq(users.email, team.captainEmail));
+
+        let userId: string;
+        let password: string | null = null;
+        let isNewAccount = false;
+
+        if (existingUser) {
+          userId = existingUser.id;
+        } else {
+          password = generatePassword();
+          const { userId: newUserId, error } = await createCaptainAccount(team.captainEmail, password);
+          if (error) {
+            return res.status(500).json({ message: `Team created but failed to create captain account: ${error}` });
+          }
+          userId = newUserId;
+          isNewAccount = true;
+
+          await authStorage.upsertUser({
+            id: userId,
+            email: team.captainEmail,
+            firstName: team.captainName?.split(" ")[0] || null,
+            lastName: team.captainName?.split(" ").slice(1).join(" ") || null,
+            role: "captain",
+            password: password,
+          });
+        }
+
+        await storage.updateTeam(team.id, { captainUserId: userId });
+        await storage.claimTeamsByEmail(team.captainEmail, userId);
+
+        if (isNewAccount && password) {
+          try {
+            const { sendCaptainCredentialsEmail } = await import("./gmail");
+            const baseUrl = `${req.protocol}://${req.get("host")}`;
+            console.log(`Sending credentials email via Gmail to ${team.captainEmail}...`);
+            const result = await sendCaptainCredentialsEmail(
+              team.captainEmail,
+              team.captainName || "Captain",
+              team.name,
+              password,
+              `${baseUrl}/captain-login`
+            );
+            console.log(`Gmail send result: messageId=${result.messageId}`);
+          } catch (emailErr: any) {
+            console.error("Failed to send credentials email:", emailErr?.message || emailErr);
+          }
+        }
+
+        return res.status(201).json({
+          team: { ...team, captainUserId: userId },
+          credentials: isNewAccount && password ? {
+            email: team.captainEmail,
+            password,
+            loginUrl: "/captain-login",
+          } : null,
+          message: isNewAccount
+            ? `Team created & captain account created for ${team.captainEmail}`
+            : `Team created. Captain already has an account (${team.captainEmail}).`,
+        });
+      }
+
+      res.status(201).json({ team, credentials: null, message: "Team created successfully." });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      console.error("Admin create team error:", err);
+      res.status(500).json({ message: "Failed to create team" });
+    }
+  });
+
   app.patch(api.teams.update.path, async (req, res) => {
     try {
       const input = api.teams.update.input.parse(req.body);

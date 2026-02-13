@@ -204,11 +204,12 @@ function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) 
 }
 
 function CreateTeamDialog({ onClose }: { onClose: () => void }) {
-  const createTeam = useCreateTeam();
   const { data: tournaments } = useTournaments();
   const [tournamentId, setTournamentId] = useState<number>(0);
   const { data: divisionsList } = useDivisions(tournamentId);
   const { toast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
+  const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
 
   useEffect(() => {
     if (tournamentId === 0 && tournaments && tournaments.length > 0) {
@@ -230,30 +231,81 @@ function CreateTeamDialog({ onClose }: { onClose: () => void }) {
       toast({ title: "Please fill all required fields", variant: "destructive" });
       return;
     }
+    setSubmitting(true);
     try {
-      await createTeam.mutateAsync({
-        name,
-        captainName,
-        captainEmail,
-        captainPhone,
-        tournamentId,
-        divisionId: Number(divisionId),
-        status: status as any,
-        paymentStatus: paymentStatus as any,
+      const res = await fetch("/api/admin/teams/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name,
+          captainName,
+          captainEmail,
+          captainPhone,
+          tournamentId,
+          divisionId: Number(divisionId),
+          status: status as any,
+          paymentStatus: paymentStatus as any,
+        }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to create team");
+
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
-      toast({ title: "Team created" });
-      onClose();
+
+      if (data.credentials) {
+        setCredentials(data.credentials);
+        toast({ title: "Team created with captain account" });
+      } else {
+        toast({ title: data.message || "Team created" });
+        onClose();
+      }
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  if (credentials) {
+    return (
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Captain Credentials Created</DialogTitle>
+          <DialogDescription>A new captain account was created and emailed. You can also share these credentials directly.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div>
+            <label className="text-sm text-muted-foreground">Email</label>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={credentials.email} data-testid="text-credentials-email" />
+              <Button size="icon" variant="outline" onClick={() => { navigator.clipboard.writeText(credentials.email); toast({ title: "Copied" }); }} data-testid="button-copy-email">
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-muted-foreground">Password</label>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={credentials.password} data-testid="text-credentials-password" />
+              <Button size="icon" variant="outline" onClick={() => { navigator.clipboard.writeText(credentials.password); toast({ title: "Copied" }); }} data-testid="button-copy-password">
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={onClose} data-testid="button-done-credentials">Done</Button>
+        </DialogFooter>
+      </DialogContent>
+    );
+  }
 
   return (
     <DialogContent className="max-w-lg">
       <DialogHeader>
         <DialogTitle>Add New Team</DialogTitle>
-        <DialogDescription>Manually create a team.</DialogDescription>
+        <DialogDescription>Manually create a team. If status is set to "Approved", a captain account will be created and credentials emailed automatically.</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -322,8 +374,8 @@ function CreateTeamDialog({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" disabled={createTeam.isPending} data-testid="button-submit-create-team">
-            {createTeam.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Create Team
+          <Button type="submit" disabled={submitting} data-testid="button-submit-create-team">
+            {submitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Create Team
           </Button>
         </DialogFooter>
       </form>
