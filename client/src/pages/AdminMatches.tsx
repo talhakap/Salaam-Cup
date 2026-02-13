@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { Loader2, Plus, Pencil, Trash2, Calendar, Upload, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -199,7 +199,14 @@ function MatchFormDialog({
 export default function AdminMatches() {
   const { data: tournaments, isLoading: tournamentsLoading } = useTournaments();
   const [selectedTournamentId, setSelectedTournamentId] = useState<number | null>(null);
-  const activeTournamentId = selectedTournamentId || (tournaments?.[0]?.id ?? 0);
+
+  useEffect(() => {
+    if (selectedTournamentId === null && tournaments && tournaments.length > 0) {
+      setSelectedTournamentId(tournaments[0].id);
+    }
+  }, [tournaments, selectedTournamentId]);
+
+  const activeTournamentId = selectedTournamentId || 0;
   const { data: matches, isLoading: matchesLoading } = useMatches(activeTournamentId, true);
   const { data: divisions } = useDivisions(activeTournamentId);
   const { data: allTeams } = useAllTeams();

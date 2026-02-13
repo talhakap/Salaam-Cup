@@ -181,7 +181,7 @@ export default function TeamDetail() {
                         </div>
                       </div>
                       {(venue || m.fieldLocation) && (
-                        <div className="flex items-center gap-1.5 mt-1.5 ml-28 pl-0" data-testid={`team-match-venue-${m.id}`}>
+                        <div className="flex items-center gap-1.5 mt-1.5 pl-0" data-testid={`team-match-venue-${m.id}`}>
                           <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
                           <span className="text-xs text-muted-foreground">
                             {[venue?.name, m.fieldLocation].filter(Boolean).join(" — ")}
