@@ -91,7 +91,7 @@ export async function registerRoutes(
       const resetUrl = `${protocol}://${host}/reset-password?token=${token}`;
 
       try {
-        const { sendPasswordResetEmail } = await import("./resend");
+        const { sendPasswordResetEmail } = await import("./gmail");
         await sendPasswordResetEmail(normalizedEmail, resetUrl);
       } catch (emailErr) {
         console.error("Failed to send reset email:", emailErr);

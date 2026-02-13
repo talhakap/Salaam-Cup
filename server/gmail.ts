@@ -84,3 +84,53 @@ export async function sendCaptainCredentialsEmail(
 
   return result;
 }
+
+export async function sendPasswordResetEmail(
+  toEmail: string,
+  resetUrl: string
+) {
+  const transporter = createTransporter();
+  const fromEmail = process.env.GMAIL_USER;
+
+  const result = await transporter.sendMail({
+    from: `"Salaam Cup" <${fromEmail}>`,
+    to: toEmail,
+    subject: "Salaam Cup - Password Reset Request",
+    html: `
+      <div style="font-family: 'Nunito Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; padding: 30px 0; background-color: #000; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #fff; font-family: 'Montserrat', Arial, sans-serif; font-size: 28px; margin: 0;">
+            SALAAM CUP
+          </h1>
+        </div>
+        
+        <div style="padding: 30px; background-color: #f9f9f9; border: 1px solid #e0e0e0;">
+          <h2 style="color: #333; font-family: 'Montserrat', Arial, sans-serif; margin-top: 0;">
+            Password Reset Request
+          </h2>
+          
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            We received a request to reset your password. Click the button below to set a new password.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" 
+               style="display: inline-block; background-color: #000; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-family: 'Montserrat', Arial, sans-serif; font-weight: bold; font-size: 14px;">
+              RESET PASSWORD
+            </a>
+          </div>
+          
+          <p style="color: #999; font-size: 13px; line-height: 1.5;">
+            This link will expire in 1 hour. If you did not request a password reset, you can safely ignore this email.
+          </p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+          <p style="margin: 0;">Salaam Cup - Toronto & GTA Muslim Community Sports</p>
+        </div>
+      </div>
+    `,
+  });
+
+  return result;
+}
