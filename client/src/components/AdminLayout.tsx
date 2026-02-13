@@ -65,14 +65,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-muted flex font-sans">
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-secondary text-stone-900 min-h-screen fixed left-0 top-0 z-20">
-        <div className="p-6 border-b border-white/10">
+      <aside className="hidden md:flex flex-col w-64 bg-secondary text-stone-900 h-screen fixed left-0 top-0 z-20">
+        <div className="p-6 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-primary" />
             <span className="text-stone-900 text-xl font-bold font-display">ADMIN PORTAL</span>
           </div>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {sidebarItems.map((item) => (
             <Link key={item.href} href={item.href} className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
@@ -85,7 +85,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 flex-shrink-0">
            <Link href="/">
             <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white mb-2">
                Back to Public Site
