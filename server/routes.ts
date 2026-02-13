@@ -161,7 +161,7 @@ export async function registerRoutes(
       if (supabaseAdmin) {
         try {
           const { data: supabaseUsers } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-          const supabaseUser = supabaseUsers?.users?.find(u => u.email === normalizedEmail);
+          const supabaseUser = supabaseUsers?.users?.find(u => u.email?.toLowerCase() === normalizedEmail);
           if (supabaseUser) {
             await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, { password: newPassword });
           }
