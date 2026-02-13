@@ -354,8 +354,7 @@ export class DatabaseStorage implements IStorage {
     const registeredPlayers = await db.select().from(players).where(
       and(
         eq(players.teamId, rosterPlayer.teamId),
-        eq(players.registrationType, 'player'),
-        eq(players.status, 'flagged')
+        eq(players.registrationType, 'player')
       )
     );
 
@@ -400,7 +399,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllRegisteredPlayers(status?: string): Promise<(Player & { team: Team | null })[]> {
     const conditions: any[] = [
-      sql`${players.registrationType} IN ('player', 'free_agent')`
+      sql`(${players.registrationType} IN ('player', 'free_agent') OR (${players.registrationType} = 'roster' AND ${players.status} = 'confirmed'))`
     ];
     if (status) conditions.push(eq(players.status, status as any));
     const allPlayers = await db.select().from(players)
