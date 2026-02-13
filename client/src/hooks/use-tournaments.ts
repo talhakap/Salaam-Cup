@@ -131,3 +131,29 @@ export function useDeleteDivision() {
     },
   });
 }
+
+export function useReorderTournaments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderedIds: number[]) => {
+      await apiRequest("POST", "/api/tournaments/reorder", { orderedIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.tournaments.list.path] });
+    },
+  });
+}
+
+export function useReorderDivisions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ tournamentId, orderedIds }: { tournamentId: number; orderedIds: number[] }) => {
+      await apiRequest("POST", `/api/tournaments/${tournamentId}/divisions/reorder`, { orderedIds });
+      return { tournamentId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [api.divisions.list.path, data.tournamentId] });
+      queryClient.invalidateQueries({ queryKey: [api.tournaments.get.path, data.tournamentId] });
+    },
+  });
+}

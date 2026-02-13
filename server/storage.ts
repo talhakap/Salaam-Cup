@@ -11,7 +11,7 @@ import {
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
-import { eq, and, sql, desc, isNull } from "drizzle-orm";
+import { eq, and, sql, desc, asc, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Sports
@@ -28,11 +28,14 @@ export interface IStorage {
   deleteTournament(id: number): Promise<void>;
   resetTournament(id: number): Promise<void>;
 
+  reorderTournaments(orderedIds: number[]): Promise<void>;
+
   // Divisions
   getDivisions(tournamentId: number): Promise<Division[]>;
   createDivision(data: InsertDivision): Promise<Division>;
   updateDivision(id: number, data: Partial<InsertDivision>): Promise<Division>;
   deleteDivision(id: number): Promise<void>;
+  reorderDivisions(tournamentId: number, orderedIds: number[]): Promise<void>;
 
   // Teams
   getAllTeams(status?: string): Promise<Team[]>;
@@ -147,13 +150,13 @@ export class DatabaseStorage implements IStorage {
 
   // Tournaments
   async getTournaments(): Promise<Tournament[]> {
-    return await db.select().from(tournaments);
+    return await db.select().from(tournaments).orderBy(asc(tournaments.sortOrder), asc(tournaments.id));
   }
 
   async getTournament(id: number): Promise<(Tournament & { divisions: Division[] }) | undefined> {
     const [tournament] = await db.select().from(tournaments).where(eq(tournaments.id, id));
     if (!tournament) return undefined;
-    const divs = await db.select().from(divisions).where(eq(divisions.tournamentId, id));
+    const divs = await db.select().from(divisions).where(eq(divisions.tournamentId, id)).orderBy(asc(divisions.sortOrder), asc(divisions.id));
     return { ...tournament, divisions: divs };
   }
 
@@ -191,9 +194,15 @@ export class DatabaseStorage implements IStorage {
     await db.delete(tournaments).where(eq(tournaments.id, id));
   }
 
+  async reorderTournaments(orderedIds: number[]): Promise<void> {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await db.update(tournaments).set({ sortOrder: i }).where(eq(tournaments.id, orderedIds[i]));
+    }
+  }
+
   // Divisions
   async getDivisions(tournamentId: number): Promise<Division[]> {
-    return await db.select().from(divisions).where(eq(divisions.tournamentId, tournamentId));
+    return await db.select().from(divisions).where(eq(divisions.tournamentId, tournamentId)).orderBy(asc(divisions.sortOrder), asc(divisions.id));
   }
 
   async createDivision(data: InsertDivision): Promise<Division> {
@@ -215,6 +224,12 @@ export class DatabaseStorage implements IStorage {
     }
     await db.delete(teams).where(eq(teams.divisionId, id));
     await db.delete(divisions).where(eq(divisions.id, id));
+  }
+
+  async reorderDivisions(tournamentId: number, orderedIds: number[]): Promise<void> {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await db.update(divisions).set({ sortOrder: i }).where(and(eq(divisions.id, orderedIds[i]), eq(divisions.tournamentId, tournamentId)));
+    }
   }
 
   // Teams

@@ -1,10 +1,10 @@
 import { AdminLayout } from "@/components/AdminLayout";
-import { useTournaments, useCreateTournament, useUpdateTournament, useDeleteTournament, useDivisions, useCreateDivision, useUpdateDivision, useDeleteDivision } from "@/hooks/use-tournaments";
+import { useTournaments, useCreateTournament, useUpdateTournament, useDeleteTournament, useDivisions, useCreateDivision, useUpdateDivision, useDeleteDivision, useReorderTournaments, useReorderDivisions } from "@/hooks/use-tournaments";
 import { useVenues } from "@/hooks/use-venues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon, RotateCcw } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon, RotateCcw, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -95,6 +95,7 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
   const createDivision = useCreateDivision();
   const updateDivision = useUpdateDivision();
   const deleteDivision = useDeleteDivision();
+  const reorderDivisions = useReorderDivisions();
   const { toast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
   const [editDiv, setEditDiv] = useState<Division | null>(null);
@@ -157,6 +158,15 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
+  };
+
+  const moveDivision = (index: number, direction: "up" | "down") => {
+    if (!divisions) return;
+    const ids = divisions.map((d) => d.id);
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= ids.length) return;
+    [ids[index], ids[newIndex]] = [ids[newIndex], ids[index]];
+    reorderDivisions.mutate({ tournamentId, orderedIds: ids });
   };
 
   const openEdit = (div: Division) => {
@@ -252,13 +262,23 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
         <p className="text-sm text-muted-foreground text-center py-2">No divisions yet</p>
       ) : (
         <div className="space-y-2">
-          {divisions.map((div) => (
+          {divisions.map((div, index) => (
             <div key={div.id} className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-md" data-testid={`row-division-${div.id}`}>
-              <div className="min-w-0">
-                <span className="font-medium text-sm">{div.name}</span>
-                {div.category && <Badge variant="secondary" className="ml-2 text-xs">{div.category}</Badge>}
-                {div.gameFormat && <span className="text-xs text-muted-foreground ml-2">{div.gameFormat}</span>}
-                {div.registrationFee ? <span className="text-xs text-muted-foreground ml-2">${div.registrationFee}</span> : null}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex flex-col flex-shrink-0">
+                  <Button size="icon" variant="ghost" className="h-5 w-5" disabled={index === 0} onClick={() => moveDivision(index, "up")} data-testid={`button-move-division-up-${div.id}`}>
+                    <ArrowUp className="h-3 w-3" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-5 w-5" disabled={index === divisions.length - 1} onClick={() => moveDivision(index, "down")} data-testid={`button-move-division-down-${div.id}`}>
+                    <ArrowDown className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="min-w-0">
+                  <span className="font-medium text-sm">{div.name}</span>
+                  {div.category && <Badge variant="secondary" className="ml-2 text-xs">{div.category}</Badge>}
+                  {div.gameFormat && <span className="text-xs text-muted-foreground ml-2">{div.gameFormat}</span>}
+                  {div.registrationFee ? <span className="text-xs text-muted-foreground ml-2">${div.registrationFee}</span> : null}
+                </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
                 <Button size="icon" variant="ghost" onClick={() => openEdit(div)} data-testid={`button-edit-division-${div.id}`}>
@@ -359,6 +379,7 @@ export default function AdminTournaments() {
   const createTournament = useCreateTournament();
   const updateTournament = useUpdateTournament();
   const deleteTournament = useDeleteTournament();
+  const reorderTournaments = useReorderTournaments();
   const [createOpen, setCreateOpen] = useState(false);
   const [editTournament, setEditTournament] = useState<Tournament | null>(null);
   const [deleteTournamentState, setDeleteTournamentState] = useState<Tournament | null>(null);
@@ -469,6 +490,15 @@ export default function AdminTournaments() {
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
+  };
+
+  const moveTournament = (index: number, direction: "up" | "down") => {
+    if (!tournaments) return;
+    const ids = tournaments.map((t) => t.id);
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= ids.length) return;
+    [ids[index], ids[newIndex]] = [ids[newIndex], ids[index]];
+    reorderTournaments.mutate(ids);
   };
 
   const statusColor = (s: string) => {
@@ -630,18 +660,28 @@ export default function AdminTournaments() {
         </div>
       ) : (
         <div className="space-y-3">
-          {tournaments.map((t) => (
+          {tournaments.map((t, index) => (
             <div key={t.id} className="bg-card rounded-lg shadow border" data-testid={`card-tournament-${t.id}`}>
               <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center flex-wrap gap-2 mb-1">
-                    <h3 className="font-bold text-lg truncate">{t.name}</h3>
-                    <Badge variant={statusColor(t.status)}>{t.status}</Badge>
-                    {t.isFeatured && <Badge variant="outline">Featured</Badge>}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex flex-col flex-shrink-0">
+                    <Button size="icon" variant="ghost" className="h-6 w-6" disabled={index === 0} onClick={() => moveTournament(index, "up")} data-testid={`button-move-tournament-up-${t.id}`}>
+                      <ArrowUp className="h-3 w-3" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" disabled={index === tournaments.length - 1} onClick={() => moveTournament(index, "down")} data-testid={`button-move-tournament-down-${t.id}`}>
+                      <ArrowDown className="h-3 w-3" />
+                    </Button>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t.year} &middot; {format(new Date(t.startDate), 'MMM d')} - {format(new Date(t.endDate), 'MMM d, yyyy')}
-                    {t.description && <span className="hidden sm:inline ml-2">&middot; {t.description.slice(0, 60)}{t.description.length > 60 ? '...' : ''}</span>}
+                  <div className="min-w-0">
+                    <div className="flex items-center flex-wrap gap-2 mb-1">
+                      <h3 className="font-bold text-lg truncate">{t.name}</h3>
+                      <Badge variant={statusColor(t.status)}>{t.status}</Badge>
+                      {t.isFeatured && <Badge variant="outline">Featured</Badge>}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {t.year} &middot; {format(new Date(t.startDate), 'MMM d')} - {format(new Date(t.endDate), 'MMM d, yyyy')}
+                      {t.description && <span className="hidden sm:inline ml-2">&middot; {t.description.slice(0, 60)}{t.description.length > 60 ? '...' : ''}</span>}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">

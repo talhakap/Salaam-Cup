@@ -49,6 +49,7 @@ export const tournaments = pgTable("tournaments", {
   venueId: integer("venue_id").references(() => venues.id),
   showInfoBanner: boolean("show_info_banner").default(false),
   showNewsBanner: boolean("show_news_banner").default(false),
+  sortOrder: integer("sort_order").default(0).notNull(),
 });
 
 export const insertTournamentSchema = createInsertSchema(tournaments).omit({ id: true });
@@ -67,6 +68,7 @@ export const divisions = pgTable("divisions", {
   rulesContent: text("rules_content"),
   venueId: integer("venue_id").references(() => venues.id),
   heroImage: text("hero_image"),
+  sortOrder: integer("sort_order").default(0).notNull(),
 });
 
 export const insertDivisionSchema = createInsertSchema(divisions).omit({ id: true });

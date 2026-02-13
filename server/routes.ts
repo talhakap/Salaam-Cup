@@ -352,6 +352,19 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/tournaments/reorder", isAuthenticated, async (req, res) => {
+    try {
+      const { orderedIds } = req.body;
+      if (!Array.isArray(orderedIds)) {
+        return res.status(400).json({ message: "orderedIds must be an array" });
+      }
+      await storage.reorderTournaments(orderedIds);
+      res.json({ message: "Tournaments reordered successfully" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === DIVISIONS ===
   app.get(api.divisions.list.path, async (req, res) => {
     const data = await storage.getDivisions(Number(req.params.tournamentId));
@@ -384,6 +397,19 @@ export async function registerRoutes(
     try {
       await storage.deleteDivision(Number(req.params.id));
       res.json({ message: "Division deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
+  app.post("/api/tournaments/:tournamentId/divisions/reorder", isAuthenticated, async (req, res) => {
+    try {
+      const { orderedIds } = req.body;
+      if (!Array.isArray(orderedIds)) {
+        return res.status(400).json({ message: "orderedIds must be an array" });
+      }
+      await storage.reorderDivisions(Number(req.params.tournamentId), orderedIds);
+      res.json({ message: "Divisions reordered successfully" });
     } catch (err) {
       throw err;
     }
