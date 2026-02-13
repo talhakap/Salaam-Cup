@@ -49,7 +49,7 @@ export default function TeamDetail() {
     );
   }
 
-  const rosterPlayers = players?.filter((p: Player) => p.registrationType === "roster") || [];
+  const rosterPlayers = players?.filter((p: Player) => p.status !== "rejected") || [];
   const teamMatches = allMatches?.filter((m: MatchWithTeams) => m.homeTeamId === teamId || m.awayTeamId === teamId) || [];
 
   return (
