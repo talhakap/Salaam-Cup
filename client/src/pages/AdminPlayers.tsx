@@ -15,7 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import type { Player, Team } from "@shared/schema";
 
-const STATUS_FILTERS = ["all", "confirmed", "flagged", "verified", "staging", "rejected"] as const;
+const STATUS_FILTERS = ["all", "confirmed", "flagged", "staging", "rejected"] as const;
+const TYPE_FILTERS = ["all", "players", "free agents"] as const;
 
 type PlayerWithTeam = Player & { team: Team | null };
 
@@ -253,10 +254,12 @@ function CreatePlayerDialog({ teams, onClose }: { teams: Team[]; onClose: () => 
 
 export default function AdminPlayers() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [tournamentFilter, setTournamentFilter] = useState<string>("all");
   const [divisionFilter, setDivisionFilter] = useState<string>("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");
-  const { data: players, isLoading } = useAdminPlayers(statusFilter === "all" ? undefined : statusFilter);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const { data: players, isLoading } = useAdminPlayers();
   const { data: tournaments } = useTournaments();
   const { data: divisions } = useDivisions(tournamentFilter !== "all" ? Number(tournamentFilter) : 0);
   const { data: allTeams } = useAllTeams();
@@ -278,6 +281,18 @@ export default function AdminPlayers() {
   const filteredPlayers = useMemo(() => {
     if (!players) return [];
     return players.filter((p) => {
+      if (statusFilter !== "all") {
+        if (statusFilter === "confirmed") {
+          if (p.status !== "confirmed" && p.status !== "verified") return false;
+        } else {
+          if (p.status !== statusFilter) return false;
+        }
+      }
+      if (typeFilter === "players") {
+        if (!p.teamId) return false;
+      } else if (typeFilter === "free agents") {
+        if (p.teamId) return false;
+      }
       if (tournamentFilter !== "all") {
         if (!p.team || p.team.tournamentId !== Number(tournamentFilter)) return false;
       }
@@ -287,9 +302,15 @@ export default function AdminPlayers() {
       if (teamFilter !== "all") {
         if (!p.teamId || p.teamId !== Number(teamFilter)) return false;
       }
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const fullName = `${p.firstName} ${p.lastName}`.toLowerCase();
+        const email = p.email.toLowerCase();
+        if (!fullName.includes(q) && !email.includes(q)) return false;
+      }
       return true;
     });
-  }, [players, tournamentFilter, divisionFilter, teamFilter]);
+  }, [players, statusFilter, typeFilter, tournamentFilter, divisionFilter, teamFilter, searchQuery]);
 
   const handleDelete = async () => {
     if (!deletePlayerState) return;
@@ -332,7 +353,7 @@ export default function AdminPlayers() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-3">
         {STATUS_FILTERS.map((s) => (
           <Button
             key={s}
@@ -346,7 +367,21 @@ export default function AdminPlayers() {
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-2 mb-4">
+        {TYPE_FILTERS.map((t) => (
+          <Button
+            key={t}
+            variant={typeFilter === t ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTypeFilter(t)}
+            data-testid={`button-filter-player-type-${t.replace(" ", "-")}`}
+          >
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <Select value={tournamentFilter} onValueChange={(val) => { setTournamentFilter(val); setDivisionFilter("all"); setTeamFilter("all"); }}>
           <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-filter-player-tournament">
             <SelectValue placeholder="All Tournaments" />
@@ -380,6 +415,15 @@ export default function AdminPlayers() {
             ))}
           </SelectContent>
         </Select>
+        <div className="ml-auto w-full sm:w-auto">
+          <Input
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-[250px]"
+            data-testid="input-search-players"
+          />
+        </div>
       </div>
 
       {isLoading ? (
@@ -391,7 +435,7 @@ export default function AdminPlayers() {
           <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium">No player registrations found</p>
           <p className="text-sm mt-1">
-            {statusFilter !== "all" || tournamentFilter !== "all" || divisionFilter !== "all" || teamFilter !== "all"
+            {statusFilter !== "all" || typeFilter !== "all" || tournamentFilter !== "all" || divisionFilter !== "all" || teamFilter !== "all" || searchQuery.trim()
               ? "No players match the selected filters."
               : "No players or free agents have registered yet."}
           </p>
