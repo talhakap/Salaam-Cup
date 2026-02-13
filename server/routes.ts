@@ -345,7 +345,16 @@ export async function registerRoutes(
 
   app.post("/api/tournaments/:id/reset", isAuthenticated, async (req, res) => {
     try {
-      await storage.resetTournament(Number(req.params.id));
+      const deletedUserIds = await storage.resetTournament(Number(req.params.id));
+      if (supabaseAdmin && deletedUserIds.length > 0) {
+        for (const uid of deletedUserIds) {
+          try {
+            await supabaseAdmin.auth.admin.deleteUser(uid);
+          } catch (e) {
+            console.warn(`Failed to delete Supabase Auth user ${uid}:`, e);
+          }
+        }
+      }
       res.json({ message: "Tournament reset successfully" });
     } catch (err) {
       throw err;
