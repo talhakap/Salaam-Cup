@@ -1,5 +1,5 @@
 import { AdminLayout } from "@/components/AdminLayout";
-import { useAllTeams, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
+import { useAllTeams, useUpdateTeam, useDeleteTeam, useCreateTeam } from "@/hooks/use-teams";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, Eye, Pencil, Trash2, Copy, Key } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, Pencil, Trash2, Copy, Key, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import type { Team, Division } from "@shared/schema";
@@ -203,6 +203,134 @@ function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) 
   );
 }
 
+function CreateTeamDialog({ onClose }: { onClose: () => void }) {
+  const createTeam = useCreateTeam();
+  const { data: tournaments } = useTournaments();
+  const [tournamentId, setTournamentId] = useState<number>(0);
+  const { data: divisionsList } = useDivisions(tournamentId);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (tournamentId === 0 && tournaments && tournaments.length > 0) {
+      setTournamentId(tournaments[0].id);
+    }
+  }, [tournaments, tournamentId]);
+
+  const [name, setName] = useState("");
+  const [captainName, setCaptainName] = useState("");
+  const [captainEmail, setCaptainEmail] = useState("");
+  const [captainPhone, setCaptainPhone] = useState("");
+  const [divisionId, setDivisionId] = useState("");
+  const [status, setStatus] = useState("pending");
+  const [paymentStatus, setPaymentStatus] = useState("unpaid");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !captainName || !captainEmail || !captainPhone || !divisionId || !tournamentId) {
+      toast({ title: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    try {
+      await createTeam.mutateAsync({
+        name,
+        captainName,
+        captainEmail,
+        captainPhone,
+        tournamentId,
+        divisionId: Number(divisionId),
+        status: status as any,
+        paymentStatus: paymentStatus as any,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      toast({ title: "Team created" });
+      onClose();
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Add New Team</DialogTitle>
+        <DialogDescription>Manually create a team.</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-sm font-medium">Team Name</label>
+          <Input value={name} onChange={e => setName(e.target.value)} data-testid="input-create-team-name" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Captain Name</label>
+            <Input value={captainName} onChange={e => setCaptainName(e.target.value)} data-testid="input-create-captain-name" />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Captain Email</label>
+            <Input value={captainEmail} onChange={e => setCaptainEmail(e.target.value)} data-testid="input-create-captain-email" />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Captain Phone</label>
+          <Input value={captainPhone} onChange={e => setCaptainPhone(e.target.value)} data-testid="input-create-captain-phone" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Tournament</label>
+            <Select value={String(tournamentId)} onValueChange={v => { setTournamentId(Number(v)); setDivisionId(""); }}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {tournaments?.map(t => (
+                  <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Division</label>
+            <Select value={divisionId} onValueChange={setDivisionId}>
+              <SelectTrigger><SelectValue placeholder="Select division" /></SelectTrigger>
+              <SelectContent>
+                {divisionsList?.map((d: Division) => (
+                  <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Payment Status</label>
+            <Select value={paymentStatus} onValueChange={setPaymentStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={createTeam.isPending} data-testid="button-submit-create-team">
+            {createTeam.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Create Team
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
 export default function AdminTeams() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [tournamentFilter, setTournamentFilter] = useState<string>("all");
@@ -215,6 +343,7 @@ export default function AdminTeams() {
   const { toast } = useToast();
   const [editTeam, setEditTeam] = useState<Team | null>(null);
   const [deleteTeamState, setDeleteTeamState] = useState<Team | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [credentials, setCredentials] = useState<ApprovalCredentials | null>(null);
   const [approvingTeamId, setApprovingTeamId] = useState<number | null>(null);
 
@@ -282,9 +411,14 @@ export default function AdminTeams() {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-teams-title">Team Management</h1>
-        <p className="text-muted-foreground mt-1">Review and manage team registrations</p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-teams-title">Team Management</h1>
+          <p className="text-muted-foreground mt-1">Review and manage team registrations</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)} className="gap-2" data-testid="button-add-team">
+          <Plus className="h-4 w-4" /> Add Team
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
@@ -417,6 +551,10 @@ export default function AdminTeams() {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={createOpen} onOpenChange={(o) => !o && setCreateOpen(false)}>
+        {createOpen && <CreateTeamDialog onClose={() => setCreateOpen(false)} />}
       </Dialog>
 
       {credentials && (

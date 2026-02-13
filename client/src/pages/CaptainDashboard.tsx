@@ -17,13 +17,15 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { usePlayers, useCreatePlayer } from "@/hooks/use-players";
+import { usePlayers, useCreatePlayer, useDeletePlayer } from "@/hooks/use-players";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, AlertCircle, LogIn } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, LogIn, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Fragment } from "react";
+import type { Player } from "@shared/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "wouter";
 
@@ -105,40 +107,139 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
 
 function RosterList({ teamId }: { teamId: number }) {
   const { data: players, isLoading } = usePlayers(teamId);
+  const deletePlayer = useDeletePlayer();
+  const { toast } = useToast();
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  const handleDelete = async (playerId: number) => {
+    try {
+      await deletePlayer.mutateAsync(playerId);
+      toast({ title: "Player removed from roster" });
+      setDeleteConfirmId(null);
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
 
   if (isLoading) return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>;
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>#</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {players?.length === 0 ? (
+    <>
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-              No players added yet. Use the "Add Player" button to get started.
-            </TableCell>
+            <TableHead>Name</TableHead>
+            <TableHead>#</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-20"></TableHead>
           </TableRow>
-        ) : (
-          players?.map((player) => (
-            <TableRow key={player.id} data-testid={`row-player-${player.id}`}>
-              <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
-              <TableCell>{player.jerseyNumber}</TableCell>
-              <TableCell>
-                <Badge variant={player.status === 'verified' || player.status === 'confirmed' ? 'default' : player.status === 'flagged' || player.status === 'rejected' ? 'destructive' : 'secondary'} data-testid={`badge-player-status-${player.id}`}>
-                  {player.status}
-                </Badge>
+        </TableHeader>
+        <TableBody>
+          {players?.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                No players added yet. Use the "Add Player" button to get started.
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ) : (
+            players?.map((player: Player) => (
+              <Fragment key={player.id}>
+                <TableRow data-testid={`row-player-${player.id}`}>
+                  <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
+                  <TableCell>{player.jerseyNumber}</TableCell>
+                  <TableCell>
+                    <Badge variant={player.status === 'verified' || player.status === 'confirmed' ? 'default' : player.status === 'flagged' || player.status === 'rejected' ? 'destructive' : 'secondary'} data-testid={`badge-player-status-${player.id}`}>
+                      {player.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setExpandedId(expandedId === player.id ? null : player.id)}
+                        data-testid={`button-expand-player-${player.id}`}
+                      >
+                        {expandedId === player.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setDeleteConfirmId(player.id)}
+                        data-testid={`button-delete-player-${player.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                {expandedId === player.id && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="bg-muted/50">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 py-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Email: </span>
+                          <span className="font-medium">{player.email}</span>
+                        </div>
+                        {player.phone && (
+                          <div>
+                            <span className="text-muted-foreground">Phone: </span>
+                            <span className="font-medium">{player.phone}</span>
+                          </div>
+                        )}
+                        {player.dob && (
+                          <div>
+                            <span className="text-muted-foreground">DOB: </span>
+                            <span className="font-medium">{player.dob}</span>
+                          </div>
+                        )}
+                        {player.position && (
+                          <div>
+                            <span className="text-muted-foreground">Position: </span>
+                            <span className="font-medium">{player.position}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-muted-foreground">Waiver: </span>
+                          <span className="font-medium">{player.waiverSigned ? "Signed" : "Not signed"}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Type: </span>
+                          <span className="font-medium">{player.registrationType}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      <Dialog open={deleteConfirmId !== null} onOpenChange={(o) => !o && setDeleteConfirmId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Player</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove this player from your roster? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+              disabled={deletePlayer.isPending}
+              data-testid="button-confirm-delete-roster-player"
+            >
+              {deletePlayer.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -263,7 +364,7 @@ export default function CaptainDashboard() {
           {captain && (
             <div className="flex items-center gap-3">
               <span className="text-sm opacity-80">{captain.email}</span>
-              <Button variant="outline" size="sm" onClick={() => captainLogout()} data-testid="button-captain-logout" className="border-white/30 text-white">
+              <Button variant="outline" size="sm" onClick={() => captainLogout()} data-testid="button-captain-logout" className="border-black/30 text-black">
                 Sign Out
               </Button>
             </div>

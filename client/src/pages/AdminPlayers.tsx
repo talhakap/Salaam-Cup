@@ -1,5 +1,5 @@
 import { AdminLayout } from "@/components/AdminLayout";
-import { useAdminPlayers, useUpdatePlayer, useDeletePlayer } from "@/hooks/use-players";
+import { useAdminPlayers, useUpdatePlayer, useDeletePlayer, useCreatePlayer } from "@/hooks/use-players";
 import { useAllTeams } from "@/hooks/use-teams";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useMemo } from "react";
-import { Loader2, User, Users, Pencil, Trash2 } from "lucide-react";
+import { Loader2, User, Users, Pencil, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import type { Player, Team } from "@shared/schema";
@@ -122,6 +122,135 @@ function EditPlayerDialog({ player, onClose }: { player: PlayerWithTeam; onClose
   );
 }
 
+function CreatePlayerDialog({ teams, onClose }: { teams: Team[]; onClose: () => void }) {
+  const createPlayer = useCreatePlayer();
+  const { toast } = useToast();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dob, setDob] = useState("");
+  const [jerseyNumber, setJerseyNumber] = useState(0);
+  const [position, setPosition] = useState("");
+  const [teamId, setTeamId] = useState("");
+  const [registrationType, setRegistrationType] = useState("roster");
+  const [status, setStatus] = useState("staging");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstName || !lastName || !email || !dob) {
+      toast({ title: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    try {
+      await createPlayer.mutateAsync({
+        firstName,
+        lastName,
+        email,
+        phone: phone || undefined,
+        dob,
+        jerseyNumber: jerseyNumber || undefined,
+        position: position || undefined,
+        teamId: teamId && teamId !== "none" ? Number(teamId) : undefined,
+        registrationType: registrationType as any,
+        status: status as any,
+      });
+      toast({ title: "Player created" });
+      onClose();
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Add New Player</DialogTitle>
+        <DialogDescription>Manually create a player.</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">First Name</label>
+            <Input value={firstName} onChange={e => setFirstName(e.target.value)} data-testid="input-create-player-first" />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Last Name</label>
+            <Input value={lastName} onChange={e => setLastName(e.target.value)} data-testid="input-create-player-last" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Email</label>
+            <Input value={email} onChange={e => setEmail(e.target.value)} data-testid="input-create-player-email" />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Phone</label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="text-sm font-medium">DOB</label>
+            <Input type="date" value={dob} onChange={e => setDob(e.target.value)} data-testid="input-create-player-dob" />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Jersey #</label>
+            <Input type="number" value={jerseyNumber} onChange={e => setJerseyNumber(parseInt(e.target.value) || 0)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Position</label>
+            <Input value={position} onChange={e => setPosition(e.target.value)} />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Team</label>
+          <Select value={teamId} onValueChange={setTeamId}>
+            <SelectTrigger><SelectValue placeholder="Select team (optional)" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Team (Free Agent)</SelectItem>
+              {teams.map(t => (
+                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Type</label>
+            <Select value={registrationType} onValueChange={setRegistrationType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="roster">Roster</SelectItem>
+                <SelectItem value="player">Player</SelectItem>
+                <SelectItem value="free_agent">Free Agent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="staging">Staging</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="flagged">Flagged</SelectItem>
+                <SelectItem value="verified">Verified</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={createPlayer.isPending} data-testid="button-submit-create-player">
+            {createPlayer.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Create Player
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
 export default function AdminPlayers() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [tournamentFilter, setTournamentFilter] = useState<string>("all");
@@ -135,6 +264,7 @@ export default function AdminPlayers() {
   const { toast } = useToast();
   const [editPlayer, setEditPlayer] = useState<PlayerWithTeam | null>(null);
   const [deletePlayerState, setDeletePlayerState] = useState<PlayerWithTeam | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const teamsForFilter = useMemo(() => {
     if (!allTeams) return [];
@@ -192,9 +322,14 @@ export default function AdminPlayers() {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-players-title">Player Registrations</h1>
-        <p className="text-muted-foreground mt-1">Review player and free agent registrations</p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-players-title">Player Registrations</h1>
+          <p className="text-muted-foreground mt-1">Review player and free agent registrations</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)} className="gap-2" data-testid="button-add-player">
+          <Plus className="h-4 w-4" /> Add Player
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
@@ -332,6 +467,10 @@ export default function AdminPlayers() {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={createOpen} onOpenChange={(o) => !o && setCreateOpen(false)}>
+        {createOpen && <CreatePlayerDialog teams={allTeams || []} onClose={() => setCreateOpen(false)} />}
       </Dialog>
     </AdminLayout>
   );
