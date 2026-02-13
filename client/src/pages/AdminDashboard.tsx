@@ -91,7 +91,7 @@ export default function AdminDashboard() {
                      <p className="font-medium truncate">{t.name}</p>
                      <p className="text-sm text-muted-foreground capitalize">{t.status}</p>
                    </div>
-                   <Link href={`/tournaments/${t.id}`} className="flex-shrink-0">
+                   <Link href={`/tournaments/${t.slug}`} className="flex-shrink-0">
                       <Button className="hover:bg-stone-900 hover:text-white"size="sm" variant="secondary">View</Button>
                    </Link>
                  </div>

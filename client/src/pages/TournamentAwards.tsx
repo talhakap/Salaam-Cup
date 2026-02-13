@@ -14,11 +14,12 @@ import type { Division, Award } from "@shared/schema";
 
 export default function TournamentAwards() {
   const [, params] = useRoute("/tournaments/:id/awards");
-  const tournamentId = Number(params?.id);
+  const tournamentSlug = params?.id || "";
 
-  const { data: tournament, isLoading } = useTournament(tournamentId);
-  const { data: divisions } = useDivisions(tournamentId);
-  const { data: allAwards } = useAwards(tournamentId);
+  const { data: tournament, isLoading } = useTournament(tournamentSlug);
+  const numericId = tournament?.id || 0;
+  const { data: divisions } = useDivisions(numericId);
+  const { data: allAwards } = useAwards(numericId);
 
   const [selectedDivision, setSelectedDivision] = useState<string>("all");
 
@@ -78,7 +79,7 @@ export default function TournamentAwards() {
       />
       <HeroSection title="Awards" image={tournament.heroImage || undefined} size="small" />
       <SponsorBar />
-      <TournamentNav tournamentId={tournamentId} />
+      <TournamentNav tournamentId={tournamentSlug} />
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 max-w-5xl">

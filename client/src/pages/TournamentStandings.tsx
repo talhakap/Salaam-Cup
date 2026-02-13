@@ -12,22 +12,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
 import { Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Division, StandingWithTeam } from "@shared/schema";
 
 export default function TournamentStandings() {
   const [, params] = useRoute("/tournaments/:id/standings");
-  const tournamentId = Number(params?.id);
+  const tournamentSlug = params?.id || "";
 
-  const { data: tournament, isLoading } = useTournament(tournamentId);
-  const { data: divisions } = useDivisions(tournamentId);
-  const { data: allStandings } = useStandings(tournamentId);
+  const { data: tournament, isLoading } = useTournament(tournamentSlug);
+  const numericId = tournament?.id || 0;
+  const { data: divisions } = useDivisions(numericId);
+  const { data: allStandings } = useStandings(numericId);
 
   const divisionTabsReady = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
   const [selectedDivision, setSelectedDivision] = useState<string>("");
-  if (selectedDivision === "" && divisionTabsReady.length > 0) {
-    setSelectedDivision(divisionTabsReady[0].id);
-  }
+
+  useEffect(() => {
+    if (selectedDivision === "" && divisionTabsReady.length > 0) {
+      setSelectedDivision(divisionTabsReady[0].id);
+    }
+  }, [divisionTabsReady, selectedDivision]);
 
   if (isLoading) {
     return (
@@ -71,7 +75,7 @@ export default function TournamentStandings() {
         image={tournament.heroImage || undefined}
       />
       <SponsorBar />
-      <TournamentNav tournamentId={tournamentId} />
+      <TournamentNav tournamentId={tournamentSlug} />
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 max-w-5xl">

@@ -10,7 +10,7 @@ const navItems = [
   { label: "Awards", path: "/awards", icon: Award },
 ];
 
-export function TournamentNav({ tournamentId }: { tournamentId: number }) {
+export function TournamentNav({ tournamentId }: { tournamentId: string }) {
   const [location] = useLocation();
   const basePath = `/tournaments/${tournamentId}`;
 

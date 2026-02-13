@@ -56,7 +56,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
       </CardContent>
 
       <CardFooter className="bg-gray-50/50 p-4 border-t">
-        <Link href={`/tournaments/${tournament.id}`} className="w-full">
+        <Link href={`/tournaments/${tournament.slug}`} className="w-full">
           <Button className="w-full gap-2 group-hover:bg-primary group-hover:text-white transition-colors" variant="outline">
             View Details <ArrowRight className="h-4 w-4" />
           </Button>

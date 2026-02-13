@@ -16,5 +16,15 @@ if (databaseUrl.includes("pooler.supabase.com:6543")) {
   databaseUrl = databaseUrl.replace(":6543/", ":5432/");
 }
 
-export const pool = new Pool({ connectionString: databaseUrl });
+export const pool = new Pool({
+  connectionString: databaseUrl,
+  max: 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+
+pool.on("error", (err) => {
+  console.error("Unexpected pool error:", err.message);
+});
+
 export const db = drizzle(pool, { schema });

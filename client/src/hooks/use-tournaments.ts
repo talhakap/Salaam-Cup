@@ -14,7 +14,7 @@ export function useTournaments() {
   });
 }
 
-export function useTournament(id: number) {
+export function useTournament(id: string | number) {
   return useQuery({
     queryKey: [api.tournaments.get.path, id],
     queryFn: async () => {

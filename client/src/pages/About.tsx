@@ -151,7 +151,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
 
             return (
               <div key={t.id} className="w-full flex-shrink-0 px-4 md:px-12" data-testid={`about-card-upcoming-${t.id}`}>
-                <Link href={`/tournaments/${t.id}`} className="block relative rounded-xl overflow-hidden max-w-md mx-auto aspect-square cursor-pointer">
+                <Link href={`/tournaments/${t.slug}`} className="block relative rounded-xl overflow-hidden max-w-md mx-auto aspect-square cursor-pointer">
                   <div className="absolute inset-0">
                     <img src={bg} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50" />

@@ -23,6 +23,7 @@ export interface IStorage {
   // Tournaments
   getTournaments(): Promise<Tournament[]>;
   getTournament(id: number): Promise<(Tournament & { divisions: Division[] }) | undefined>;
+  getTournamentBySlug(slug: string): Promise<(Tournament & { divisions: Division[] }) | undefined>;
   createTournament(data: InsertTournament): Promise<Tournament>;
   updateTournament(id: number, data: Partial<InsertTournament>): Promise<Tournament>;
   deleteTournament(id: number): Promise<void>;
@@ -158,6 +159,13 @@ export class DatabaseStorage implements IStorage {
     const [tournament] = await db.select().from(tournaments).where(eq(tournaments.id, id));
     if (!tournament) return undefined;
     const divs = await db.select().from(divisions).where(eq(divisions.tournamentId, id)).orderBy(asc(divisions.sortOrder), asc(divisions.id));
+    return { ...tournament, divisions: divs };
+  }
+
+  async getTournamentBySlug(slug: string): Promise<(Tournament & { divisions: Division[] }) | undefined> {
+    const [tournament] = await db.select().from(tournaments).where(eq(tournaments.slug, slug));
+    if (!tournament) return undefined;
+    const divs = await db.select().from(divisions).where(eq(divisions.tournamentId, tournament.id)).orderBy(asc(divisions.sortOrder), asc(divisions.id));
     return { ...tournament, divisions: divs };
   }
 

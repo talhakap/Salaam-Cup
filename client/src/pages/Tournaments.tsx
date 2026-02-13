@@ -22,7 +22,7 @@ function TournamentCard({ tournament, index }: { tournament: any; index: number 
   const { data: divisions } = useDivisions(Number(tournament.id));
 
   return (
-    <Link href={`/tournaments/${tournament.id}`}>
+    <Link href={`/tournaments/${tournament.slug}`}>
       <div
         className="relative rounded-md overflow-hidden group cursor-pointer bg-black"
         data-testid={`card-tournament-${tournament.id}`}

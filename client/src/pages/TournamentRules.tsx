@@ -20,10 +20,11 @@ const ReactQuill = lazy(() => import("react-quill-new"));
 
 export default function TournamentRules() {
   const [, params] = useRoute("/tournaments/:id/rules");
-  const tournamentId = Number(params?.id);
+  const tournamentSlug = params?.id || "";
 
-  const { data: tournament, isLoading } = useTournament(tournamentId);
-  const { data: divisions } = useDivisions(tournamentId);
+  const { data: tournament, isLoading } = useTournament(tournamentSlug);
+  const numericId = tournament?.id || 0;
+  const { data: divisions } = useDivisions(numericId);
   const { isAuthenticated } = useAuth();
   const updateDivision = useUpdateDivision();
   const { toast } = useToast();
@@ -194,7 +195,7 @@ export default function TournamentRules() {
       />
       <HeroSection title="Divisions & Rules" image={tournament.heroImage || undefined} size="small" />
       <SponsorBar />
-      <TournamentNav tournamentId={tournamentId} />
+      <TournamentNav tournamentId={tournamentSlug} />
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 max-w-5xl">

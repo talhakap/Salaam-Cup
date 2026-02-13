@@ -432,7 +432,11 @@ export async function registerRoutes(
   });
 
   app.get(api.tournaments.get.path, async (req, res) => {
-    const tournament = await storage.getTournament(Number(req.params.id));
+    const param = req.params.id;
+    const isNumeric = /^\d+$/.test(param);
+    const tournament = isNumeric 
+      ? await storage.getTournament(Number(param))
+      : await storage.getTournamentBySlug(param);
     if (!tournament) return res.status(404).json({ message: "Tournament not found" });
     res.json(tournament);
   });
@@ -1496,11 +1500,11 @@ export async function registerRoutes(
       ];
 
       const tournamentPages = tournaments.flatMap((t) => [
-        { loc: `/tournaments/${t.id}`, priority: "0.8", changefreq: "weekly" },
-        { loc: `/tournaments/${t.id}/schedule`, priority: "0.8", changefreq: "daily" },
-        { loc: `/tournaments/${t.id}/standings`, priority: "0.8", changefreq: "daily" },
-        { loc: `/tournaments/${t.id}/rules`, priority: "0.6", changefreq: "monthly" },
-        { loc: `/tournaments/${t.id}/awards`, priority: "0.6", changefreq: "monthly" },
+        { loc: `/tournaments/${t.slug}`, priority: "0.8", changefreq: "weekly" },
+        { loc: `/tournaments/${t.slug}/schedule`, priority: "0.8", changefreq: "daily" },
+        { loc: `/tournaments/${t.slug}/standings`, priority: "0.8", changefreq: "daily" },
+        { loc: `/tournaments/${t.slug}/rules`, priority: "0.6", changefreq: "monthly" },
+        { loc: `/tournaments/${t.slug}/awards`, priority: "0.6", changefreq: "monthly" },
       ]);
 
       const teamPages = teams.map((t) => ({

@@ -129,7 +129,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             {allTournaments.length > 0 ? allTournaments.map((t: Tournament) => (
                               <li key={t.id}>
                                 <Link
-                                  href={`/tournaments/${t.id}`}
+                                  href={`/tournaments/${t.slug}`}
                                   className={cn(
                                     "block text-sm py-1.5 px-2 rounded-md flex items-center justify-between gap-2 transition-colors",
                                     Number(activeTournament) === Number(t.id)
@@ -152,6 +152,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                         <TournamentDivisionsColumn
                           tournamentId={activeTournament}
+                          tournamentSlug={allTournaments.find(t => Number(t.id) === activeTournament)?.slug || null}
                           onClose={() => { setTournamentDropdownOpen(false); setSelectedSportId(null); setSelectedTournamentId(null); }}
                         />
                       </div>
@@ -297,7 +298,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                       {(tournaments || []).map((t: Tournament) => (
                         <Link
                           key={t.id}
-                          href={`/tournaments/${t.id}`}
+                          href={`/tournaments/${t.slug}`}
                           className="block text-sm p-2 text-muted-foreground hover:text-foreground"
                           onClick={() => { setIsOpen(false); setMobileTournamentExpanded(false); }}
                           data-testid={`nav-mobile-tournament-${t.id}`}
@@ -421,7 +422,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function TournamentDivisionsColumn({ tournamentId, onClose }: { tournamentId: number | null; onClose: () => void }) {
+function TournamentDivisionsColumn({ tournamentId, tournamentSlug, onClose }: { tournamentId: number | null; tournamentSlug: string | null; onClose: () => void }) {
   const { data: divisions } = useDivisions(tournamentId || 0);
 
   if (!tournamentId) return null;
@@ -433,7 +434,7 @@ function TournamentDivisionsColumn({ tournamentId, onClose }: { tournamentId: nu
         {(divisions || []).length > 0 ? (divisions || []).map((div: Division) => (
           <li key={div.id}>
             <Link
-              href={`/tournaments/${tournamentId}`}
+              href={`/tournaments/${tournamentSlug || tournamentId}`}
               className="block text-sm py-1.5 px-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
               onClick={onClose}
               data-testid={`dropdown-division-${div.id}`}

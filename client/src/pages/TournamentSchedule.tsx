@@ -22,11 +22,12 @@ import type { Division, MatchWithTeams, Venue } from "@shared/schema";
 
 export default function TournamentSchedule() {
   const [, params] = useRoute("/tournaments/:id/schedule");
-  const tournamentId = Number(params?.id);
+  const tournamentSlug = params?.id || "";
 
-  const { data: tournament, isLoading } = useTournament(tournamentId);
-  const { data: divisions } = useDivisions(tournamentId);
-  const { data: allMatches, isLoading: matchesLoading } = useMatches(tournamentId);
+  const { data: tournament, isLoading } = useTournament(tournamentSlug);
+  const numericId = tournament?.id || 0;
+  const { data: divisions } = useDivisions(numericId);
+  const { data: allMatches, isLoading: matchesLoading } = useMatches(numericId);
   const { data: venues } = useVenues();
 
   const [filterDivision, setFilterDivision] = useState<string>("all");
@@ -100,7 +101,7 @@ export default function TournamentSchedule() {
       />
       <HeroSection title="Schedule" image={tournament.heroImage || undefined} size="small" />
       <SponsorBar />
-      <TournamentNav tournamentId={tournamentId} />
+      <TournamentNav tournamentId={tournamentSlug} />
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 max-w-5xl">

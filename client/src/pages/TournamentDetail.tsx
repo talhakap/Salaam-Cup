@@ -18,32 +18,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
 import { Users, ArrowRight } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 import type { Division, Team, StandingWithTeam, MatchWithTeams, Venue } from "@shared/schema";
 
 export default function TournamentDetail() {
   const [, params] = useRoute("/tournaments/:id");
-  const tournamentId = Number(params?.id);
+  const tournamentSlug = params?.id || "";
 
-  const { data: tournament, isLoading } = useTournament(tournamentId);
-  const { data: divisions } = useDivisions(tournamentId);
-  const { data: allTeams } = useTeams(tournamentId);
-  const { data: allMatches, isLoading: matchesLoading } = useMatches(tournamentId);
+  const { data: tournament, isLoading } = useTournament(tournamentSlug);
+  const numericId = tournament?.id || 0;
+  const { data: divisions } = useDivisions(numericId);
+  const { data: allTeams } = useTeams(numericId);
+  const { data: allMatches, isLoading: matchesLoading } = useMatches(numericId);
   const { data: venues } = useVenues();
-  const { data: allStandings, isLoading: standingsLoading } = useStandings(tournamentId);
+  const { data: allStandings, isLoading: standingsLoading } = useStandings(numericId);
   const { data: allNews } = useNews();
 
   const tournamentNews = useMemo(() => {
-    if (!allNews || !tournamentId) return [];
-    return allNews.filter((n) => n.tournamentId === tournamentId);
-  }, [allNews, tournamentId]);
+    if (!allNews || !numericId) return [];
+    return allNews.filter((n) => n.tournamentId === numericId);
+  }, [allNews, numericId]);
 
   const divisionTabsReady = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
   const [selectedDivision, setSelectedDivision] = useState<string>("");
-  if (selectedDivision === "" && divisionTabsReady.length > 0) {
-    setSelectedDivision(divisionTabsReady[0].id);
-  }
+
+  useEffect(() => {
+    if (selectedDivision === "" && divisionTabsReady.length > 0) {
+      setSelectedDivision(divisionTabsReady[0].id);
+    }
+  }, [divisionTabsReady, selectedDivision]);
 
   if (isLoading) {
     return (
@@ -111,7 +115,7 @@ export default function TournamentDetail() {
         image={tournament.heroImage || undefined}
       />
       <SponsorBar />
-      <TournamentNav tournamentId={tournamentId} />
+      <TournamentNav tournamentId={tournamentSlug} />
 
       {tournament.showNewsBanner && tournamentNews.length > 0 && (
         <TournamentNewsBanner newsItems={tournamentNews} />
@@ -162,7 +166,7 @@ export default function TournamentDetail() {
           )}
 
           <div className="text-center mt-4 mb-16">
-            <Link href={`/tournaments/${tournamentId}/schedule`}>
+            <Link href={`/tournaments/${tournamentSlug}/schedule`}>
               <Button variant="outline" className="rounded-full font-bold uppercase text-xs hover:bg-stone-500 hover:text-background tracking-wider px-8 gap-2" data-testid="button-full-schedule">
                 See Full Schedule <ArrowRight className="h-4 w-4" />
               </Button>
@@ -220,7 +224,7 @@ export default function TournamentDetail() {
               </div>
 
               <div className="text-center mt-6 mb-16">
-                <Link href={`/tournaments/${tournamentId}/standings`}>
+                <Link href={`/tournaments/${tournamentSlug}/standings`}>
                   <Button variant="outline" className="rounded-full font-bold uppercase text-xs hover:bg-stone-500 hover:text-background tracking-wider px-8 gap-2" data-testid="button-full-standings">
                     See Full Standings <ArrowRight className="h-4 w-4" />
                   </Button>
