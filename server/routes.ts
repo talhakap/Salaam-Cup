@@ -667,10 +667,32 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.players.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.players.delete.path, async (req, res) => {
     try {
-      await storage.deletePlayer(Number(req.params.id));
-      res.json({ message: "Player deleted" });
+      const playerId = Number(req.params.id);
+      const captainUserId = (req.session as any)?.captainUserId;
+      const adminUserId = (req.session as any)?.adminUserId;
+      const adminRole = (req.session as any)?.adminRole;
+
+      if (adminUserId && adminRole === "admin") {
+        await storage.deletePlayer(playerId);
+        return res.json({ message: "Player deleted" });
+      }
+
+      if (captainUserId) {
+        const player = await storage.getPlayerById(playerId);
+        if (!player || !player.teamId) {
+          return res.status(404).json({ message: "Player not found" });
+        }
+        const team = await storage.getTeam(player.teamId);
+        if (!team || team.captainUserId !== captainUserId) {
+          return res.status(403).json({ message: "You can only delete players from your own team" });
+        }
+        await storage.deletePlayer(playerId);
+        return res.json({ message: "Player deleted" });
+      }
+
+      return res.status(401).json({ message: "Not authenticated" });
     } catch (err) {
       throw err;
     }

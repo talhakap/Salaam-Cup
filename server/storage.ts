@@ -49,6 +49,7 @@ export interface IStorage {
 
   // Players
   getPlayers(teamId: number): Promise<Player[]>;
+  getPlayerById(id: number): Promise<Player | undefined>;
   getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team | null })[]>;
   getAllRegisteredPlayers(status?: string): Promise<(Player & { team: Team | null })[]>;
   createPlayer(data: InsertPlayer): Promise<Player>;
@@ -308,6 +309,11 @@ export class DatabaseStorage implements IStorage {
   // Players
   async getPlayers(teamId: number): Promise<Player[]> {
     return await db.select().from(players).where(eq(players.teamId, teamId));
+  }
+
+  async getPlayerById(id: number): Promise<Player | undefined> {
+    const [player] = await db.select().from(players).where(eq(players.id, id));
+    return player;
   }
 
   async createPlayer(data: InsertPlayer): Promise<Player> {

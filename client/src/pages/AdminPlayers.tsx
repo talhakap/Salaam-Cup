@@ -304,9 +304,11 @@ export default function AdminPlayers() {
         }
       }
       if (typeFilter === "players") {
-        if (!p.teamId) return false;
+        if (p.registrationType !== "player") return false;
       } else if (typeFilter === "free agents") {
-        if (p.teamId) return false;
+        if (p.registrationType !== "free_agent") return false;
+      } else if (typeFilter === "captains") {
+        return false;
       }
       if (tournamentFilter !== "all") {
         if (!p.team || p.team.tournamentId !== Number(tournamentFilter)) return false;
