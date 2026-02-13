@@ -175,23 +175,22 @@ export class DatabaseStorage implements IStorage {
     await db.delete(standings).where(eq(standings.tournamentId, id));
     await db.delete(matches).where(eq(matches.tournamentId, id));
     const teamRows = await db.select().from(teams).where(eq(teams.tournamentId, id));
-    const captainUserIds = teamRows
-      .map(t => t.captainUserId)
-      .filter((uid): uid is string => !!uid);
     for (const t of teamRows) {
       await db.delete(players).where(eq(players.teamId, t.id));
     }
     await db.delete(teams).where(eq(teams.tournamentId, id));
-    if (captainUserIds.length > 0) {
-      const adminUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, "admin"));
-      const adminIds = new Set(adminUsers.map(u => u.id));
-      const toDelete = captainUserIds.filter(uid => !adminIds.has(uid));
-      if (toDelete.length > 0) {
-        await db.delete(users).where(inArray(users.id, toDelete));
-      }
-      return toDelete;
+    const captainUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, "captain"));
+    const allTeamCaptainIds = (await db.select({ captainUserId: teams.captainUserId }).from(teams))
+      .map(t => t.captainUserId)
+      .filter((uid): uid is string => !!uid);
+    const activeCaptainIds = new Set(allTeamCaptainIds);
+    const orphanedCaptains = captainUsers
+      .map(u => u.id)
+      .filter(uid => !activeCaptainIds.has(uid));
+    if (orphanedCaptains.length > 0) {
+      await db.delete(users).where(inArray(users.id, orphanedCaptains));
     }
-    return [];
+    return orphanedCaptains;
   }
 
   async deleteTournament(id: number): Promise<void> {
