@@ -96,7 +96,8 @@ export async function setupAuth(app: Express) {
     try {
       const user = await authStorage.getUser(adminUserId);
       if (!user) return res.status(401).json({ message: "User not found" });
-      res.json(user);
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });

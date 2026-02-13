@@ -19,16 +19,35 @@ export async function registerRoutes(
   seedAdminAccounts().catch(err => console.error("Admin seeding error:", err));
 
   // === CAPTAIN AUTH (Supabase Auth - email/password) ===
+  const captainLoginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+  const CAPTAIN_MAX_ATTEMPTS = 10;
+  const CAPTAIN_WINDOW_MS = 15 * 60 * 1000;
+
   app.post("/api/captain/login", async (req, res) => {
     try {
       const { email, password } = req.body;
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
       }
+
+      const key = email.trim().toLowerCase();
+      const now = Date.now();
+      const record = captainLoginAttempts.get(key);
+      if (record && now - record.lastAttempt <= CAPTAIN_WINDOW_MS && record.count >= CAPTAIN_MAX_ATTEMPTS) {
+        return res.status(429).json({ message: "Too many login attempts. Please try again later." });
+      }
+      if (!record || now - record.lastAttempt > CAPTAIN_WINDOW_MS) {
+        captainLoginAttempts.set(key, { count: 1, lastAttempt: now });
+      } else {
+        record.count++;
+        record.lastAttempt = now;
+      }
+
       const result = await verifyCaptainCredentials(email, password);
       if (result.error) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
+      captainLoginAttempts.delete(key);
       (req.session as any).captainUserId = result.userId;
       (req.session as any).captainEmail = email;
       req.session.save((err) => {
@@ -334,7 +353,8 @@ export async function registerRoutes(
         .returning();
 
       if (!updated) return res.status(404).json({ message: "User not found" });
-      res.json(updated);
+      const { password: _, ...safeUser } = updated;
+      res.json(safeUser);
     } catch (err) {
       console.error("Error updating user:", err);
       res.status(500).json({ message: "Failed to update user" });
@@ -378,7 +398,7 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  app.post(api.sports.create.path, async (req, res) => {
+  app.post(api.sports.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.sports.create.input.parse(req.body);
       const sport = await storage.createSport(input);
@@ -389,7 +409,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch(api.sports.update.path, async (req, res) => {
+  app.patch(api.sports.update.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.sports.update.input.parse(req.body);
       const sport = await storage.updateSport(Number(req.params.id), input);
@@ -400,7 +420,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.sports.delete.path, async (req, res) => {
+  app.delete(api.sports.delete.path, isAuthenticated, async (req, res) => {
     await storage.deleteSport(Number(req.params.id));
     res.json({ success: true });
   });
@@ -645,8 +665,25 @@ export async function registerRoutes(
 
   app.patch(api.teams.update.path, async (req, res) => {
     try {
+      const captainUserId = (req.session as any)?.captainUserId;
+      const adminUserId = (req.session as any)?.adminUserId;
+      const adminRole = (req.session as any)?.adminRole;
+
+      if (!captainUserId && !(adminUserId && adminRole === "admin")) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const teamId = Number(req.params.id);
+
+      if (captainUserId && !(adminUserId && adminRole === "admin")) {
+        const team = await storage.getTeam(teamId);
+        if (!team || team.captainUserId !== captainUserId) {
+          return res.status(403).json({ message: "You can only update your own team" });
+        }
+      }
+
       const input = api.teams.update.input.parse(req.body);
-      const team = await storage.updateTeam(Number(req.params.id), input);
+      const team = await storage.updateTeam(teamId, input);
       res.json(team);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
@@ -744,8 +781,23 @@ export async function registerRoutes(
 
   app.post(api.players.bulkCreate.path, async (req, res) => {
     try {
+      const captainUserId = (req.session as any)?.captainUserId;
+      const adminUserId = (req.session as any)?.adminUserId;
+      const adminRole = (req.session as any)?.adminRole;
+
+      if (!captainUserId && !(adminUserId && adminRole === "admin")) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
       const teamId = Number(req.params.teamId);
       const team = await storage.getTeam(teamId);
+
+      if (captainUserId && !(adminUserId && adminRole === "admin")) {
+        if (!team || team.captainUserId !== captainUserId) {
+          return res.status(403).json({ message: "You can only add players to your own team" });
+        }
+      }
+
       if (team) {
         const tournament = await storage.getTournament(team.tournamentId);
         if (tournament && !tournament.registrationOpen) {
@@ -840,7 +892,7 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  app.post(api.matches.create.path, async (req, res) => {
+  app.post(api.matches.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.matches.create.input.parse(req.body);
       const match = await storage.createMatch(input);
@@ -1056,7 +1108,7 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  app.post(api.standings.recalculate.path, async (req, res) => {
+  app.post(api.standings.recalculate.path, isAuthenticated, async (req, res) => {
     await storage.recalculateStandings(Number(req.params.tournamentId));
     res.json({ message: "Standings recalculated" });
   });
