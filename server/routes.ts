@@ -48,6 +48,9 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Invalid email or password" });
       }
       captainLoginAttempts.delete(key);
+      (req.session as any).adminUserId = null;
+      (req.session as any).adminEmail = null;
+      (req.session as any).adminRole = null;
       (req.session as any).captainUserId = result.userId;
       (req.session as any).captainEmail = email;
       req.session.save((err) => {

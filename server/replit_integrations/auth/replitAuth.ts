@@ -67,6 +67,8 @@ export async function setupAuth(app: Express) {
       if (!user || user.role !== "admin") {
         return res.status(403).json({ message: "Access denied. Admin privileges required." });
       }
+      (req.session as any).captainUserId = null;
+      (req.session as any).captainEmail = null;
       (req.session as any).adminUserId = user.id;
       (req.session as any).adminEmail = email;
       (req.session as any).adminRole = "admin";
