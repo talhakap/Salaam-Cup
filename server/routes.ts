@@ -102,12 +102,11 @@ export async function registerRoutes(
 
       await storage.claimTeamsByEmail(team.captainEmail, userId);
 
-      console.log(`Team approval - isNewAccount: ${isNewAccount}, hasPassword: ${!!password}, captainEmail: ${team.captainEmail}`);
       if (isNewAccount && password) {
         try {
-          const { sendCaptainCredentialsEmail } = await import("./mailjet");
+          const { sendCaptainCredentialsEmail } = await import("./resend");
           const baseUrl = `${req.protocol}://${req.get("host")}`;
-          console.log(`Sending credentials email via Mailjet to ${team.captainEmail}...`);
+          console.log(`Sending credentials email via Resend to ${team.captainEmail}...`);
           const result = await sendCaptainCredentialsEmail(
             team.captainEmail,
             team.captainName || "Captain",
@@ -115,15 +114,10 @@ export async function registerRoutes(
             password,
             `${baseUrl}/captain-login`
           );
-          console.log(`Mailjet send result:`, JSON.stringify(result));
+          console.log(`Resend send result:`, JSON.stringify(result));
         } catch (emailErr: any) {
           console.error("Failed to send credentials email:", emailErr?.message || emailErr);
-          if (emailErr?.response) {
-            console.error("Mailjet error response:", JSON.stringify(emailErr.response?.data || emailErr.statusCode));
-          }
         }
-      } else {
-        console.log(`Skipping email: existing captain account for ${team.captainEmail}`);
       }
 
       res.json({
