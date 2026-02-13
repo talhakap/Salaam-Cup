@@ -104,9 +104,9 @@ export async function registerRoutes(
 
       if (isNewAccount && password) {
         try {
-          const { sendCaptainCredentialsEmail } = await import("./resend");
+          const { sendCaptainCredentialsEmail } = await import("./gmail");
           const baseUrl = `${req.protocol}://${req.get("host")}`;
-          console.log(`Sending credentials email via Resend to ${team.captainEmail}...`);
+          console.log(`Sending credentials email via Gmail to ${team.captainEmail}...`);
           const result = await sendCaptainCredentialsEmail(
             team.captainEmail,
             team.captainName || "Captain",
@@ -114,7 +114,7 @@ export async function registerRoutes(
             password,
             `${baseUrl}/captain-login`
           );
-          console.log(`Resend send result:`, JSON.stringify(result));
+          console.log(`Gmail send result: messageId=${result.messageId}`);
         } catch (emailErr: any) {
           console.error("Failed to send credentials email:", emailErr?.message || emailErr);
         }
