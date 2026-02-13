@@ -128,7 +128,7 @@ export default function CaptainLogin() {
             {showForgot && (
               <div className="mt-4 p-4 border rounded-lg space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Enter your email to request a password reset. A new password will be generated and shared with you by the tournament admin.
+                  Enter your email address. If an account exists, we'll send you a link to reset your password.
                 </p>
                 <Input
                   type="email"
@@ -162,7 +162,7 @@ export default function CaptainLogin() {
                   data-testid="button-submit-forgot"
                 >
                   {forgotLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Request Reset
+                  Send Reset Link
                 </Button>
               </div>
             )}

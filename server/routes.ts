@@ -64,43 +64,98 @@ export async function registerRoutes(
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
-      res.json({ message: "If an account exists with that email, please contact the tournament admin to receive a new password." });
+
+      const { db } = await import("./db");
+      const { users, passwordResetTokens } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+      const { randomBytes } = await import("crypto");
+
+      const normalizedEmail = email.trim().toLowerCase();
+      const [user] = await db.select().from(users).where(eq(users.email, normalizedEmail));
+
+      if (!user) {
+        return res.json({ message: "If an account exists with that email, we'll send you a password reset link." });
+      }
+
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await db.insert(passwordResetTokens).values({
+        email: normalizedEmail,
+        token,
+        expiresAt,
+      });
+
+      const protocol = req.headers["x-forwarded-proto"] || "https";
+      const host = req.headers.host;
+      const resetUrl = `${protocol}://${host}/reset-password?token=${token}`;
+
+      try {
+        const { sendPasswordResetEmail } = await import("./resend");
+        await sendPasswordResetEmail(normalizedEmail, resetUrl);
+      } catch (emailErr) {
+        console.error("Failed to send reset email:", emailErr);
+      }
+
+      res.json({ message: "If an account exists with that email, we'll send you a password reset link." });
     } catch (err) {
       res.status(500).json({ message: "Failed to process request" });
     }
   });
 
-  app.post("/api/admin/reset-password", isAuthenticated, async (req, res) => {
+  app.post("/api/reset-password", async (req, res) => {
     try {
-      const { userId } = req.body;
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
+      const { token, email, newPassword } = req.body;
+      if (!token || !email || !newPassword) {
+        return res.status(400).json({ message: "Token, email, and new password are required" });
       }
-      if (!supabaseAdmin) {
-        return res.status(500).json({ message: "Auth service not configured" });
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
       }
 
       const { db } = await import("./db");
-      const { users } = await import("@shared/models/auth");
-      const { eq } = await import("drizzle-orm");
+      const { users, passwordResetTokens } = await import("@shared/models/auth");
+      const { eq, and, isNull, gt } = await import("drizzle-orm");
 
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const [resetToken] = await db.select().from(passwordResetTokens).where(
+        and(
+          eq(passwordResetTokens.token, token),
+          eq(passwordResetTokens.email, normalizedEmail),
+          isNull(passwordResetTokens.usedAt),
+          gt(passwordResetTokens.expiresAt, new Date())
+        )
+      );
+
+      if (!resetToken) {
+        return res.status(400).json({ message: "Invalid or expired reset link. Please request a new one." });
+      }
+
+      const [user] = await db.select().from(users).where(eq(users.email, normalizedEmail));
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(400).json({ message: "No account found with that email." });
       }
 
-      const password = generatePassword(12);
-
-      const { data: supabaseUsers } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const supabaseUser = supabaseUsers?.users?.find(u => u.email === user.email);
-      if (supabaseUser) {
-        await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, { password });
+      if (supabaseAdmin) {
+        try {
+          const { data: supabaseUsers } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          const supabaseUser = supabaseUsers?.users?.find(u => u.email === normalizedEmail);
+          if (supabaseUser) {
+            await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, { password: newPassword });
+          }
+        } catch (supaErr) {
+          console.error("Failed to update Supabase auth password:", supaErr);
+        }
       }
 
-      await db.update(users).set({ password, updatedAt: new Date() }).where(eq(users.id, userId));
+      await db.update(users).set({ password: newPassword, updatedAt: new Date() }).where(eq(users.id, user.id));
 
-      res.json({ password, email: user.email });
-    } catch (err) {
+      await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, resetToken.id));
+
+      res.json({ message: "Password has been reset successfully. You can now log in with your new password." });
+    } catch (err: any) {
+      console.error("Reset password error:", err);
       res.status(500).json({ message: "Failed to reset password" });
     }
   });

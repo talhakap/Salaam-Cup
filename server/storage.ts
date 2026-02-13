@@ -447,6 +447,7 @@ export class DatabaseStorage implements IStorage {
       if (matchedRoster) {
         const [updated] = await db.update(players).set({
           status: 'confirmed',
+          registrationType: 'player',
           email: data.email || matchedRoster.email,
           phone: data.phone || matchedRoster.phone,
           position: data.position || matchedRoster.position,

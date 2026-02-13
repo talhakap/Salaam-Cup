@@ -374,7 +374,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/" className="hover:text-white transition-colors" data-testid="footer-home">HOME</Link></li>
                 <li><Link href="/about" className="hover:text-white transition-colors" data-testid="footer-about">ABOUT</Link></li>
                 <li><Link href="/media" className="hover:text-white transition-colors" data-testid="footer-media">MEDIA</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition-colors" data-testid="footer-contact">CONTACT</Link></li>
+                <li><Link href="/register" className="hover:text-white transition-colors" data-testid="footer-contact">CONTACT</Link></li>
                 <li><Link href="/admin-login" className="hover:text-white transition-colors" data-testid="footer-admin-login">ADMIN LOGIN</Link></li>
                 <li><Link href="/captain-login" className="hover:text-white transition-colors" data-testid="footer-captain-login">CAPTAIN LOGIN</Link></li>
               </ul>

@@ -36,6 +36,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import Media from "@/pages/Media";
 import Faq from "@/pages/Faq";
 import TournamentAwards from "@/pages/TournamentAwards";
+import ResetPassword from "@/pages/ResetPassword";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/register" component={Register} />
       
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/captain-login" component={CaptainLogin} />
       <Route path="/captain" component={CaptainDashboard} />
       <Route path="/admin-login" component={AdminLogin} />
