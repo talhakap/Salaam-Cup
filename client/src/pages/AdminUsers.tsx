@@ -8,8 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Shield, UserCog, Loader2, Users } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Shield, UserCog, Loader2, Users, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -132,6 +132,8 @@ export default function AdminUsers() {
   const { toast } = useToast();
   const [showCreate, setShowCreate] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data: users, isLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
@@ -165,7 +167,19 @@ export default function AdminUsers() {
     },
   });
 
-  const filteredUsers = users?.filter(u => roleFilter === "all" || u.role === roleFilter) || [];
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    return users.filter(u => {
+      if (roleFilter !== "all" && u.role !== roleFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const fullName = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        if (!fullName.includes(q) && !email.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [users, roleFilter, searchQuery]);
 
   const adminCount = users?.filter(u => u.role === "admin").length || 0;
   const captainCount = users?.filter(u => u.role === "captain").length || 0;
@@ -182,22 +196,33 @@ export default function AdminUsers() {
         </Button>
       </div>
 
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {[
-          { value: "all", label: `All (${users?.length || 0})` },
-          { value: "admin", label: `Admins (${adminCount})` },
-          { value: "captain", label: `Captains (${captainCount})` },
-        ].map(f => (
-          <Button
-            key={f.value}
-            variant={roleFilter === f.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setRoleFilter(f.value)}
-            data-testid={`button-filter-${f.value}`}
-          >
-            {f.label}
-          </Button>
-        ))}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "all", label: `All (${users?.length || 0})` },
+            { value: "admin", label: `Admins (${adminCount})` },
+            { value: "captain", label: `Captains (${captainCount})` },
+          ].map(f => (
+            <Button
+              key={f.value}
+              variant={roleFilter === f.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setRoleFilter(f.value)}
+              data-testid={`button-filter-${f.value}`}
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
+        <div className="ml-auto w-full sm:w-auto">
+          <Input
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-[250px]"
+            data-testid="input-search-users"
+          />
+        </div>
       </div>
 
       {isLoading ? (
@@ -213,54 +238,94 @@ export default function AdminUsers() {
         <div className="space-y-3">
           {filteredUsers.map(user => (
             <Card key={user.id} data-testid={`card-user-${user.id}`}>
-              <CardContent className="flex items-center justify-between gap-4 flex-wrap py-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex items-center justify-center h-9 w-9 rounded-full bg-muted shrink-0">
-                    {user.role === "admin" ? <Shield className="h-4 w-4" /> : <UserCog className="h-4 w-4" />}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium truncate" data-testid={`text-user-name-${user.id}`}>
-                      {user.firstName || user.lastName
-                        ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                        : user.email}
-                    </p>
-                    {(user.firstName || user.lastName) && (
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted shrink-0">
+                      {user.role === "admin" ? <Shield className="h-5 w-5" /> : <UserCog className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center flex-wrap gap-2 mb-1">
+                        <p className="font-bold text-lg truncate" data-testid={`text-user-name-${user.id}`}>
+                          {user.firstName || user.lastName
+                            ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                            : user.email}
+                        </p>
+                        <Badge
+                          variant={user.role === "admin" ? "default" : "secondary"}
+                          data-testid={`badge-user-role-${user.id}`}
+                        >
+                          {user.role === "admin" ? "Admin" : "Captain"}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground truncate" data-testid={`text-user-email-${user.id}`}>{user.email}</p>
-                    )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setExpandedId(expandedId === user.id ? null : user.id)}
+                      data-testid={`button-expand-user-${user.id}`}
+                    >
+                      {expandedId === user.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                    <Select
+                      value={user.role || "captain"}
+                      onValueChange={(newRole) => updateRole.mutate({ id: user.id, role: newRole })}
+                    >
+                      <SelectTrigger className="w-[130px]" data-testid={`select-change-role-${user.id}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="captain">Captain</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this user?")) {
+                          deleteUser.mutate(user.id);
+                        }
+                      }}
+                      data-testid={`button-delete-user-${user.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge
-                    variant={user.role === "admin" ? "default" : "secondary"}
-                    data-testid={`badge-user-role-${user.id}`}
-                  >
-                    {user.role === "admin" ? "Admin" : "Captain"}
-                  </Badge>
-                  <Select
-                    value={user.role || "captain"}
-                    onValueChange={(newRole) => updateRole.mutate({ id: user.id, role: newRole })}
-                  >
-                    <SelectTrigger className="w-[130px]" data-testid={`select-change-role-${user.id}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="captain">Captain</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this user?")) {
-                        deleteUser.mutate(user.id);
-                      }
-                    }}
-                    data-testid={`button-delete-user-${user.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                {expandedId === user.id && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Email: </span>
+                        <span className="font-medium">{user.email || "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">First Name: </span>
+                        <span className="font-medium">{user.firstName || "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Last Name: </span>
+                        <span className="font-medium">{user.lastName || "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Role: </span>
+                        <span className="font-medium">{user.role === "admin" ? "Admin" : "Captain"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Created: </span>
+                        <span className="font-medium">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">User ID: </span>
+                        <span className="font-medium text-xs">{user.id}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
