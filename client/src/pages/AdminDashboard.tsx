@@ -72,7 +72,7 @@ export default function AdminDashboard() {
             )}
             <div className="mt-4 pt-4 border-t">
               <Link href="/admin/teams">
-                <Button variant="ghost" className="w-full" data-testid="link-view-all-teams">View All Teams</Button>
+                <Button  variant="ghost" className="w-full hover:bg-stone-900 hover:text-white" data-testid="link-view-all-teams">View All Teams</Button>
               </Link>
             </div>
           </CardContent>
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
                      <p className="text-sm text-muted-foreground capitalize">{t.status}</p>
                    </div>
                    <Link href={`/tournaments/${t.id}`} className="flex-shrink-0">
-                      <Button size="sm" variant="secondary">View</Button>
+                      <Button className="hover:bg-stone-900 hover:text-white"size="sm" variant="secondary">View</Button>
                    </Link>
                  </div>
                ))}

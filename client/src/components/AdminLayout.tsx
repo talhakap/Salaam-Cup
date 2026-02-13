@@ -78,7 +78,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
               location === item.href 
                 ? "bg-primary text-white" 
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                : "text-gray-400 hover:text-black hover:bg-stone-400"
             )}>
               <item.icon className="h-5 w-5" />
               {item.label}
@@ -87,13 +87,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="p-4 border-t border-white/10 flex-shrink-0">
            <Link href="/">
-            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white mb-2">
+            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-black mb-2">
                Back to Public Site
             </Button>
            </Link>
           <Button 
             variant="destructive" 
-            className="w-full justify-start gap-2"
+            className="hover:bg-white hover:text-red-600 w-full justify-start gap-2"
             onClick={() => logout()}
           >
             <LogOut className="h-4 w-4" /> Logout
@@ -127,7 +127,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <nav className="flex-1 overflow-y-auto p-4 space-y-1">
                 {sidebarItems.map((item) => (
                   <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)} className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-stone-400 hover:text-white",
                     location === item.href ? "bg-primary text-white" : "text-gray-400"
                   )}>
                     <item.icon className="h-5 w-5" />
@@ -137,11 +137,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </nav>
               <div className="p-4 border-t border-white/10 space-y-2 flex-shrink-0">
                 <Link href="/" onClick={() => setIsOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white">
+                  <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-black">
                     Back to Public Site
                   </Button>
                 </Link>
-                <Button variant="destructive" className="w-full justify-start gap-2" onClick={() => logout()}>
+                <Button variant="destructive" className="w-full justify-start gap-2 hover:bg-white hover:text-red-600" onClick={() => logout()}>
                   <LogOut className="h-4 w-4" /> Logout
                 </Button>
               </div>

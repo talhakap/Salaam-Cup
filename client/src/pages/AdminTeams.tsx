@@ -84,6 +84,7 @@ function CredentialsDialog({ credentials, onClose }: { credentials: ApprovalCred
 }
 
 const STATUS_FILTERS = ["all", "pending", "approved", "rejected"] as const;
+const PAYMENT_FILTERS = ["all", "paid", "unpaid"] as const;
 
 function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) {
   const updateTeam = useUpdateTeam();
@@ -385,9 +386,10 @@ function CreateTeamDialog({ onClose }: { onClose: () => void }) {
 
 export default function AdminTeams() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [paymentFilter, setPaymentFilter] = useState<string>("all");
   const [tournamentFilter, setTournamentFilter] = useState<string>("all");
   const [divisionFilter, setDivisionFilter] = useState<string>("all");
-  const { data: teams, isLoading } = useAllTeams(statusFilter === "all" ? undefined : statusFilter);
+  const { data: teams, isLoading } = useAllTeams();
   const { data: tournaments } = useTournaments();
   const { data: divisions } = useDivisions(tournamentFilter !== "all" ? Number(tournamentFilter) : 0);
   const updateTeam = useUpdateTeam();
@@ -400,6 +402,8 @@ export default function AdminTeams() {
   const [approvingTeamId, setApprovingTeamId] = useState<number | null>(null);
 
   const filteredTeams = teams?.filter((team) => {
+    if (statusFilter !== "all" && team.status !== statusFilter) return false;
+    if (paymentFilter !== "all" && team.paymentStatus !== paymentFilter) return false;
     if (tournamentFilter !== "all" && team.tournamentId !== Number(tournamentFilter)) return false;
     if (divisionFilter !== "all" && team.divisionId !== Number(divisionFilter)) return false;
     return true;
@@ -465,17 +469,17 @@ export default function AdminTeams() {
     <AdminLayout>
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-teams-title">Team Management</h1>
+          <h1 className="text-3xl font-bold font-display text-foreground" data-testid="text-admin-teams-title">Team Management</h1>
           <p className="text-muted-foreground mt-1">Review and manage team registrations</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2" data-testid="button-add-team">
+        <Button  onClick={() => setCreateOpen(true)} className="hover:bg-white hover:text-stone-900 gap-2" data-testid="button-add-team">
           <Plus className="h-4 w-4" /> Add Team
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-3">
         {STATUS_FILTERS.map((s) => (
-          <Button
+          <Button className="hover:bg-stone-400 hover:text-white"
             key={s}
             variant={statusFilter === s ? "default" : "outline"}
             size="sm"
@@ -483,6 +487,20 @@ export default function AdminTeams() {
             data-testid={`button-filter-${s}`}
           >
             {s.charAt(0).toUpperCase() + s.slice(1)}
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {PAYMENT_FILTERS.map((p) => (
+          <Button className="hover:bg-stone-400 hover:text-white"
+            key={p}
+            variant={paymentFilter === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPaymentFilter(p)}
+            data-testid={`button-filter-payment-${p}`}
+          >
+            {p.charAt(0).toUpperCase() + p.slice(1)}
           </Button>
         ))}
       </div>
@@ -520,7 +538,7 @@ export default function AdminTeams() {
         <div className="text-center py-20 text-muted-foreground">
           <p className="text-lg font-medium">No teams found</p>
           <p className="text-sm mt-1">
-            {statusFilter !== "all" || tournamentFilter !== "all" || divisionFilter !== "all"
+            {statusFilter !== "all" || paymentFilter !== "all" || tournamentFilter !== "all" || divisionFilter !== "all"
               ? "No teams match the selected filters."
               : "No teams have registered yet."}
           </p>
@@ -546,16 +564,17 @@ export default function AdminTeams() {
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
                   <Link href={`/teams/${team.id}`}>
-                    <Button size="sm" variant="outline" data-testid={`button-view-team-${team.id}`}>
+                    <Button className="hover:bg-stone-900 hover:text-white" size="sm" variant="outline" data-testid={`button-view-team-${team.id}`}>
                       <Eye className="h-4 w-4 mr-1" /> View
                     </Button>
                   </Link>
-                  <Button size="sm" variant="outline" onClick={() => setEditTeam(team)} data-testid={`button-edit-team-${team.id}`}>
+                  <Button className="hover:bg-stone-900 hover:text-white" size="sm" variant="outline" onClick={() => setEditTeam(team)} data-testid={`button-edit-team-${team.id}`}>
                     <Pencil className="h-4 w-4 mr-1" /> Edit
                   </Button>
                   {team.status === "pending" && (
                     <>
-                      <Button
+                      <Button 
+                        className="bg-card rounded-md shadow border-stone-900 hover:bg-green-600 hover:text-white"
                         size="sm"
                         onClick={() => handleApprove(team.id)}
                         disabled={approvingTeamId === team.id}
@@ -564,6 +583,7 @@ export default function AdminTeams() {
                         {approvingTeamId === team.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />} Approve
                       </Button>
                       <Button
+                        className="bg-card rounded-md shadow border-stone-900 hover:bg-red-600 hover:text-white"
                         size="sm"
                         variant="destructive"
                         onClick={() => handleReject(team.id)}
@@ -574,7 +594,7 @@ export default function AdminTeams() {
                       </Button>
                     </>
                   )}
-                  <Button size="icon" variant="ghost" onClick={() => setDeleteTeamState(team)} data-testid={`button-delete-team-${team.id}`}>
+                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-red-600 hover:text-white" size="icon" variant="ghost" onClick={() => setDeleteTeamState(team)} data-testid={`button-delete-team-${team.id}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

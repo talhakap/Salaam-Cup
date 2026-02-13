@@ -627,10 +627,10 @@ export default function AdminTournaments() {
   return (
     <AdminLayout>
       <div className="flex justify-between items-center flex-wrap gap-2 mb-8">
-        <h1 className="text-2xl font-bold font-display" data-testid="text-admin-tournaments-title">Manage Tournaments</h1>
+        <h1 className="text-3xl font-bold font-display" data-testid="text-admin-tournaments-title">Manage Tournaments</h1>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2" data-testid="button-create-tournament"><Plus className="h-4 w-4" /> Create Tournament</Button>
+            <Button className="hover:bg-white hover:text-stone-900 gap-2" data-testid="button-create-tournament"><Plus className="h-4 w-4" /> Create Tournament</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -685,7 +685,7 @@ export default function AdminTournaments() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ">
                     <Switch
                       checked={!!t.registrationOpen}
                       onCheckedChange={async (checked) => {
@@ -705,13 +705,13 @@ export default function AdminTournaments() {
                   <Button size="icon" variant="ghost" onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} data-testid={`button-expand-tournament-${t.id}`}>
                     {expandedId === t.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(t)} data-testid={`button-edit-tournament-${t.id}`}>
+                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-stone-900 hover:text-white" size="icon" variant="ghost" onClick={() => openEdit(t)} data-testid={`button-edit-tournament-${t.id}`}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => setResetTournamentState(t)} data-testid={`button-reset-tournament-${t.id}`} title="Reset tournament">
+                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-amber-400 hover:text-white" size="icon" variant="ghost" onClick={() => setResetTournamentState(t)} data-testid={`button-reset-tournament-${t.id}`} title="Reset tournament">
                     <RotateCcw className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => setDeleteTournamentState(t)} data-testid={`button-delete-tournament-${t.id}`}>
+                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-red-600 hover:text-white" size="icon" variant="ghost" onClick={() => setDeleteTournamentState(t)} data-testid={`button-delete-tournament-${t.id}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
