@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useMemo } from "react";
 import { Loader2, User, Users, Pencil, Trash2, Plus, ChevronDown, ChevronUp, Shield } from "lucide-react";
+import { Pagination, usePagination } from "@/components/Pagination";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -103,7 +104,7 @@ function EditPlayerDialog({ player, onClose }: { player: PlayerWithTeam; onClose
           </div>
           <div>
             <label className="text-sm font-medium">Status</label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="staging">Staging</SelectItem>
@@ -353,6 +354,8 @@ export default function AdminPlayers() {
     });
   }, [captainUsers, typeFilter, searchQuery, approvedCaptainEmails]);
 
+  const { paginatedItems: paginatedPlayers, ...paginationProps } = usePagination(filteredPlayers, 25);
+
   const showCaptains = typeFilter === "all" || typeFilter === "captains";
   const showPlayers = typeFilter !== "captains";
 
@@ -561,7 +564,7 @@ export default function AdminPlayers() {
           {showPlayers && filteredPlayers.length > 0 && (
             <>
               {typeFilter === "all" && <p className="text-sm font-medium text-muted-foreground pt-2">Players</p>}
-          {filteredPlayers.map((player) => (
+          {paginatedPlayers?.map((player) => (
             <Card key={player.id} data-testid={`card-player-${player.id}`}>
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -665,6 +668,7 @@ export default function AdminPlayers() {
           ))}
             </>
           )}
+          <Pagination {...paginationProps} onPageChange={paginationProps.setCurrentPage} />
         </div>
       )}
 

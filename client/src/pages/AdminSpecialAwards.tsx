@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
@@ -165,12 +165,14 @@ export default function AdminSpecialAwards() {
   const { toast } = useToast();
   const [editing, setEditing] = useState<SpecialAward | undefined>();
   const [showDialog, setShowDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<SpecialAward | null>(null);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this special award?")) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteAward.mutateAsync(id);
+      await deleteAward.mutateAsync(deleteTarget.id);
       toast({ title: "Special award deleted" });
+      setDeleteTarget(null);
     } catch {
       toast({ title: "Failed to delete special award", variant: "destructive" });
     }
@@ -229,7 +231,7 @@ export default function AdminSpecialAwards() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => handleDelete(a.id)}
+                      onClick={() => setDeleteTarget(a)}
                       data-testid={`button-delete-special-award-${a.id}`}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -247,6 +249,23 @@ export default function AdminSpecialAwards() {
             onClose={() => { setShowDialog(false); setEditing(undefined); }}
           />
         )}
+
+        <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Special Award</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete "{deleteTarget?.header}"? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteAward.isPending} data-testid="button-confirm-delete">
+                {deleteAward.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

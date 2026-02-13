@@ -114,12 +114,14 @@ export default function AdminVenues() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Venue | undefined>();
+  const [deleteTarget, setDeleteTarget] = useState<Venue | null>(null);
 
-  const handleDelete = async (venue: Venue) => {
-    if (!window.confirm(`Delete venue "${venue.name}"?`)) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteVenue.mutateAsync(venue.id);
+      await deleteVenue.mutateAsync(deleteTarget.id);
       toast({ title: "Venue deleted" });
+      setDeleteTarget(null);
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -184,7 +186,7 @@ export default function AdminVenues() {
                         size="icon"
                         variant="ghost"
                         data-testid={`button-delete-venue-${venue.id}`}
-                        onClick={() => handleDelete(venue)}
+                        onClick={() => setDeleteTarget(venue)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -215,6 +217,23 @@ export default function AdminVenues() {
           onClose={() => setDialogOpen(false)}
         />
       )}
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Venue</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteVenue.isPending} data-testid="button-confirm-delete">
+              {deleteVenue.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

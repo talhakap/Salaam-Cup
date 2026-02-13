@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, HelpCircle, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, HelpCircle, Star, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { Faq } from "@shared/schema";
 
@@ -122,12 +122,14 @@ export default function AdminFaqs() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Faq | undefined>();
+  const [deleteTarget, setDeleteTarget] = useState<Faq | null>(null);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this FAQ?")) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteFaq.mutateAsync(id);
+      await deleteFaq.mutateAsync(deleteTarget.id);
       toast({ title: "FAQ deleted" });
+      setDeleteTarget(null);
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -191,7 +193,7 @@ export default function AdminFaqs() {
                 <Button
                   size="icon"
                   variant="ghost"
-                  onClick={() => handleDelete(faq.id)}
+                  onClick={() => setDeleteTarget(faq)}
                   data-testid={`button-delete-faq-${faq.id}`}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -211,6 +213,23 @@ export default function AdminFaqs() {
             item={editItem}
             onClose={() => setDialogOpen(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete FAQ</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteTarget?.question}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteFaq.isPending} data-testid="button-confirm-delete">
+              {deleteFaq.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AdminLayout>

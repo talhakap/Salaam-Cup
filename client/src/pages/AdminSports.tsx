@@ -110,12 +110,14 @@ export default function AdminSports() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Sport | undefined>();
+  const [deleteTarget, setDeleteTarget] = useState<Sport | null>(null);
 
-  const handleDelete = async (sport: Sport) => {
-    if (!window.confirm(`Delete sport "${sport.name}"? Tournaments linked to this sport may be affected.`)) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteSport.mutateAsync(sport.id);
+      await deleteSport.mutateAsync(deleteTarget.id);
       toast({ title: "Sport deleted" });
+      setDeleteTarget(null);
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -179,7 +181,7 @@ export default function AdminSports() {
                         size="icon"
                         variant="ghost"
                         data-testid={`button-delete-sport-${sport.id}`}
-                        onClick={() => handleDelete(sport)}
+                        onClick={() => setDeleteTarget(sport)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -204,6 +206,23 @@ export default function AdminSports() {
           onClose={() => setDialogOpen(false)}
         />
       )}
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Sport</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteTarget?.name}"? Tournaments linked to this sport may be affected. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteSport.isPending} data-testid="button-confirm-delete">
+              {deleteSport.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

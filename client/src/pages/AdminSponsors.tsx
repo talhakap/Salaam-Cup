@@ -3,12 +3,13 @@ import { useSponsors, useCreateSponsor, useUpdateSponsor, useDeleteSponsor } fro
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { Plus, Pencil, Trash2, Handshake, Upload, Loader2, ImageIcon } from "lucide-react";
 import { useState, useRef } from "react";
+import { Pagination, usePagination } from "@/components/Pagination";
 import type { Sponsor } from "@shared/schema";
 
 function SponsorDialog({
@@ -149,17 +150,20 @@ function SponsorDialog({
 }
 
 export default function AdminSponsors() {
-  const { data: sponsorsList, isLoading } = useSponsors();
+  const { data: sponsorsData, isLoading } = useSponsors();
+  const { paginatedItems: sponsorsList, ...paginationProps } = usePagination(sponsorsData, 25);
   const deleteSponsor = useDeleteSponsor();
   const { toast } = useToast();
   const [editing, setEditing] = useState<Sponsor | undefined>();
   const [showDialog, setShowDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Sponsor | null>(null);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this sponsor?")) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteSponsor.mutateAsync(id);
+      await deleteSponsor.mutateAsync(deleteTarget.id);
       toast({ title: "Sponsor deleted" });
+      setDeleteTarget(null);
     } catch {
       toast({ title: "Failed to delete sponsor", variant: "destructive" });
     }
@@ -221,7 +225,7 @@ export default function AdminSponsors() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDelete(s.id)}
+                    onClick={() => setDeleteTarget(s)}
                     data-testid={`button-delete-sponsor-${s.id}`}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -232,12 +236,33 @@ export default function AdminSponsors() {
           </div>
         )}
 
+        {!isLoading && sponsorsList && sponsorsList.length > 0 && (
+          <Pagination {...paginationProps} onPageChange={paginationProps.setCurrentPage} />
+        )}
+
         {showDialog && (
           <SponsorDialog
             item={editing}
             onClose={() => { setShowDialog(false); setEditing(undefined); }}
           />
         )}
+
+        <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Sponsor</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteSponsor.isPending} data-testid="button-confirm-delete">
+                {deleteSponsor.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { Plus, Pencil, Trash2, Newspaper, Upload, Loader2, ImageIcon } from "lucide-react";
 import { useState, useRef } from "react";
+import { Pagination, usePagination } from "@/components/Pagination";
 import type { News, Tournament } from "@shared/schema";
 
 function NewsDialog({
@@ -176,15 +177,17 @@ export default function AdminNews() {
   const deleteNews = useDeleteNews();
   const { toast } = useToast();
 
+  const { paginatedItems: paginatedNews, ...paginationProps } = usePagination(newsItems, 10);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<News | undefined>();
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<News | null>(null);
 
-  const handleDelete = async (id: number) => {
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteNews.mutateAsync(id);
+      await deleteNews.mutateAsync(deleteTarget.id);
       toast({ title: "News deleted" });
-      setDeleteConfirm(null);
+      setDeleteTarget(null);
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -222,7 +225,7 @@ export default function AdminNews() {
         </div>
       ) : (
         <div className="space-y-2">
-          {newsItems.map((item: News) => {
+          {paginatedNews?.map((item: News) => {
             const tournament = tournaments?.find((t: Tournament) => t.id === item.tournamentId);
             return (
               <div key={item.id} className="bg-card border rounded-md p-4 flex items-center gap-4" data-testid={`card-news-${item.id}`}>
@@ -246,24 +249,14 @@ export default function AdminNews() {
                   <Button size="icon" variant="ghost" onClick={() => openEdit(item)} data-testid={`button-edit-news-${item.id}`}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  {deleteConfirm === item.id ? (
-                    <div className="flex items-center gap-1">
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(item.id)} data-testid={`button-confirm-delete-news-${item.id}`}>
-                        Delete
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setDeleteConfirm(null)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button size="icon" variant="ghost" onClick={() => setDeleteConfirm(item.id)} data-testid={`button-delete-news-${item.id}`}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
+                  <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(item)} data-testid={`button-delete-news-${item.id}`}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
               </div>
             );
           })}
+          <Pagination {...paginationProps} onPageChange={paginationProps.setCurrentPage} />
         </div>
       )}
 
@@ -278,6 +271,23 @@ export default function AdminNews() {
             tournaments={tournaments || []}
             onClose={() => setDialogOpen(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete News</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteTarget?.headline}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteNews.isPending} data-testid="button-confirm-delete">
+              {deleteNews.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AdminLayout>

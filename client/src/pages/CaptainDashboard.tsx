@@ -270,7 +270,21 @@ function TeamCard({ team }: { team: Team & { tournamentName?: string; divisionNa
 
   return (
     <div className="space-y-8" data-testid={`section-team-${team.id}`}>
-      <Alert className={team.status === "approved" ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-bold font-display uppercase" data-testid={`text-team-heading-${team.id}`}>{team.name}</h2>
+          {(team.tournamentName || team.divisionName) && (
+            <p className="text-muted-foreground text-sm mt-1" data-testid={`text-team-context-${team.id}`}>
+              {[team.tournamentName, team.divisionName].filter(Boolean).join(" \u2014 ")}
+            </p>
+          )}
+        </div>
+        <Badge variant={statusVariant} data-testid={`badge-team-header-status-${team.id}`}>
+          {team.status.charAt(0).toUpperCase() + team.status.slice(1)}
+        </Badge>
+      </div>
+
+      <Alert className={team.status === "approved" ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950" : team.status === "rejected" ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950" : "border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950"}>
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Team Status: {team.status.charAt(0).toUpperCase() + team.status.slice(1)}</AlertTitle>
         <AlertDescription>

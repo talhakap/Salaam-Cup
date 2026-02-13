@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle, Eye, Pencil, Trash2, Copy, Key, Plus } from "lucide-react";
+import { Pagination, usePagination } from "@/components/Pagination";
 import { Link } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import type { Team, Division } from "@shared/schema";
@@ -409,6 +410,8 @@ export default function AdminTeams() {
     return true;
   });
 
+  const { paginatedItems: paginatedTeams, ...paginationProps } = usePagination(filteredTeams, 25);
+
   const handleApprove = async (teamId: number) => {
     setApprovingTeamId(teamId);
     try {
@@ -545,7 +548,7 @@ export default function AdminTeams() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredTeams.map((team) => (
+          {paginatedTeams?.map((team) => (
             <Card key={team.id} data-testid={`card-team-${team.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -601,6 +604,7 @@ export default function AdminTeams() {
               </CardContent>
             </Card>
           ))}
+          <Pagination {...paginationProps} onPageChange={paginationProps.setCurrentPage} />
         </div>
       )}
 

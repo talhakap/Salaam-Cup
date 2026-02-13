@@ -31,6 +31,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, CheckCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 import heroImg from "/images/hero-register.png";
 
 type RegistrationType = "team" | "player" | "free_agent";
@@ -567,24 +570,42 @@ export default function Register() {
               Registration Submitted
             </h2>
             {registrationType === "team" ? (
-              <>
-                <p className="text-muted-foreground mb-2">Your team has been submitted for review. An admin will review your registration shortly.</p>
-                <p className="text-muted-foreground mb-8 text-sm">Once approved, you will be able to create an account and manage your team roster.</p>
-              </>
+              <div className="space-y-4 mb-8">
+                <p className="text-muted-foreground">Your team has been submitted for review. An admin will review your registration shortly.</p>
+                <Card className="text-left">
+                  <CardContent className="pt-6 space-y-3">
+                    <h3 className="font-bold text-sm uppercase tracking-wider">What happens next?</h3>
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>An admin will review and approve your team registration.</li>
+                      <li>You will receive an email with your captain login credentials.</li>
+                      <li>Sign in to the <strong>Captain Dashboard</strong> to manage your roster and add players.</li>
+                    </ol>
+                  </CardContent>
+                </Card>
+              </div>
             ) : playerStatus === "confirmed" ? (
-              <>
-                <p className="text-muted-foreground mb-2">Your registration has been matched against the team roster.</p>
-                <p className="text-foreground font-medium mb-8">Status: Confirmed</p>
-              </>
+              <div className="space-y-4 mb-8">
+                <p className="text-muted-foreground">Your registration has been matched against the team roster.</p>
+                <Badge variant="default" className="text-sm px-4 py-1" data-testid="badge-player-status-confirmed">Confirmed</Badge>
+                <p className="text-sm text-muted-foreground">Your team captain has you on the roster. No further action is needed from you.</p>
+              </div>
             ) : (
-              <>
-                <p className="text-muted-foreground mb-2">Your registration has been submitted. However, we could not find a matching roster entry.</p>
-                <p className="text-foreground font-medium mb-8">Status: Flagged for admin review</p>
-              </>
+              <div className="space-y-4 mb-8">
+                <p className="text-muted-foreground">Your registration has been submitted. We could not find a matching roster entry yet.</p>
+                <Badge variant="secondary" className="text-sm px-4 py-1" data-testid="badge-player-status-flagged">Flagged for Review</Badge>
+                <p className="text-sm text-muted-foreground">An admin or your team captain will need to verify and confirm your registration. Make sure your name and date of birth match what your captain submitted.</p>
+              </div>
             )}
-            <Button onClick={() => { setSubmitted(false); setPlayerStatus(""); }} variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-register-another">
-              Register Again
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button onClick={() => { setSubmitted(false); setPlayerStatus(""); }} variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="button-register-another">
+                Register Again
+              </Button>
+              <Link href="/">
+                <Button variant="ghost" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" data-testid="link-home-from-success">
+                  Back to Home
+                </Button>
+              </Link>
+            </div>
           </div>
         </section>
       </MainLayout>

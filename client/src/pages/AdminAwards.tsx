@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Trophy } from "lucide-react";
+import { Plus, Pencil, Trash2, Trophy, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { Award } from "@shared/schema";
 
@@ -249,7 +249,7 @@ export default function AdminAwards() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAward, setEditingAward] = useState<Award | undefined>();
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Award | null>(null);
 
   const [filterTournament, setFilterTournament] = useState<string>("all");
   const [filterDivision, setFilterDivision] = useState<string>("all");
@@ -266,11 +266,12 @@ export default function AdminAwards() {
     return true;
   });
 
-  const handleDelete = async (id: number) => {
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteAward.mutateAsync({ id });
+      await deleteAward.mutateAsync({ id: deleteTarget.id });
       toast({ title: "Award deleted" });
-      setDeleteConfirm(null);
+      setDeleteTarget(null);
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -374,20 +375,9 @@ export default function AdminAwards() {
                 <Button size="icon" variant="ghost" onClick={() => openEdit(award)} data-testid={`button-edit-award-${award.id}`}>
                   <Pencil className="h-4 w-4" />
                 </Button>
-                {deleteConfirm === award.id ? (
-                  <div className="flex items-center gap-1">
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(award.id)} data-testid={`button-confirm-delete-award-${award.id}`}>
-                      Delete
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setDeleteConfirm(null)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button size="icon" variant="ghost" onClick={() => setDeleteConfirm(award.id)} data-testid={`button-delete-award-${award.id}`}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
+                <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(award)} data-testid={`button-delete-award-${award.id}`}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
               </div>
             </div>
           ))}
@@ -404,6 +394,23 @@ export default function AdminAwards() {
             award={editingAward}
             onClose={() => setDialogOpen(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Award</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the {deleteTarget?.category} award for "{deleteTarget?.teamName || deleteTarget?.playerName}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteAward.isPending} data-testid="button-confirm-delete">
+              {deleteAward.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AdminLayout>

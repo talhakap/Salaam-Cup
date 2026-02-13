@@ -12,7 +12,7 @@ import { useUpload } from "@/hooks/use-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -222,26 +222,29 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
   const [editingItem, setEditingItem] = useState<MediaItem | undefined>();
   const [showAddItem, setShowAddItem] = useState(false);
   const [showEditYear, setShowEditYear] = useState(false);
+  const [deleteYearTarget, setDeleteYearTarget] = useState(false);
+  const [deleteItemTarget, setDeleteItemTarget] = useState<MediaItem | null>(null);
   const deleteYear = useDeleteMediaYear();
   const updateYear = useUpdateMediaYear();
   const deleteItem = useDeleteMediaItem();
   const { toast } = useToast();
 
-  const handleDeleteYear = async () => {
-    if (!confirm(`Delete ${yearData.year} and all its cards?`)) return;
+  const handleConfirmDeleteYear = async () => {
     try {
       await deleteYear.mutateAsync(yearData.id);
       toast({ title: `${yearData.year} deleted` });
+      setDeleteYearTarget(false);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
   };
 
-  const handleDeleteItem = async (item: MediaItem) => {
-    if (!confirm(`Delete "${item.tournamentName}" card?`)) return;
+  const handleConfirmDeleteItem = async () => {
+    if (!deleteItemTarget) return;
     try {
-      await deleteItem.mutateAsync(item.id);
+      await deleteItem.mutateAsync(deleteItemTarget.id);
       toast({ title: "Card deleted" });
+      setDeleteItemTarget(null);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -266,7 +269,7 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
           <Button size="icon" variant="ghost" onClick={() => setShowEditYear(true)} data-testid={`button-edit-year-${yearData.year}`}>
             <Pencil className="w-4 h-4" />
           </Button>
-          <Button size="icon" variant="destructive" onClick={handleDeleteYear} data-testid={`button-delete-year-${yearData.year}`}>
+          <Button size="icon" variant="destructive" onClick={() => setDeleteYearTarget(true)} data-testid={`button-delete-year-${yearData.year}`}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -301,7 +304,7 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
                       <Button size="icon" variant="ghost" onClick={() => setEditingItem(item)} data-testid={`button-edit-item-${item.id}`}>
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleDeleteItem(item)} data-testid={`button-delete-item-${item.id}`}>
+                      <Button size="icon" variant="ghost" onClick={() => setDeleteItemTarget(item)} data-testid={`button-delete-item-${item.id}`}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
@@ -330,6 +333,40 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
           onClose={() => setShowEditYear(false)}
         />
       )}
+
+      <Dialog open={deleteYearTarget} onOpenChange={(o) => !o && setDeleteYearTarget(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Year</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {yearData.year} and all its cards? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteYearTarget(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmDeleteYear} disabled={deleteYear.isPending} data-testid="button-confirm-delete">
+              {deleteYear.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteItemTarget} onOpenChange={(o) => !o && setDeleteItemTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Card</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteItemTarget?.tournamentName}" card? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteItemTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmDeleteItem} disabled={deleteItem.isPending} data-testid="button-confirm-delete">
+              {deleteItem.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
