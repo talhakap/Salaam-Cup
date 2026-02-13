@@ -311,15 +311,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPlayer(data: InsertPlayer): Promise<Player> {
+    if (data.registrationType === 'roster' && data.teamId) {
+      const normalizedFirst = data.firstName.trim().toLowerCase();
+      const normalizedLast = data.lastName.trim().toLowerCase();
+      const normalizedDob = data.dob;
+      const existing = await db.select().from(players).where(
+        and(
+          eq(players.teamId, data.teamId),
+          eq(players.registrationType, 'roster')
+        )
+      );
+      const dup = existing.find(e =>
+        e.firstName.trim().toLowerCase() === normalizedFirst
+        && e.lastName.trim().toLowerCase() === normalizedLast
+        && e.dob === normalizedDob
+      );
+      if (dup) {
+        return dup;
+      }
+    }
+
     const [player] = await db.insert(players).values(data).returning();
     if (data.registrationType === 'roster' && data.teamId) {
-      await this.matchRosterAgainstRegistrations(player);
+      const matched = await this.matchRosterAgainstRegistrations(player);
+      if (matched) return matched;
     }
     return player;
   }
 
-  private async matchRosterAgainstRegistrations(rosterPlayer: Player): Promise<void> {
-    if (!rosterPlayer.teamId) return;
+  private async matchRosterAgainstRegistrations(rosterPlayer: Player): Promise<Player | null> {
+    if (!rosterPlayer.teamId) return null;
     const normalizedFirst = rosterPlayer.firstName.trim().toLowerCase();
     const normalizedLast = rosterPlayer.lastName.trim().toLowerCase();
     const normalizedDob = rosterPlayer.dob;
@@ -327,21 +348,32 @@ export class DatabaseStorage implements IStorage {
     const registeredPlayers = await db.select().from(players).where(
       and(
         eq(players.teamId, rosterPlayer.teamId),
-        sql`${players.registrationType} IN ('player')`,
+        eq(players.registrationType, 'player'),
         eq(players.status, 'flagged')
       )
     );
 
-    for (const rp of registeredPlayers) {
-      if (
-        rp.firstName.trim().toLowerCase() === normalizedFirst
-        && rp.lastName.trim().toLowerCase() === normalizedLast
-        && rp.dob === normalizedDob
-      ) {
-        await db.update(players).set({ status: 'confirmed' }).where(eq(players.id, rp.id));
-        await db.update(players).set({ status: 'confirmed' }).where(eq(players.id, rosterPlayer.id));
-      }
+    const matchedRegistration = registeredPlayers.find(rp =>
+      rp.firstName.trim().toLowerCase() === normalizedFirst
+      && rp.lastName.trim().toLowerCase() === normalizedLast
+      && rp.dob === normalizedDob
+    );
+
+    if (matchedRegistration) {
+      await db.update(players).set({
+        status: 'confirmed',
+        email: matchedRegistration.email || rosterPlayer.email,
+        phone: matchedRegistration.phone || rosterPlayer.phone,
+        position: matchedRegistration.position || rosterPlayer.position,
+        jerseyNumber: matchedRegistration.jerseyNumber || rosterPlayer.jerseyNumber,
+        waiverSigned: matchedRegistration.waiverSigned ?? rosterPlayer.waiverSigned,
+      }).where(eq(players.id, rosterPlayer.id));
+      await db.delete(players).where(eq(players.id, matchedRegistration.id));
+      const [updated] = await db.select().from(players).where(eq(players.id, rosterPlayer.id));
+      return updated;
     }
+
+    return null;
   }
 
   async getAllPlayersByStatus(status?: string): Promise<(Player & { team: Team | null })[]> {
@@ -380,6 +412,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async registerPlayerWithMatching(data: InsertPlayer): Promise<Player> {
+    const normalizedFirst = data.firstName.trim().toLowerCase();
+    const normalizedLast = data.lastName.trim().toLowerCase();
+    const normalizedDob = data.dob;
+
     if (data.registrationType === 'free_agent') {
       const [player] = await db.insert(players).values({
         ...data,
@@ -389,11 +425,6 @@ export class DatabaseStorage implements IStorage {
       return player;
     }
 
-    const normalizedFirst = data.firstName.trim().toLowerCase();
-    const normalizedLast = data.lastName.trim().toLowerCase();
-    const normalizedDob = data.dob;
-
-    let matched = false;
     if (data.teamId) {
       const rosterPlayers = await db.select().from(players).where(
         and(
@@ -402,27 +433,44 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-      matched = rosterPlayers.some(rp => {
-        return rp.firstName.trim().toLowerCase() === normalizedFirst
-          && rp.lastName.trim().toLowerCase() === normalizedLast
-          && rp.dob === normalizedDob;
-      });
+      const matchedRoster = rosterPlayers.find(rp =>
+        rp.firstName.trim().toLowerCase() === normalizedFirst
+        && rp.lastName.trim().toLowerCase() === normalizedLast
+        && rp.dob === normalizedDob
+      );
 
-      if (matched) {
-        const matchedRoster = rosterPlayers.find(rp =>
-          rp.firstName.trim().toLowerCase() === normalizedFirst
-          && rp.lastName.trim().toLowerCase() === normalizedLast
-          && rp.dob === normalizedDob
-        );
-        if (matchedRoster) {
-          await db.update(players).set({ status: 'confirmed' }).where(eq(players.id, matchedRoster.id));
-        }
+      if (matchedRoster) {
+        const [updated] = await db.update(players).set({
+          status: 'confirmed',
+          email: data.email || matchedRoster.email,
+          phone: data.phone || matchedRoster.phone,
+          position: data.position || matchedRoster.position,
+          jerseyNumber: data.jerseyNumber || matchedRoster.jerseyNumber,
+          waiverSigned: data.waiverSigned ?? matchedRoster.waiverSigned,
+          registeredAt: new Date(),
+        }).where(eq(players.id, matchedRoster.id)).returning();
+        return updated;
+      }
+
+      const existingRegistration = await db.select().from(players).where(
+        and(
+          eq(players.teamId, data.teamId),
+          eq(players.registrationType, 'player')
+        )
+      );
+      const dupReg = existingRegistration.find(e =>
+        e.firstName.trim().toLowerCase() === normalizedFirst
+        && e.lastName.trim().toLowerCase() === normalizedLast
+        && e.dob === normalizedDob
+      );
+      if (dupReg) {
+        return dupReg;
       }
     }
 
     const [player] = await db.insert(players).values({
       ...data,
-      status: matched ? 'confirmed' : 'flagged',
+      status: 'flagged',
       registrationType: 'player',
     }).returning();
     return player;
@@ -438,14 +486,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPlayersBulk(data: Omit<InsertPlayer, "teamId">[], teamId: number): Promise<Player[]> {
-    const toInsert = data.map(p => ({ ...p, teamId }));
+    const existingRoster = await db.select().from(players).where(
+      and(
+        eq(players.teamId, teamId),
+        eq(players.registrationType, 'roster')
+      )
+    );
+
+    const deduped = data.filter(p => {
+      if (p.registrationType !== 'roster') return true;
+      const nFirst = p.firstName.trim().toLowerCase();
+      const nLast = p.lastName.trim().toLowerCase();
+      const nDob = p.dob;
+      return !existingRoster.some(e =>
+        e.firstName.trim().toLowerCase() === nFirst
+        && e.lastName.trim().toLowerCase() === nLast
+        && e.dob === nDob
+      );
+    });
+
+    if (deduped.length === 0) return existingRoster;
+
+    const toInsert = deduped.map(p => ({ ...p, teamId }));
     const created = await db.insert(players).values(toInsert).returning();
+    const results: Player[] = [];
     for (const player of created) {
       if (player.registrationType === 'roster') {
-        await this.matchRosterAgainstRegistrations(player);
+        const matched = await this.matchRosterAgainstRegistrations(player);
+        results.push(matched || player);
+      } else {
+        results.push(player);
       }
     }
-    return created;
+    return results;
   }
 
   // Matches
