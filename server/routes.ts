@@ -248,6 +248,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Cannot delete your own account" });
       }
 
+      const { teams } = await import("@shared/schema");
+      await db.update(teams).set({ captainUserId: null }).where(eqOp(teams.captainUserId, userId));
+
       if (supabaseAdmin) {
         try {
           await supabaseAdmin.auth.admin.deleteUser(userId);
