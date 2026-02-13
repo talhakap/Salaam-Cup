@@ -14,12 +14,12 @@ export function ReadyToCompete() {
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           <Link href="/register">
-            <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-register-cta">
+            <Button variant="outline" className="rounded-full border-white text-white bg-transparent hover:bg-white hover:text-black px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-register-cta">
               Register Now
             </Button>
           </Link>
           <Link href="/tournaments">
-            <Button variant="outline" className="rounded-full border-white text-white bg-transparent px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-tournaments-cta">
+            <Button variant="outline" className="rounded-full border-white text-white bg-transparent hover:bg-white hover:text-black px-8 font-bold uppercase text-xs tracking-wider" data-testid="button-tournaments-cta">
               Tournaments
             </Button>
           </Link>

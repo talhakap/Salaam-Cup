@@ -40,7 +40,7 @@ function MediaCard({ item }: { item: MediaYearWithItems["items"][0] }) {
             rel="noopener noreferrer"
             data-testid={`media-card-link-${item.id}`}
           >
-            <Button variant="outline" size="sm" className="rounded-full gap-1.5">
+            <Button variant="outline" size="sm" className="hover:bg-foreground hover:text-white rounded-full gap-1.5">
               Show All <ExternalLink className="w-3 h-3" />
             </Button>
           </a>

@@ -29,7 +29,7 @@ export function TournamentNav({ tournamentId }: { tournamentId: number }) {
                 key={item.label}
                 href={fullPath}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2",
+                  "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 hover:text-stone-900",
                   isActive
                     ? "border-foreground text-foreground"
                     : "border-transparent text-muted-foreground"

@@ -14,9 +14,9 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 border-none shadow-md group h-full flex flex-col">
-      <div className="relative h-48 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
+    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 border-none shadow-md group h-full flex flex-col ">
+      <div className="relative h-48 overflow-hidden ">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10 " />
         {tournament.heroImage ? (
            <img 
             src={tournament.heroImage} 

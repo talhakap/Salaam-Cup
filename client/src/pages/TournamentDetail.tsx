@@ -134,7 +134,7 @@ export default function TournamentDetail() {
                   <Button
                     key={tab.id}
                     variant={selectedDivision === tab.id ? "default" : "outline"}
-                    className="rounded-full text-xs font-bold uppercase tracking-wider"
+                    className="rounded-full text-xs font-bold uppercase tracking-wider hover:bg-stone-500 hover:text-background"
                     onClick={() => setSelectedDivision(tab.id)}
                     data-testid={`filter-division-${tab.id}`}
                   >
@@ -163,7 +163,7 @@ export default function TournamentDetail() {
 
           <div className="text-center mt-4 mb-16">
             <Link href={`/tournaments/${tournamentId}/schedule`}>
-              <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8 gap-2" data-testid="button-full-schedule">
+              <Button variant="outline" className="rounded-full font-bold uppercase text-xs hover:bg-stone-500 hover:text-background tracking-wider px-8 gap-2" data-testid="button-full-schedule">
                 See Full Schedule <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -200,7 +200,7 @@ export default function TournamentDetail() {
                     <TableRow key={s.id} className="border-b" data-testid={`row-standing-${s.id}`}>
                       <TableCell className="font-bold">{s.position}</TableCell>
                       <TableCell>
-                        <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline flex items-center gap-2">
+                        <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline  flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           {s.team?.name || `Team #${s.teamId}`}
                         </Link>
@@ -221,7 +221,7 @@ export default function TournamentDetail() {
 
               <div className="text-center mt-6 mb-16">
                 <Link href={`/tournaments/${tournamentId}/standings`}>
-                  <Button variant="outline" className="rounded-full font-bold uppercase text-xs tracking-wider px-8 gap-2" data-testid="button-full-standings">
+                  <Button variant="outline" className="rounded-full font-bold uppercase text-xs hover:bg-stone-500 hover:text-background tracking-wider px-8 gap-2" data-testid="button-full-standings">
                     See Full Standings <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -240,7 +240,7 @@ export default function TournamentDetail() {
                     {divTeams.map((team: Team, idx: number) => (
                       <Link key={team.id} href={`/teams/${team.id}`}>
                         <div
-                          className={`flex items-center gap-3 md:gap-4 py-3 px-3 md:px-4 cursor-pointer hover-elevate ${idx < divTeams.length - 1 ? "border-b" : ""}`}
+                          className={`hover:bg-stone-900 hover:text-background flex items-center gap-3 md:gap-4 py-3 px-3 md:px-4 cursor-pointer hover-elevate ${idx < divTeams.length - 1 ? "border-b" : ""}`}
                           data-testid={`row-team-${team.id}`}
                         >
                           <span className="text-xs text-muted-foreground font-bold w-6 shrink-0">{idx + 1}</span>

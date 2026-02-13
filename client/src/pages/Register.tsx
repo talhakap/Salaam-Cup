@@ -213,7 +213,7 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
         />
 
         <div className="flex justify-end">
-          <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={createTeam.isPending} data-testid="button-submit-registration">
+          <Button type="submit" className="hover:bg-white hover:text-black rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={createTeam.isPending} data-testid="button-submit-registration">
             {createTeam.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             Register Team
           </Button>
@@ -381,7 +381,7 @@ function PlayerRegistrationForm({ onSuccess }: { onSuccess: (status: string) => 
         />
 
         <div className="flex justify-end">
-          <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-player-registration">
+          <Button type="submit" className="hover:bg-white hover:text-black rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-player-registration">
             {registerPlayer.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             Register Now
           </Button>
@@ -530,7 +530,7 @@ function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) 
         />
 
         <div className="flex justify-end">
-          <Button type="submit" className="rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-freeagent-registration">
+          <Button type="submit" className="hover:bg-white hover:text-black rounded-full font-bold uppercase text-xs tracking-wider px-8" disabled={registerPlayer.isPending} data-testid="button-submit-freeagent-registration">
             {registerPlayer.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             Register Now
           </Button>
@@ -615,7 +615,7 @@ export default function Register() {
                   <Button
                     key={type.key}
                     variant={registrationType === type.key ? "default" : "outline"}
-                    className="rounded-full font-bold uppercase text-xs tracking-wider px-6"
+                    className="rounded-full font-bold uppercase text-xs tracking-wider px-6 hover:bg-foreground hover:text-white"
                     onClick={() => setRegistrationType(type.key)}
                     data-testid={`button-reg-type-${type.key}`}
                   >

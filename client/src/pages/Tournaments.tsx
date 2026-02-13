@@ -141,7 +141,7 @@ export default function Tournaments() {
                 <TournamentCard key={tournament.id} tournament={tournament} index={index} />
               ))}
 
-              <div className="flex flex-col items-center justify-center p-8 border border-border rounded-md" data-testid="card-ready-compete">
+              <div className="flex flex-col items-center justify-center bg-stone-200 p-8 border border-border rounded-md " data-testid="card-ready-compete">
                 <h3 className="text-2xl md:text-3xl font-bold font-display uppercase text-center mb-4">
                   Ready To Compete?
                 </h3>
@@ -150,12 +150,12 @@ export default function Tournaments() {
                 </p>
                 <div className="flex gap-3 flex-wrap justify-center">
                   <Link href="/register">
-                    <Button className="font-bold uppercase text-xs tracking-wider" data-testid="button-register-now">
+                    <Button className="font-bold uppercase text-xs tracking-wider hover:bg-white hover:text-stone-800" data-testid="button-register-now">
                       Register Now
                     </Button>
                   </Link>
                   <Link href="/about">
-                    <Button variant="outline" className="font-bold uppercase text-xs tracking-wider" data-testid="button-about">
+                    <Button variant="outline" className="font-bold uppercase hover:bg-stone-700 hover:text-white text-xs tracking-wider" data-testid="button-about">
                       About
                     </Button>
                   </Link>

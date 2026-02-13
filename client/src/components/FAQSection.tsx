@@ -14,7 +14,8 @@ export function FAQSection() {
   if (!featuredFaqs || featuredFaqs.length === 0) return null;
 
   return (
-    <section className="py-20 bg-stone-900 text-white" data-testid="section-faq">
+    <section className="py-20 bg-white text-stone-900" data-testid="section-faq">
+      <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2 text-center">FAQ</p>
       <div className="container mx-auto px-4 max-w-4xl">
         <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-faq">
           Frequently Asked Questions
@@ -33,7 +34,7 @@ export function FAQSection() {
         </Accordion>
         <div className="flex justify-center mt-10">
           <Link href="/faq">
-            <Button variant="outline" className="rounded-full px-8 uppercase tracking-wider text-sm font-bold" data-testid="button-all-questions">
+            <Button variant="outline" className="rounded-full px-8 uppercase tracking-wider text-sm font-bold hover:bg-foreground hover:text-background" data-testid="button-all-questions">
               All Questions
             </Button>
           </Link>

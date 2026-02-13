@@ -286,6 +286,7 @@ export default function About() {
       {/* Our Beginnings / How We Grew */}
       <section className="py-16 md:py-24 bg-stone-900 text-white" data-testid="section-history">
         <div className="container mx-auto px-4 max-w-5xl">
+          <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2 text-center">HISTORY</p>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold font-display uppercase leading-tight" data-testid="text-moments-title">
               Relive The Best Moments<br />With Us.
@@ -347,7 +348,7 @@ export default function About() {
                   <Link href={card.href} data-testid={`link-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
                     <Button
                       variant="outline"
-                      className="rounded-full border-white/60 text-white bg-transparent text-xs md:text-sm font-medium tracking-wide uppercase px-6"
+                      className="rounded-full border-white/200 text-white bg-transparent hover:bg-white hover:text-black text-xs md:text-sm font-medium tracking-wide uppercase px-6"
                     >
                       {card.cta}
                     </Button>
@@ -364,7 +365,7 @@ export default function About() {
         <section className="py-16 md:py-24 bg-stone-900 text-white" data-testid="section-admire">
           <div className="container mx-auto px-4">
             <div className="text-center mb-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Awards Info</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">In Memory Of</p>
               <h2 className="text-3xl md:text-5xl font-bold font-display uppercase" data-testid="text-admire-title">
                 We Admire Them
               </h2>
@@ -391,6 +392,7 @@ export default function About() {
       {/* HOW WE CELEBRATED */}
       <section className="py-16 md:py-24 bg-background" data-testid="section-celebrated">
         <div className="container mx-auto px-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2 text-center">20th Anniversary</p>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold font-display uppercase" data-testid="text-celebrated-title">
               How We Celebrated
@@ -428,9 +430,10 @@ export default function About() {
       </section>
 
       {/* UPCOMING EVENTS */}
-      <section className="py-16 md:py-24 bg-background text-foreground" data-testid="section-about-upcoming">
+      <section className="py-16 md:py-24 bg-background text-foreground " data-testid="section-about-upcoming">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-about-upcoming-events">
+          <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2 text-center">Events</p>
+          <h2 className="text-4xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-about-upcoming-events">
             Upcoming Events
           </h2>
           {upcomingTournaments.length > 0 && sports ? (

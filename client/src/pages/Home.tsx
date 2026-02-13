@@ -203,17 +203,17 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                         className="w-full h-full object-contain drop-shadow-lg"
                       />
                     </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-200/80 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500">
-                      <h3 className="text-5xl font-bold font-display uppercase text-black tracking-wide mb-1" data-testid={`text-upcoming-name-${t.id}`}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-50/80 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500">
+                      <h3 className="text-5xl font-bold font-display uppercase text-black tracking-wide mb-3" data-testid={`text-upcoming-name-${t.id}`}>
                         {t.name}
                       </h3>
-                      <p className="text-md text-gray-800 max-w-sm mb-3 leading-snug">
+                      <p className="text-2xl text-gray-800 max-w-sm mb-7 leading-snug">
                         {desc}
                       </p>
-                      <div className="text-l text-black font-semibold">
+                      <h5 className="text-4xl text-black font-semibold mb-3">
                         Upcoming Tournament:
-                      </div>
-                      <div className="text-sm text-gray-700 font-bold mt-0.5">
+                      </h5>
+                      <div className="text-2xl text-gray-700 font-bold mt-0.5">
                         {dateStr}
                       </div>
                     </div>
@@ -310,7 +310,7 @@ function TournamentAccordionItem({ tournament }: { tournament: Tournament }) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-full border-gray-600 text-white bg-transparent text-xs font-medium tracking-wide"
+                      className="rounded-full border-gray-600 text-white bg-transparent hover:bg-white hover:text-black text-xs font-medium tracking-wide"
                     >
                       Register Now
                     </Button>
@@ -408,7 +408,7 @@ export default function Home() {
           <div className="flex items-center gap-4 mt-8">
             <Link href="/register">
               <Button
-                className="rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/40 text-sm font-semibold uppercase tracking-wider px-8"
+                className="rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white hover:text-black border border-white/40 text-sm font-semibold uppercase tracking-wider px-8"
                 data-testid="button-hero-register"
               >
                 Register Now
@@ -417,7 +417,7 @@ export default function Home() {
             <Link href="/tournaments">
               <Button
                 variant="outline"
-                className="rounded-full border-white/40 text-white bg-white/10 backdrop-blur-sm text-sm font-semibold uppercase tracking-wider px-8"
+                className="rounded-full border-white/40 text-white bg-white/10 backdrop-blur-sm hover:bg-white hover:text-black text-sm font-semibold uppercase tracking-wider px-8"
                 data-testid="button-hero-tournaments"
               >
                 Tournaments
@@ -458,7 +458,7 @@ export default function Home() {
                   <Link href={card.href} data-testid={`link-value-${card.title.toLowerCase().replace(/\s+/g, '-')}`}>
                     <Button
                       variant="outline"
-                      className="rounded-full border-white/60 text-white bg-transparent text-xs md:text-sm font-medium tracking-wide uppercase px-6"
+                      className="rounded-full border-white/60 text-white hover:bg-white hover:text-black bg-transparent text-xs md:text-sm font-medium tracking-wide uppercase px-6"
                     >
                       {card.cta}
                     </Button>
@@ -470,8 +470,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-black text-white">
+      <section className="py-20 bg-foreground text-white">
         <div className="container mx-auto px-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2 text-center">Tournaments</p>
           <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-play-with-us">
             Play With Us
           </h2>
@@ -537,8 +538,9 @@ export default function Home() {
       </section>
 
       {(featuredFaqs && featuredFaqs.length > 0) && (
-        <section className="py-20 bg-stone-900 text-white">
+        <section className="py-20 bg-foreground text-white">
           <div className="container mx-auto px-4 max-w-4xl">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2 text-center">FAQ</p>
             <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-faq">
               Frequently Asked Questions
             </h2>
@@ -556,7 +558,7 @@ export default function Home() {
             </Accordion>
             <div className="flex justify-center mt-10">
               <Link href="/faq">
-                <Button variant="outline" className="rounded-full px-8 uppercase tracking-wider text-sm font-bold" data-testid="button-all-questions">
+                <Button variant="outline" className="rounded-full px-8 uppercase tracking-wider hover:bg-white hover:text-black text-sm font-bold" data-testid="button-all-questions">
                   All Questions
                 </Button>
               </Link>

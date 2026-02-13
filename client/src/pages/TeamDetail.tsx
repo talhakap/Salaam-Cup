@@ -5,12 +5,13 @@ import { SponsorBar } from "@/components/SponsorBar";
 import { useTeam } from "@/hooks/use-teams";
 import { usePlayers } from "@/hooks/use-players";
 import { useMatches } from "@/hooks/use-matches";
+import { useVenues } from "@/hooks/use-venues";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Users, MapPin } from "lucide-react";
 import { useState } from "react";
-import type { Player, MatchWithTeams } from "@shared/schema";
+import type { Player, MatchWithTeams, Venue } from "@shared/schema";
 
 export default function TeamDetail() {
   const [, params] = useRoute("/teams/:id");
@@ -19,6 +20,7 @@ export default function TeamDetail() {
   const { data: team, isLoading } = useTeam(teamId);
   const { data: players } = usePlayers(teamId);
   const { data: allMatches } = useMatches(team?.tournamentId || 0);
+  const { data: venues } = useVenues();
 
   const [activeTab, setActiveTab] = useState<"roster" | "schedule">("roster");
 
@@ -97,7 +99,7 @@ export default function TeamDetail() {
           <div className="flex gap-2 py-6">
             <Button
               variant={activeTab === "roster" ? "default" : "outline"}
-              className="rounded-full text-xs font-bold uppercase tracking-wider"
+              className="hover:bg-stone-500 hover:text-background rounded-full text-xs font-bold uppercase tracking-wider"
               onClick={() => setActiveTab("roster")}
               data-testid="tab-roster"
             >
@@ -105,7 +107,7 @@ export default function TeamDetail() {
             </Button>
             <Button
               variant={activeTab === "schedule" ? "default" : "outline"}
-              className="rounded-full text-xs font-bold uppercase tracking-wider"
+              className="hover:bg-stone-500 hover:text-background rounded-full text-xs font-bold uppercase tracking-wider"
               onClick={() => setActiveTab("schedule")}
               data-testid="tab-schedule"
             >
@@ -141,40 +143,51 @@ export default function TeamDetail() {
                   const isScheduled = m.status === "scheduled";
                   const isLive = m.status === "live";
                   const isFinal = m.status === "final";
+                  const venue = m.venueId ? venues?.find((v: Venue) => v.id === m.venueId) : null;
 
                   return (
-                    <div key={m.id} className="flex items-center py-4 border-b gap-4" data-testid={`team-match-${m.id}`}>
-                      <div className="w-28 shrink-0">
-                        {matchDate && (
-                          <>
-                            <div className="text-xs text-muted-foreground">
-                              {matchDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                            </div>
-                            <div className="text-xl font-bold font-display">
-                              {matchDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                            </div>
-                          </>
-                        )}
+                    <div key={m.id} className="py-4 border-b" data-testid={`team-match-${m.id}`}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-28 shrink-0">
+                          {matchDate && (
+                            <>
+                              <div className="text-xs text-muted-foreground">
+                                {matchDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                              </div>
+                              <div className="text-xl font-bold font-display">
+                                {matchDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex-1 text-right font-bold text-sm">
+                          <Link href={`/teams/${m.homeTeamId}`} className="hover:underline">
+                            {m.homeTeam?.name || "TBD"}
+                          </Link>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 px-4">
+                          <span className="text-2xl font-bold font-display">{isScheduled ? "-" : m.homeScore}</span>
+                          <span className="text-2xl font-bold font-display">{isScheduled ? "-" : m.awayScore}</span>
+                        </div>
+                        <div className="flex-1 font-bold text-sm">
+                          <Link href={`/teams/${m.awayTeamId}`} className="hover:underline">
+                            {m.awayTeam?.name || "TBD"}
+                          </Link>
+                        </div>
+                        <div className="w-20 text-right">
+                          {isLive && <span className="text-xs font-bold text-red-500 uppercase">Live</span>}
+                          {isFinal && <span className="text-xs text-muted-foreground uppercase">Final</span>}
+                          {isScheduled && <span className="text-xs text-muted-foreground uppercase">Scheduled</span>}
+                        </div>
                       </div>
-                      <div className="flex-1 text-right font-bold text-sm">
-                        <Link href={`/teams/${m.homeTeamId}`} className="hover:underline">
-                          {m.homeTeam?.name || "TBD"}
-                        </Link>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 px-4">
-                        <span className="text-2xl font-bold font-display">{isScheduled ? "-" : m.homeScore}</span>
-                        <span className="text-2xl font-bold font-display">{isScheduled ? "-" : m.awayScore}</span>
-                      </div>
-                      <div className="flex-1 font-bold text-sm">
-                        <Link href={`/teams/${m.awayTeamId}`} className="hover:underline">
-                          {m.awayTeam?.name || "TBD"}
-                        </Link>
-                      </div>
-                      <div className="w-20 text-right">
-                        {isLive && <span className="text-xs font-bold text-red-500 uppercase">Live</span>}
-                        {isFinal && <span className="text-xs text-muted-foreground uppercase">Final</span>}
-                        {isScheduled && <span className="text-xs text-muted-foreground uppercase">Scheduled</span>}
-                      </div>
+                      {(venue || m.fieldLocation) && (
+                        <div className="flex items-center gap-1.5 mt-1.5 ml-28 pl-0" data-testid={`team-match-venue-${m.id}`}>
+                          <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
+                          <span className="text-xs text-muted-foreground">
+                            {[venue?.name, m.fieldLocation].filter(Boolean).join(" — ")}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
