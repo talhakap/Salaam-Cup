@@ -357,13 +357,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div className="col-span-1">
-              <span className="text-2xl font-bold font-display tracking-tight block mb-4">
-                <img
-                  src="/images/salaam-cup-logo-white.png"
-                  alt="Sport Cup Manager Logo"
-                  className="h-20 w-auto"
-                />
-              </span>
+              <Link href="/" className="flex items-center gap-2 shrink-0" data-testid="link-logo">
+                <span className="text-2xl font-bold font-display tracking-tight block mb-4">
+                  <img
+                    src="/images/salaam-cup-logo-white.png"
+                    alt="Sport Cup Manager Logo"
+                    className="h-20 w-auto"
+                  />
+                </span>
+              </Link>
               <p className="text-sm text-gray-400 leading-relaxed">
                 Salaam Cup is a premier sports organization uniting athletes through competition, faith, and community.
               </p>
@@ -413,8 +415,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-white/10 text-center text-xs text-gray-500">
-            Copyright &copy;2025 Salaam Cup. Created by Aeth Digital.
+          <div className="mt-12 pt-8 border-t border-white/10 text-center text-xs text-gray-300">
+            Copyright &copy;2025 Salaam Cup. Powered by <u><a href="www.aethdigital.com">Aeth Digital.</a></u>
           </div>
         </div>
       </footer>

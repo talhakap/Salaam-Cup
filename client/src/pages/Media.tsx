@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/accordion";
 import { ExternalLink } from "lucide-react";
 import type { MediaYearWithItems } from "@shared/schema";
+import heroImg from "/images/tournament-hero-home.png";
 
 function MediaCard({ item }: { item: MediaYearWithItems["items"][0] }) {
   return (
@@ -62,19 +63,23 @@ export default function Media() {
         keywords="Salaam Cup photos, tournament gallery Toronto, sports event photos GTA, Muslim community sports media"
       />
       <div className="min-h-screen bg-background">
-        <section className="py-16 md:py-24 text-center" data-testid="media-hero">
-          <div className="max-w-4xl mx-auto px-4">
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold uppercase tracking-tight mb-6" data-testid="text-media-title">
+        <section className="relative h-[50vh] min-h-[150px] mb-[50px] flex items-center justify-center overflow-hidden" data-testid="hero-about">
+          <div className="absolute inset-0 z-0">
+            <img src={heroImg} alt="Who We Are" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
+          <div className="relative z-10 text-center px-4">
+            <h1 className="text-white font-display text-4xl md:text-5xl lg:text-6xl font-bold uppercase tracking-tight mb-6" data-testid="text-media-title">
               OUR GALLERY
             </h1>
-            <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold uppercase tracking-tight" data-testid="text-media-subtitle">
+            <h2 className="text-white font-display text-2xl md:text-3xl lg:text-4xl font-bold uppercase tracking-tight" data-testid="text-media-subtitle">
               PLAY WITH US
             </h2>
           </div>
         </section>
 
-        <section className="max-w-6xl mx-auto px-4 pb-16" data-testid="media-years-section">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-medium">Tournaments</p>
+        <section className="max-w-6xl mx-auto px-4 pt-35 pb-16" data-testid="media-years-section">
+          
 
           {isLoading ? (
             <div className="space-y-4">

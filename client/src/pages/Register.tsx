@@ -34,7 +34,7 @@ import { Loader2, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import heroImg from "/images/hero-register.png";
+import heroImg from "/images/tournament-hero-home.png";
 
 type RegistrationType = "team" | "player" | "free_agent";
 
