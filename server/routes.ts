@@ -1152,6 +1152,67 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/robots.txt", (_req, res) => {
+    res.type("text/plain").send(
+      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin-login\nDisallow: /captain\nDisallow: /captain-login\nSitemap: https://salaamcup.com/sitemap.xml`
+    );
+  });
+
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const tournaments = await storage.getTournaments();
+      const allTeams = await Promise.all(
+        tournaments.map((t) => storage.getTeams(t.id, "approved"))
+      );
+      const teams = allTeams.flat();
+
+      const staticPages = [
+        { loc: "/", priority: "1.0", changefreq: "weekly" },
+        { loc: "/about", priority: "0.8", changefreq: "monthly" },
+        { loc: "/tournaments", priority: "0.9", changefreq: "weekly" },
+        { loc: "/register", priority: "0.8", changefreq: "monthly" },
+        { loc: "/media", priority: "0.7", changefreq: "monthly" },
+        { loc: "/faq", priority: "0.6", changefreq: "monthly" },
+      ];
+
+      const tournamentPages = tournaments.flatMap((t) => [
+        { loc: `/tournaments/${t.id}`, priority: "0.8", changefreq: "weekly" },
+        { loc: `/tournaments/${t.id}/schedule`, priority: "0.8", changefreq: "daily" },
+        { loc: `/tournaments/${t.id}/standings`, priority: "0.8", changefreq: "daily" },
+        { loc: `/tournaments/${t.id}/rules`, priority: "0.6", changefreq: "monthly" },
+        { loc: `/tournaments/${t.id}/awards`, priority: "0.6", changefreq: "monthly" },
+      ]);
+
+      const teamPages = teams.map((t) => ({
+          loc: `/teams/${t.id}`,
+          priority: "0.5",
+          changefreq: "weekly" as const,
+        }));
+
+      const allPages = [...staticPages, ...tournamentPages, ...teamPages];
+      const baseUrl = "https://salaamcup.com";
+      const today = new Date().toISOString().split("T")[0];
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allPages
+  .map(
+    (p) => `  <url>
+    <loc>${baseUrl}${p.loc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`
+  )
+  .join("\n")}
+</urlset>`;
+
+      res.type("application/xml").send(xml);
+    } catch (err) {
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
   // Seed database on startup
   seedDatabase();
 

@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,12 @@ export default function Tournaments() {
 
   return (
     <MainLayout>
+      <SEO 
+        title="Tournaments"
+        description="Browse all Salaam Cup tournaments across Toronto and the GTA. Ball hockey, basketball, soccer, and softball competitions for the Muslim community."
+        canonical="/tournaments"
+        keywords="sports tournaments Toronto, Muslim league GTA, ball hockey tournament, basketball competition Toronto, soccer tournament Mississauga"
+      />
       <HeroSection title="Tournaments" image={heroImg} />
       <SponsorBar />
 

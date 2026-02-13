@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useForm } from "react-hook-form";
@@ -592,6 +593,12 @@ export default function Register() {
 
   return (
     <MainLayout>
+      <SEO 
+        title="Register Your Team"
+        description="Register your team for Salaam Cup tournaments in Toronto and the GTA. Join the Muslim community's premier sports competition. Ball hockey, basketball, soccer, and softball."
+        canonical="/register"
+        keywords="register sports team Toronto, join tournament GTA, team registration Muslim sports, sign up ball hockey Toronto"
+      />
       <HeroSection title="Register" image={heroImg} />
       <SponsorBar />
 

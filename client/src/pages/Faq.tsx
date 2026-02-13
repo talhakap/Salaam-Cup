@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useFaqs } from "@/hooks/use-faqs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +15,12 @@ export default function Faq() {
 
   return (
     <MainLayout>
+      <SEO 
+        title="Frequently Asked Questions"
+        description="Find answers to common questions about Salaam Cup tournaments in Toronto and the GTA. Registration, rules, eligibility, and more."
+        canonical="/faq"
+        keywords="Salaam Cup FAQ, tournament questions Toronto, sports registration help GTA"
+      />
       <section className="py-20 bg-stone-900 min-h-[60vh] text-white">
         <div className="container mx-auto px-4 max-w-4xl">
           <h1 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-faq-page-title">

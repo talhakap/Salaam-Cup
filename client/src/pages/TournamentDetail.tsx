@@ -1,5 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { ReadyToCompete } from "@/components/ReadyToCompete";
@@ -98,6 +99,13 @@ export default function TournamentDetail() {
 
   return (
     <MainLayout>
+      <SEO 
+        title={tournament?.name}
+        description={`${tournament?.name || "Tournament"} - Salaam Cup tournament in Toronto & GTA. View teams, schedules, standings, and results.`}
+        canonical={`/tournaments/${params?.id}`}
+        ogType="article"
+        keywords={`${tournament?.name || ""}, Salaam Cup tournament, sports competition Toronto`}
+      />
       <HeroSection
         title={tournament.name.replace("Salaam Cup ", "").toUpperCase()}
         image={tournament.heroImage || undefined}

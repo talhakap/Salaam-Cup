@@ -1,5 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useTeam } from "@/hooks/use-teams";
 import { usePlayers } from "@/hooks/use-players";
@@ -51,6 +52,12 @@ export default function TeamDetail() {
 
   return (
     <MainLayout>
+      <SEO 
+        title={team?.name}
+        description={`${team?.name || "Team"} - Salaam Cup tournament team in the Greater Toronto Area. View roster, players, and tournament details.`}
+        canonical={`/teams/${params?.id}`}
+        keywords={`${team?.name || ""}, Salaam Cup team, sports team Toronto`}
+      />
       <section className="bg-background py-12 border-b">
         <div className="container mx-auto px-4">
           <div className="flex items-start justify-between gap-8 flex-wrap">

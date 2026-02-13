@@ -1,5 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { TournamentNav } from "@/components/TournamentNav";
@@ -69,6 +70,12 @@ export default function TournamentAwards() {
 
   return (
     <MainLayout>
+      <SEO 
+        title={tournament ? `${tournament.name} Awards` : "Tournament Awards"}
+        description={`Awards and recognition for ${tournament?.name || "Salaam Cup tournament"} in the GTA. Champions, MVPs, and special awards.`}
+        canonical={`/tournaments/${params?.id}/awards`}
+        keywords={`${tournament?.name || ""} awards, tournament champions Toronto, MVP GTA`}
+      />
       <HeroSection title="Awards" image={tournament.heroImage || undefined} size="small" />
       <SponsorBar />
       <TournamentNav tournamentId={tournamentId} />

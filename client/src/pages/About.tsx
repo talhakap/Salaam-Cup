@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { SponsorBar } from "@/components/SponsorBar";
 import { ReadyToCompete } from "@/components/ReadyToCompete";
 import { useAboutContent } from "@/hooks/use-about-content";
@@ -241,6 +242,12 @@ export default function About() {
 
   return (
     <MainLayout>
+      <SEO 
+        title="About Us"
+        description="Learn about Salaam Cup's mission to unite the Greater Toronto Area's Muslim community through competitive sports tournaments across Toronto, Mississauga, and the GTA."
+        canonical="/about"
+        keywords="about Salaam Cup, Muslim sports organization Toronto, community sports GTA, youth sports Toronto"
+      />
       {/* Hero - WHO WE ARE */}
       <section className="relative h-[50vh] min-h-[350px] flex items-center justify-center overflow-hidden" data-testid="hero-about">
         <div className="absolute inset-0 z-0">

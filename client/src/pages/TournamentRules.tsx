@@ -1,5 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { ReadyToCompete } from "@/components/ReadyToCompete";
@@ -185,6 +186,12 @@ export default function TournamentRules() {
 
   return (
     <MainLayout>
+      <SEO 
+        title={tournament ? `${tournament.name} Rules` : "Tournament Rules"}
+        description={`Official rules for ${tournament?.name || "Salaam Cup tournament"}. Game regulations, eligibility requirements, and competition guidelines.`}
+        canonical={`/tournaments/${params?.id}/rules`}
+        keywords={`${tournament?.name || ""} rules, tournament regulations, sports rules GTA`}
+      />
       <HeroSection title="Divisions & Rules" image={tournament.heroImage || undefined} size="small" />
       <SponsorBar />
       <TournamentNav tournamentId={tournamentId} />

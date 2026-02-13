@@ -1,5 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useTournament, useDivisions } from "@/hooks/use-tournaments";
@@ -91,6 +92,12 @@ export default function TournamentSchedule() {
 
   return (
     <MainLayout>
+      <SEO 
+        title={tournament ? `${tournament.name} Schedule` : "Tournament Schedule"}
+        description={`View the match schedule for ${tournament?.name || "Salaam Cup tournament"} in the Greater Toronto Area. Game times, locations, and scores.`}
+        canonical={`/tournaments/${params?.id}/schedule`}
+        keywords={`${tournament?.name || ""} schedule, match times Toronto, game schedule GTA`}
+      />
       <HeroSection title="Schedule" image={tournament.heroImage || undefined} size="small" />
       <SponsorBar />
       <TournamentNav tournamentId={tournamentId} />

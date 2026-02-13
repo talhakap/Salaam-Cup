@@ -1,5 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/HeroSection";
 import { SponsorBar } from "@/components/SponsorBar";
 import { ReadyToCompete } from "@/components/ReadyToCompete";
@@ -59,6 +60,12 @@ export default function TournamentStandings() {
 
   return (
     <MainLayout>
+      <SEO 
+        title={tournament ? `${tournament.name} Standings` : "Tournament Standings"}
+        description={`Current standings for ${tournament?.name || "Salaam Cup tournament"} in Toronto & GTA. Team rankings, wins, losses, and points.`}
+        canonical={`/tournaments/${params?.id}/standings`}
+        keywords={`${tournament?.name || ""} standings, team rankings Toronto, tournament results GTA`}
+      />
       <HeroSection
         title={tournament.name.replace("Salaam Cup ", "").toUpperCase()}
         image={tournament.heroImage || undefined}

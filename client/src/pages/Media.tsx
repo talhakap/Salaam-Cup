@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useMediaYears } from "@/hooks/use-media";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,6 +55,12 @@ export default function Media() {
 
   return (
     <MainLayout>
+      <SEO 
+        title="Media Gallery"
+        description="Browse photos and highlights from past Salaam Cup tournaments across Toronto and the Greater Toronto Area. Relive the best moments from our community sports events."
+        canonical="/media"
+        keywords="Salaam Cup photos, tournament gallery Toronto, sports event photos GTA, Muslim community sports media"
+      />
       <div className="min-h-screen bg-background">
         <section className="py-16 md:py-24 text-center" data-testid="media-hero">
           <div className="max-w-4xl mx-auto px-4">

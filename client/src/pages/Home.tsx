@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
+import { SEO } from "@/components/SEO";
 import { SponsorBar } from "@/components/SponsorBar";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { useNews } from "@/hooks/use-news";
@@ -382,6 +383,12 @@ export default function Home() {
 
   return (
     <MainLayout>
+      <SEO 
+        title="Home"
+        description="Salaam Cup brings competitive ball hockey, basketball, soccer, and softball tournaments to the Toronto & GTA Muslim community. Register your team today."
+        canonical="/"
+        keywords="Muslim sports Toronto, community tournaments GTA, ball hockey league Toronto, basketball tournament Mississauga"
+      />
       <section className="relative h-[75vh] min-h-[600px] flex items-center justify-center overflow-hidden" data-testid="hero-landing">
         <div className="absolute inset-0 z-0">
           <img src={heroImg} alt="" className="w-full h-full object-cover" />

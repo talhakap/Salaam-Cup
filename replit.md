@@ -34,6 +34,7 @@ Core features include:
 - FAQ system: faqs table with question, answer, featured boolean, sortOrder; featured FAQs (max 5) shown on homepage in accordion; full /faq page shows all FAQs; Admin FAQs page (/admin/faqs) with CRUD, featured toggle, sort order management; backend enforces max 5 featured cap
 - Special Awards system: special_awards table with imageUrl, header, description, sortOrder; displayed in "We Admire Them" section on About page (dark background, 2-column grid with image + header + description); Admin Special Awards page (/admin/special-awards) with CRUD and image upload; section hidden when no awards exist
 - Venue management: venues table with name, address, mapLink; Admin Venues page (/admin/venues) with full CRUD; venueId on tournaments, divisions, and matches tables; fieldLocation text field on matches for specific field/rink designation; venue selector in tournament, division, and match admin forms; venue + field info displayed on public schedule page and admin match cards
+- SEO: react-helmet-async for per-page meta tags; SEO component (`client/src/components/SEO.tsx`) added to all 13 public pages with Toronto/GTA-targeted titles, descriptions, keywords, and canonical URLs; index.html has base OG/Twitter/geo meta tags and JSON-LD SportsOrganization schema; server-side `/sitemap.xml` (dynamic with tournaments + approved teams) and `/robots.txt` endpoints
 
 ## User Preferences
 
