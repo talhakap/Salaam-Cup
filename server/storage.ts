@@ -11,8 +11,7 @@ import {
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
-import { users } from "@shared/models/auth";
-import { eq, and, sql, desc, asc, isNull, inArray } from "drizzle-orm";
+import { eq, and, sql, desc, asc, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Sports
@@ -27,7 +26,7 @@ export interface IStorage {
   createTournament(data: InsertTournament): Promise<Tournament>;
   updateTournament(id: number, data: Partial<InsertTournament>): Promise<Tournament>;
   deleteTournament(id: number): Promise<void>;
-  resetTournament(id: number): Promise<string[]>;
+  resetTournament(id: number): Promise<void>;
 
   reorderTournaments(orderedIds: number[]): Promise<void>;
 
@@ -171,7 +170,7 @@ export class DatabaseStorage implements IStorage {
     return tournament;
   }
 
-  async resetTournament(id: number): Promise<string[]> {
+  async resetTournament(id: number): Promise<void> {
     await db.delete(standings).where(eq(standings.tournamentId, id));
     await db.delete(matches).where(eq(matches.tournamentId, id));
     const teamRows = await db.select().from(teams).where(eq(teams.tournamentId, id));
@@ -179,18 +178,6 @@ export class DatabaseStorage implements IStorage {
       await db.delete(players).where(eq(players.teamId, t.id));
     }
     await db.delete(teams).where(eq(teams.tournamentId, id));
-    const captainUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, "captain"));
-    const allTeamCaptainIds = (await db.select({ captainUserId: teams.captainUserId }).from(teams))
-      .map(t => t.captainUserId)
-      .filter((uid): uid is string => !!uid);
-    const activeCaptainIds = new Set(allTeamCaptainIds);
-    const orphanedCaptains = captainUsers
-      .map(u => u.id)
-      .filter(uid => !activeCaptainIds.has(uid));
-    if (orphanedCaptains.length > 0) {
-      await db.delete(users).where(inArray(users.id, orphanedCaptains));
-    }
-    return orphanedCaptains;
   }
 
   async deleteTournament(id: number): Promise<void> {
