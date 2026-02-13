@@ -50,12 +50,16 @@ export function useUpdatePlayer() {
         body: JSON.stringify(updates),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to update player");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to update player" }));
+        throw new Error(err.message || "Failed to update player");
+      }
       return api.players.update.responses[200].parse(await res.json());
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [api.players.list.path, data.teamId] });
       queryClient.invalidateQueries({ queryKey: [api.teams.get.path, data.teamId] });
+      queryClient.invalidateQueries({ queryKey: [api.adminPlayers.list.path] });
     },
   });
 }

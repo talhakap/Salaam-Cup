@@ -17,13 +17,13 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { usePlayers, useCreatePlayer, useDeletePlayer } from "@/hooks/use-players";
+import { usePlayers, useCreatePlayer, useDeletePlayer, useUpdatePlayer } from "@/hooks/use-players";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, AlertCircle, LogIn, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, LogIn, Trash2, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
 import { Fragment } from "react";
 import type { Player } from "@shared/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -108,6 +108,7 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
 function RosterList({ teamId }: { teamId: number }) {
   const { data: players, isLoading } = usePlayers(teamId);
   const deletePlayer = useDeletePlayer();
+  const updatePlayer = useUpdatePlayer();
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -117,6 +118,15 @@ function RosterList({ teamId }: { teamId: number }) {
       await deletePlayer.mutateAsync(playerId);
       toast({ title: "Player removed from roster" });
       setDeleteConfirmId(null);
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleApprove = async (playerId: number) => {
+    try {
+      await updatePlayer.mutateAsync({ id: playerId, status: "confirmed" } as any);
+      toast({ title: "Player approved" });
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -155,6 +165,18 @@ function RosterList({ teamId }: { teamId: number }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
+                      {player.status === "flagged" && player.registrationType === "player" && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleApprove(player.id)}
+                          disabled={updatePlayer.isPending}
+                          data-testid={`button-approve-player-${player.id}`}
+                          title="Approve player"
+                        >
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"

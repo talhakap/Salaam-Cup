@@ -57,6 +57,54 @@ export async function registerRoutes(
     res.status(401).json({ message: "Not authenticated" });
   });
 
+  // === PASSWORD RESET ===
+  app.post("/api/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      res.json({ message: "If an account exists with that email, please contact the tournament admin to receive a new password." });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to process request" });
+    }
+  });
+
+  app.post("/api/admin/reset-password", isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      if (!supabaseAdmin) {
+        return res.status(500).json({ message: "Auth service not configured" });
+      }
+
+      const { db } = await import("./db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const password = generatePassword(12);
+
+      const { data: supabaseUsers } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const supabaseUser = supabaseUsers?.users?.find(u => u.email === user.email);
+      if (supabaseUser) {
+        await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, { password });
+      }
+
+      await db.update(users).set({ password, updatedAt: new Date() }).where(eq(users.id, userId));
+
+      res.json({ password, email: user.email });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // === TEAM APPROVAL (creates captain account) ===
   app.post("/api/admin/teams/:id/approve", isAuthenticated, async (req, res) => {
     try {
@@ -658,9 +706,39 @@ export async function registerRoutes(
 
   app.patch(api.players.update.path, async (req, res) => {
     try {
-      const input = api.players.update.input.parse(req.body);
-      const player = await storage.updatePlayer(Number(req.params.id), input);
-      res.json(player);
+      const playerId = Number(req.params.id);
+      const captainUserId = (req.session as any)?.captainUserId;
+      const adminUserId = (req.session as any)?.adminUserId;
+      const adminRole = (req.session as any)?.adminRole;
+
+      if (captainUserId) {
+        const player = await storage.getPlayerById(playerId);
+        if (!player || !player.teamId) {
+          return res.status(404).json({ message: "Player not found" });
+        }
+        const team = await storage.getTeam(player.teamId);
+        if (!team || team.captainUserId !== captainUserId) {
+          return res.status(403).json({ message: "You can only manage players on your own team" });
+        }
+        const allowedFields = ["status"];
+        const updates: any = {};
+        for (const key of allowedFields) {
+          if (req.body[key] !== undefined) updates[key] = req.body[key];
+        }
+        if (updates.status && !["confirmed", "flagged"].includes(updates.status)) {
+          return res.status(400).json({ message: "Captains can only confirm or flag players" });
+        }
+        const updated = await storage.updatePlayer(playerId, updates);
+        return res.json(updated);
+      }
+
+      if (adminUserId && adminRole === "admin") {
+        const input = api.players.update.input.parse(req.body);
+        const player = await storage.updatePlayer(playerId, input);
+        return res.json(player);
+      }
+
+      return res.status(401).json({ message: "Not authenticated" });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       throw err;

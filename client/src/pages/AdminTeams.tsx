@@ -583,7 +583,7 @@ export default function AdminTeams() {
                         {approvingTeamId === team.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />} Approve
                       </Button>
                       <Button
-                        className="bg-card rounded-md shadow border-stone-900 hover:bg-red-600 hover:text-white"
+                        className=" bg-card rounded-md shadow border-stone-900 hover:bg-red-600 hover:text-white"
                         size="sm"
                         variant="destructive"
                         onClick={() => handleReject(team.id)}

@@ -1,5 +1,5 @@
 import { MainLayout } from "@/components/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,9 @@ export default function CaptainLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -112,6 +115,57 @@ export default function CaptainLogin() {
                 Sign In
               </Button>
             </form>
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                className="text-sm text-muted-foreground hover:underline"
+                onClick={() => setShowForgot(!showForgot)}
+                data-testid="button-forgot-password"
+              >
+                Forgot your password?
+              </button>
+            </div>
+            {showForgot && (
+              <div className="mt-4 p-4 border rounded-lg space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Enter your email to request a password reset. A new password will be generated and shared with you by the tournament admin.
+                </p>
+                <Input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  data-testid="input-forgot-email"
+                />
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={forgotLoading || !forgotEmail}
+                  onClick={async () => {
+                    setForgotLoading(true);
+                    try {
+                      const res = await fetch("/api/forgot-password", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: forgotEmail }),
+                      });
+                      const data = await res.json();
+                      toast({ title: "Password Reset", description: data.message });
+                      setShowForgot(false);
+                      setForgotEmail("");
+                    } catch {
+                      toast({ title: "Error", description: "Failed to process request", variant: "destructive" });
+                    } finally {
+                      setForgotLoading(false);
+                    }
+                  }}
+                  data-testid="button-submit-forgot"
+                >
+                  {forgotLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Request Reset
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
