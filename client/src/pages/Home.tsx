@@ -180,9 +180,9 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                 : nameLC.includes("softball") ? "softball"
                 : nameLC.includes("soccer") || nameLC.includes("football") ? "soccer"
                 : "hockey");
-            const logo = sportLogoMap[detectedIcon] || sportLogoMap.hockey;
-            const bg = sportBgMap[detectedIcon] || sportBgMap.hockey;
-            const desc = sportDescriptions[detectedIcon] || sportDescriptions.hockey;
+            const logo = t.logoUrl || sportLogoMap[detectedIcon] || sportLogoMap.hockey;
+            const bg = t.heroImage || sportBgMap[detectedIcon] || sportBgMap.hockey;
+            const desc = t.description || sportDescriptions[detectedIcon] || sportDescriptions.hockey;
             const dateStr = t.startDate
               ? (() => { try { return format(parseISO(t.startDate), "MMM d, yyyy"); } catch { return t.startDate; } })()
               : "TBD";
@@ -208,7 +208,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                         {t.name}
                       </h3>
                       <p className="text-md text-gray-800 max-w-sm mb-3 leading-snug">
-                        {t.description || desc}
+                        {desc}
                       </p>
                       <div className="text-l text-black font-semibold">
                         Upcoming Tournament:
@@ -223,7 +223,7 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                     logo={logo}
                     sportName={sport?.name || t.name}
                     name={t.name}
-                    desc={t.description || desc}
+                    desc={desc}
                     dateStr={dateStr}
                     tournamentId={t.id}
                   />
