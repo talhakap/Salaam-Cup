@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useMemo } from "react";
-import { Loader2, User, Users, Pencil, Trash2, Plus } from "lucide-react";
+import { Loader2, User, Users, Pencil, Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import type { Player, Team } from "@shared/schema";
@@ -268,6 +268,7 @@ export default function AdminPlayers() {
   const [editPlayer, setEditPlayer] = useState<PlayerWithTeam | null>(null);
   const [deletePlayerState, setDeletePlayerState] = useState<PlayerWithTeam | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const teamsForFilter = useMemo(() => {
     if (!allTeams) return [];
@@ -345,10 +346,10 @@ export default function AdminPlayers() {
     <AdminLayout>
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold font-display text-secondary" data-testid="text-admin-players-title">Player Registrations</h1>
+          <h1 className="text-3xl font-bold font-display text-primary" data-testid="text-admin-players-title">Player Registrations</h1>
           <p className="text-muted-foreground mt-1">Review player and free agent registrations</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2" data-testid="button-add-player">
+        <Button onClick={() => setCreateOpen(true)} className="hover:bg-white hover:text-stone-900 gap-2" data-testid="button-add-player">
           <Plus className="h-4 w-4" /> Add Player
         </Button>
       </div>
@@ -356,6 +357,7 @@ export default function AdminPlayers() {
       <div className="flex flex-wrap gap-2 mb-3">
         {STATUS_FILTERS.map((s) => (
           <Button
+            className="hover:bg-stone-300 hover:text-stone-900"
             key={s}
             variant={statusFilter === s ? "default" : "outline"}
             size="sm"
@@ -370,6 +372,7 @@ export default function AdminPlayers() {
       <div className="flex flex-wrap gap-2 mb-4">
         {TYPE_FILTERS.map((t) => (
           <Button
+            className="hover:bg-stone-300 hover:text-stone-900"
             key={t}
             variant={typeFilter === t ? "default" : "outline"}
             size="sm"
@@ -444,48 +447,103 @@ export default function AdminPlayers() {
         <div className="space-y-3">
           {filteredPlayers.map((player) => (
             <Card key={player.id} data-testid={`card-player-${player.id}`}>
-              <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center flex-wrap gap-2 mb-1">
-                      <h3 className="font-bold text-lg truncate" data-testid={`text-player-name-${player.id}`}>
-                        {player.firstName} {player.lastName}
-                      </h3>
-                      <Badge variant={statusBadgeVariant(player.status)} data-testid={`badge-player-status-${player.id}`}>
-                        {player.status}
-                      </Badge>
-                      <Badge variant={typeBadgeVariant(player.registrationType)} data-testid={`badge-player-type-${player.id}`}>
-                        {player.registrationType === 'free_agent' ? 'Free Agent' : 'Player'}
-                      </Badge>
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                      <User className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <div className="text-sm text-muted-foreground space-y-0.5">
-                      <p>{player.email}</p>
-                      <p>
-                        {player.team ? `Team: ${player.team.name}` : 'No team (Free Agent)'}
-                        {player.dob ? ` | DOB: ${player.dob}` : ''}
-                        {player.jerseyNumber ? ` | #${player.jerseyNumber}` : ''}
-                        {player.position ? ` | ${player.position}` : ''}
+                    <div className="min-w-0">
+                      <div className="flex items-center flex-wrap gap-2 mb-1">
+                        <h3 className="font-bold text-lg truncate" data-testid={`text-player-name-${player.id}`}>
+                          {player.firstName} {player.lastName}
+                        </h3>
+                        <Badge variant={statusBadgeVariant(player.status)} data-testid={`badge-player-status-${player.id}`}>
+                          {player.status}
+                        </Badge>
+                        <Badge variant={typeBadgeVariant(player.registrationType)} data-testid={`badge-player-type-${player.id}`}>
+                          {player.registrationType === 'free_agent' ? 'Free Agent' : 'Player'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {player.team ? player.team.name : 'No team (Free Agent)'}
                       </p>
-                      {player.adminNotes && <p className="text-xs italic">Notes: {player.adminNotes}</p>}
                     </div>
                   </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {player.registeredAt && (
+                      <span className="text-xs text-muted-foreground mr-2" data-testid={`text-player-date-${player.id}`}>
+                        {format(new Date(player.registeredAt), "MMM d, yyyy")}
+                      </span>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setExpandedId(expandedId === player.id ? null : player.id)}
+                      data-testid={`button-expand-admin-player-${player.id}`}
+                    >
+                      {expandedId === player.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => setEditPlayer(player)} data-testid={`button-edit-player-${player.id}`}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => setDeletePlayerState(player)} data-testid={`button-delete-player-${player.id}`}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {player.registeredAt && (
-                    <span className="text-xs text-muted-foreground mr-2" data-testid={`text-player-date-${player.id}`}>
-                      {format(new Date(player.registeredAt), "MMM d, yyyy")}
-                    </span>
-                  )}
-                  <Button size="icon" variant="ghost" onClick={() => setEditPlayer(player)} data-testid={`button-edit-player-${player.id}`}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="ghost" onClick={() => setDeletePlayerState(player)} data-testid={`button-delete-player-${player.id}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                {expandedId === player.id && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Email: </span>
+                        <span className="font-medium">{player.email}</span>
+                      </div>
+                      {player.phone && (
+                        <div>
+                          <span className="text-muted-foreground">Phone: </span>
+                          <span className="font-medium">{player.phone}</span>
+                        </div>
+                      )}
+                      {player.dob && (
+                        <div>
+                          <span className="text-muted-foreground">DOB: </span>
+                          <span className="font-medium">{player.dob}</span>
+                        </div>
+                      )}
+                      {player.position && (
+                        <div>
+                          <span className="text-muted-foreground">Position: </span>
+                          <span className="font-medium">{player.position}</span>
+                        </div>
+                      )}
+                      {player.jerseyNumber && (
+                        <div>
+                          <span className="text-muted-foreground">Jersey #: </span>
+                          <span className="font-medium">{player.jerseyNumber}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-muted-foreground">Waiver: </span>
+                        <span className="font-medium">{player.waiverSigned ? "Signed" : "Not signed"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Type: </span>
+                        <span className="font-medium">{player.registrationType === 'free_agent' ? 'Free Agent' : player.registrationType}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Team: </span>
+                        <span className="font-medium">{player.team ? player.team.name : 'None'}</span>
+                      </div>
+                      {player.adminNotes && (
+                        <div className="col-span-2 sm:col-span-3">
+                          <span className="text-muted-foreground">Admin Notes: </span>
+                          <span className="font-medium italic">{player.adminNotes}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
