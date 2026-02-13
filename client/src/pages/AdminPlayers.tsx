@@ -304,7 +304,7 @@ export default function AdminPlayers() {
         }
       }
       if (typeFilter === "players") {
-        if (p.registrationType !== "player") return false;
+        if (p.registrationType === "free_agent") return false;
       } else if (typeFilter === "free agents") {
         if (p.registrationType !== "free_agent") return false;
       } else if (typeFilter === "captains") {

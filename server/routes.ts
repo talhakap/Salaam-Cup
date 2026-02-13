@@ -92,7 +92,9 @@ export async function registerRoutes(
 
       try {
         const { sendPasswordResetEmail } = await import("./gmail");
-        await sendPasswordResetEmail(normalizedEmail, resetUrl);
+        console.log(`Sending password reset email via Gmail to ${normalizedEmail}...`);
+        const result = await sendPasswordResetEmail(normalizedEmail, resetUrl);
+        console.log(`Password reset email sent: messageId=${result.messageId}`);
       } catch (emailErr) {
         console.error("Failed to send reset email:", emailErr);
       }
