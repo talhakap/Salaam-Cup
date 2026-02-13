@@ -327,10 +327,20 @@ export default function AdminPlayers() {
     });
   }, [players, statusFilter, typeFilter, tournamentFilter, divisionFilter, teamFilter, searchQuery]);
 
+  const approvedCaptainEmails = useMemo(() => {
+    if (!allTeams) return new Set<string>();
+    return new Set(
+      allTeams
+        .filter((t) => t.status === "approved" && t.captainEmail)
+        .map((t) => t.captainEmail!.trim().toLowerCase())
+    );
+  }, [allTeams]);
+
   const filteredCaptains = useMemo(() => {
     if (!captainUsers) return [];
     if (typeFilter !== "all" && typeFilter !== "captains") return [];
     return captainUsers.filter((c) => {
+      if (!c.email || !approvedCaptainEmails.has(c.email.trim().toLowerCase())) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
@@ -339,7 +349,7 @@ export default function AdminPlayers() {
       }
       return true;
     });
-  }, [captainUsers, typeFilter, searchQuery]);
+  }, [captainUsers, typeFilter, searchQuery, approvedCaptainEmails]);
 
   const showCaptains = typeFilter === "all" || typeFilter === "captains";
   const showPlayers = typeFilter !== "captains";
