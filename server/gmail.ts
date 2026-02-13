@@ -85,6 +85,54 @@ export async function sendCaptainCredentialsEmail(
   return result;
 }
 
+export async function sendTeamRejectionEmail(
+  toEmail: string,
+  captainName: string,
+  teamName: string
+) {
+  const transporter = createTransporter();
+  const fromEmail = process.env.GMAIL_USER;
+
+  const result = await transporter.sendMail({
+    from: `"Salaam Cup" <${fromEmail}>`,
+    to: toEmail,
+    subject: `Salaam Cup - Team "${teamName}" Registration Update`,
+    html: `
+      <div style="font-family: 'Nunito Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; padding: 30px 0; background-color: #000; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #fff; font-family: 'Montserrat', Arial, sans-serif; font-size: 28px; margin: 0;">
+            SALAAM CUP
+          </h1>
+        </div>
+        
+        <div style="padding: 30px; background-color: #f9f9f9; border: 1px solid #e0e0e0;">
+          <h2 style="color: #333; font-family: 'Montserrat', Arial, sans-serif; margin-top: 0;">
+            Hi ${captainName},
+          </h2>
+          
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            We regret to inform you that your team <strong>${teamName}</strong> registration for the Salaam Cup tournament has not been approved at this time.
+          </p>
+          
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            If you believe this was made in error or would like more information, please reach out to the Salaam Cup organizers directly.
+          </p>
+          
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            You are welcome to submit a new registration if circumstances change.
+          </p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+          <p style="margin: 0;">Salaam Cup - Toronto & GTA Muslim Community Sports</p>
+        </div>
+      </div>
+    `,
+  });
+
+  return result;
+}
+
 export async function sendPasswordResetEmail(
   toEmail: string,
   resetUrl: string

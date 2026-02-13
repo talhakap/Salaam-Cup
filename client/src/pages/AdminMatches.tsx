@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useRef, useMemo, useEffect } from "react";
@@ -241,15 +242,18 @@ export default function AdminMatches() {
 
   const togglePull = useUpdateMatch();
 
-  const handleTogglePull = async (match: MatchWithTeams) => {
+  const handleToggleTeamPull = async (match: MatchWithTeams, side: "home" | "away") => {
     try {
-      await togglePull.mutateAsync({
+      const updates = {
         id: match.id,
         tournamentId: match.tournamentId,
         divisionId: match.divisionId,
-        pulled: !match.pulled,
-      });
-      toast({ title: match.pulled ? "Match restored to standings" : "Match pulled from standings" });
+        ...(side === "home" ? { pulledHomeTeam: !match.pulledHomeTeam } : { pulledAwayTeam: !match.pulledAwayTeam }),
+      };
+      await togglePull.mutateAsync(updates);
+      const teamName = side === "home" ? (match.homeTeam?.name || "Home team") : (match.awayTeam?.name || "Away team");
+      const wasPulled = side === "home" ? match.pulledHomeTeam : match.pulledAwayTeam;
+      toast({ title: wasPulled ? `${teamName} restored to standings` : `${teamName} pulled from standings` });
     } catch (err) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     }
@@ -425,13 +429,14 @@ export default function AdminMatches() {
       ) : (
         <div className="space-y-3">
           {sortedFilteredMatches.map((match: MatchWithTeams) => (
-            <Card key={match.id} className={`${match.pulled ? "opacity-60" : ""} ${match.draft ? "border-dashed" : ""}`} data-testid={`card-match-${match.id}`}>
+            <Card key={match.id} className={`${(match.pulledHomeTeam && match.pulledAwayTeam) || match.pulled ? "opacity-60" : ""} ${match.draft ? "border-dashed" : ""}`} data-testid={`card-match-${match.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center flex-wrap gap-2 mb-1">
                     {match.draft && <Badge variant="secondary">Draft</Badge>}
                     <Badge variant={statusBadge(match.status)}>{match.status}</Badge>
-                    {match.pulled && <Badge variant="secondary">Pulled</Badge>}
+                    {(match.pulledHomeTeam || match.pulled) && <Badge variant="secondary">Home Pulled</Badge>}
+                    {(match.pulledAwayTeam || match.pulled) && <Badge variant="secondary">Away Pulled</Badge>}
                     <Badge variant="outline">{getDivisionName(match.divisionId)}</Badge>
                     {match.round && <Badge variant="secondary">{match.round}</Badge>}
                     {match.matchNumber ? <span className="text-xs text-muted-foreground">Match #{match.matchNumber}</span> : null}
@@ -455,16 +460,29 @@ export default function AdminMatches() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <Switch
-                      id={`pull-${match.id}`}
-                      checked={match.pulled}
-                      onCheckedChange={() => handleTogglePull(match)}
-                      data-testid={`switch-pull-match-${match.id}`}
-                    />
-                    <Label htmlFor={`pull-${match.id}`} className="text-xs text-muted-foreground cursor-pointer">
-                      Pull
-                    </Label>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Checkbox
+                        id={`pull-home-${match.id}`}
+                        checked={match.pulledHomeTeam || match.pulled}
+                        onCheckedChange={() => handleToggleTeamPull(match, "home")}
+                        data-testid={`checkbox-pull-home-${match.id}`}
+                      />
+                      <Label htmlFor={`pull-home-${match.id}`} className="text-xs text-muted-foreground cursor-pointer">
+                        Pull {match.homeTeam?.name ? match.homeTeam.name.substring(0, 12) : "Home"}
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Checkbox
+                        id={`pull-away-${match.id}`}
+                        checked={match.pulledAwayTeam || match.pulled}
+                        onCheckedChange={() => handleToggleTeamPull(match, "away")}
+                        data-testid={`checkbox-pull-away-${match.id}`}
+                      />
+                      <Label htmlFor={`pull-away-${match.id}`} className="text-xs text-muted-foreground cursor-pointer">
+                        Pull {match.awayTeam?.name ? match.awayTeam.name.substring(0, 12) : "Away"}
+                      </Label>
+                    </div>
                   </div>
                   <Button size="icon" variant="ghost" onClick={() => setEditMatch(match)} data-testid={`button-edit-match-${match.id}`}>
                     <Pencil className="h-4 w-4" />

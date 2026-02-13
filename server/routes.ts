@@ -690,7 +690,27 @@ export async function registerRoutes(
       }
 
       const input = api.teams.update.input.parse(req.body);
+
+      const existingTeam = await storage.getTeam(teamId);
+      const isBeingRejected = input.status === "rejected" && existingTeam && existingTeam.status !== "rejected";
+
       const team = await storage.updateTeam(teamId, input);
+
+      if (isBeingRejected && existingTeam.captainEmail) {
+        try {
+          const { sendTeamRejectionEmail } = await import("./gmail");
+          console.log(`Sending rejection email via Gmail to ${existingTeam.captainEmail}...`);
+          const result = await sendTeamRejectionEmail(
+            existingTeam.captainEmail,
+            existingTeam.captainName || "Captain",
+            existingTeam.name
+          );
+          console.log(`Gmail rejection email sent: messageId=${result.messageId}`);
+        } catch (emailErr: any) {
+          console.error("Failed to send rejection email:", emailErr?.message || emailErr);
+        }
+      }
+
       res.json(team);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });

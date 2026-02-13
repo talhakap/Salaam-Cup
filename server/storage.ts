@@ -630,18 +630,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async recalculateStandings(tournamentId: number): Promise<void> {
-    // Get all final matches for this tournament
     const finalMatches = await db.select().from(matches)
-      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final"), eq(matches.pulled, false), eq(matches.draft, false)));
+      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final"), eq(matches.draft, false)));
 
-    // Get all approved teams
     const allTeams = await db.select().from(teams)
       .where(and(eq(teams.tournamentId, tournamentId), eq(teams.status, "approved")));
 
-    // Clear existing standings
     await db.delete(standings).where(eq(standings.tournamentId, tournamentId));
 
-    // Build standings map (coerce IDs to number for consistent lookups)
     const statsMap = new Map<number, InsertStanding>();
     for (const team of allTeams) {
       statsMap.set(Number(team.id), {
@@ -666,33 +662,38 @@ export class DatabaseStorage implements IStorage {
       const away = statsMap.get(Number(m.awayTeamId));
       if (!home || !away) continue;
 
+      const homePulled = m.pulled || m.pulledHomeTeam;
+      const awayPulled = m.pulled || m.pulledAwayTeam;
+
+      if (homePulled && awayPulled) continue;
+
       const hs = m.homeScore ?? 0;
-      const as = m.awayScore ?? 0;
+      const as_ = m.awayScore ?? 0;
 
-      home.gamesPlayed!++;
-      away.gamesPlayed!++;
-      home.goalsFor! += hs;
-      home.goalsAgainst! += as;
-      away.goalsFor! += as;
-      away.goalsAgainst! += hs;
-
-      if (hs > as) {
-        home.wins!++;
-        away.losses!++;
-        home.points! += 2;
-      } else if (hs < as) {
-        away.wins!++;
-        home.losses!++;
-        away.points! += 2;
-      } else {
-        home.ties!++;
-        away.ties!++;
-        home.points! += 1;
-        away.points! += 1;
+      if (!homePulled) {
+        home.gamesPlayed!++;
+        home.goalsFor! += hs;
+        home.goalsAgainst! += as_;
+      }
+      if (!awayPulled) {
+        away.gamesPlayed!++;
+        away.goalsFor! += as_;
+        away.goalsAgainst! += hs;
       }
 
-      home.goalDifference = home.goalsFor! - home.goalsAgainst!;
-      away.goalDifference = away.goalsFor! - away.goalsAgainst!;
+      if (hs > as_) {
+        if (!homePulled) { home.wins!++; home.points! += 2; }
+        if (!awayPulled) { away.losses!++; }
+      } else if (hs < as_) {
+        if (!awayPulled) { away.wins!++; away.points! += 2; }
+        if (!homePulled) { home.losses!++; }
+      } else {
+        if (!homePulled) { home.ties!++; home.points! += 1; }
+        if (!awayPulled) { away.ties!++; away.points! += 1; }
+      }
+
+      if (!homePulled) home.goalDifference = home.goalsFor! - home.goalsAgainst!;
+      if (!awayPulled) away.goalDifference = away.goalsFor! - away.goalsAgainst!;
     }
 
     // Insert all standings

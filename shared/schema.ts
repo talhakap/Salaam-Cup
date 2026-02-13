@@ -136,6 +136,8 @@ export const matches = pgTable("matches", {
   round: text("round"),
   matchNumber: integer("match_number"),
   pulled: boolean("pulled").default(false).notNull(),
+  pulledHomeTeam: boolean("pulled_home_team").default(false).notNull(),
+  pulledAwayTeam: boolean("pulled_away_team").default(false).notNull(),
   draft: boolean("draft").default(false).notNull(),
 });
 

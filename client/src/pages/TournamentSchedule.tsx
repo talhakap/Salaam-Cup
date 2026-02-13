@@ -185,7 +185,7 @@ function ScheduleMatchRow({ match, divisions, venues }: { match: MatchWithTeams;
   const division = divisions?.find(d => d.id === match.divisionId);
 
   return (
-    <div className={`flex items-center py-5 border-b gap-2 md:gap-4 ${match.pulled ? "opacity-50" : ""}`} data-testid={`schedule-match-${match.id}`}>
+    <div className={`flex items-center py-5 border-b gap-2 md:gap-4 ${(match.pulled || (match.pulledHomeTeam && match.pulledAwayTeam)) ? "opacity-50" : ""}`} data-testid={`schedule-match-${match.id}`}>
       <div className="w-28 md:w-36 shrink-0">
         {matchDate && (
           <>
@@ -229,8 +229,9 @@ function ScheduleMatchRow({ match, divisions, venues }: { match: MatchWithTeams;
         </div>
         <div className="mt-1">
           {isLive && <span className="text-xs font-bold text-red-500 uppercase">Live</span>}
-          {isFinal && !match.pulled && <span className="text-xs text-muted-foreground uppercase">Final</span>}
-          {isFinal && match.pulled && <span className="text-xs text-muted-foreground uppercase italic">Pulled</span>}
+          {isFinal && !(match.pulled || match.pulledHomeTeam || match.pulledAwayTeam) && <span className="text-xs text-muted-foreground uppercase">Final</span>}
+          {isFinal && (match.pulled || (match.pulledHomeTeam && match.pulledAwayTeam)) && <span className="text-xs text-muted-foreground uppercase italic">Pulled</span>}
+          {isFinal && !match.pulled && (match.pulledHomeTeam !== match.pulledAwayTeam) && <span className="text-xs text-muted-foreground uppercase italic">Partial Pull</span>}
           {isScheduled && <span className="text-xs text-muted-foreground uppercase">Scheduled</span>}
         </div>
       </div>

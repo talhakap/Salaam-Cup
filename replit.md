@@ -35,6 +35,8 @@ Core features include:
 - Special Awards system: special_awards table with imageUrl, header, description, sortOrder; displayed in "We Admire Them" section on About page (dark background, 2-column grid with image + header + description); Admin Special Awards page (/admin/special-awards) with CRUD and image upload; section hidden when no awards exist
 - Venue management: venues table with name, address, mapLink; Admin Venues page (/admin/venues) with full CRUD; venueId on tournaments, divisions, and matches tables; fieldLocation text field on matches for specific field/rink designation; venue selector in tournament, division, and match admin forms; venue + field info displayed on public schedule page and admin match cards
 - SEO: react-helmet-async for per-page meta tags; SEO component (`client/src/components/SEO.tsx`) added to all 13 public pages with Toronto/GTA-targeted titles, descriptions, keywords, and canonical URLs; index.html has base OG/Twitter/geo meta tags and JSON-LD SportsOrganization schema; server-side `/sitemap.xml` (dynamic with tournaments + approved teams) and `/robots.txt` endpoints
+- Standings calculation: Now supports per-team pulled flags (pulledHomeTeam, pulledAwayTeam) allowing match to be excluded from one team's standings while counting for the opponent; legacy pulled flag still supported for backward compatibility
+- Team rejection email: Automatic Gmail notification sent to captain when admin rejects a team registration (server/gmail.ts sendTeamRejectionEmail)
 
 ## User Preferences
 
