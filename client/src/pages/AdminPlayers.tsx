@@ -10,13 +10,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useMemo } from "react";
-import { Loader2, User, Users, Pencil, Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, User, Users, Pencil, Trash2, Plus, ChevronDown, ChevronUp, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import type { Player, Team } from "@shared/schema";
 
+interface CaptainUser {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  role: string | null;
+  createdAt: string | null;
+}
+
 const STATUS_FILTERS = ["all", "confirmed", "flagged", "staging", "rejected"] as const;
-const TYPE_FILTERS = ["all", "players", "free agents"] as const;
+const TYPE_FILTERS = ["all", "players", "free agents", "captains"] as const;
 
 type PlayerWithTeam = Player & { team: Team | null };
 
@@ -260,6 +270,10 @@ export default function AdminPlayers() {
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const { data: players, isLoading } = useAdminPlayers();
+  const { data: captainUsers, isLoading: captainsLoading } = useQuery<CaptainUser[]>({
+    queryKey: ["/api/admin/users"],
+    select: (data) => data.filter(u => u.role === "captain"),
+  });
   const { data: tournaments } = useTournaments();
   const { data: divisions } = useDivisions(tournamentFilter !== "all" ? Number(tournamentFilter) : 0);
   const { data: allTeams } = useAllTeams();
@@ -268,7 +282,7 @@ export default function AdminPlayers() {
   const [editPlayer, setEditPlayer] = useState<PlayerWithTeam | null>(null);
   const [deletePlayerState, setDeletePlayerState] = useState<PlayerWithTeam | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const teamsForFilter = useMemo(() => {
     if (!allTeams) return [];
@@ -312,6 +326,23 @@ export default function AdminPlayers() {
       return true;
     });
   }, [players, statusFilter, typeFilter, tournamentFilter, divisionFilter, teamFilter, searchQuery]);
+
+  const filteredCaptains = useMemo(() => {
+    if (!captainUsers) return [];
+    if (typeFilter !== "all" && typeFilter !== "captains") return [];
+    return captainUsers.filter((c) => {
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
+        const email = (c.email || "").toLowerCase();
+        if (!fullName.includes(q) && !email.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [captainUsers, typeFilter, searchQuery]);
+
+  const showCaptains = typeFilter === "all" || typeFilter === "captains";
+  const showPlayers = typeFilter !== "captains";
 
   const handleDelete = async () => {
     if (!deletePlayerState) return;
@@ -429,22 +460,95 @@ export default function AdminPlayers() {
         </div>
       </div>
 
-      {isLoading ? (
+      {(isLoading || captainsLoading) ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : filteredPlayers.length === 0 ? (
+      ) : (showPlayers ? filteredPlayers.length : 0) + (showCaptains ? filteredCaptains.length : 0) === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No player registrations found</p>
+          <p className="text-lg font-medium">No results found</p>
           <p className="text-sm mt-1">
             {statusFilter !== "all" || typeFilter !== "all" || tournamentFilter !== "all" || divisionFilter !== "all" || teamFilter !== "all" || searchQuery.trim()
               ? "No players match the selected filters."
-              : "No players or free agents have registered yet."}
+              : "No players, free agents, or captains have registered yet."}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
+          {showCaptains && filteredCaptains.length > 0 && (
+            <>
+              {typeFilter === "all" && <p className="text-sm font-medium text-muted-foreground pt-2">Captains</p>}
+              {filteredCaptains.map((captain) => (
+                <Card key={`captain-${captain.id}`} data-testid={`card-captain-${captain.id}`}>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <Shield className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center flex-wrap gap-2 mb-1">
+                            <h3 className="font-bold text-lg truncate" data-testid={`text-captain-name-${captain.id}`}>
+                              {captain.firstName || captain.lastName
+                                ? `${captain.firstName || ""} ${captain.lastName || ""}`.trim()
+                                : captain.email}
+                            </h3>
+                            <Badge variant="secondary" data-testid={`badge-captain-role-${captain.id}`}>Captain</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">{captain.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {captain.createdAt && (
+                          <span className="text-xs text-muted-foreground mr-2">
+                            {format(new Date(captain.createdAt), "MMM d, yyyy")}
+                          </span>
+                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setExpandedId(expandedId === `captain-${captain.id}` ? null : `captain-${captain.id}`)}
+                          data-testid={`button-expand-captain-${captain.id}`}
+                        >
+                          {expandedId === `captain-${captain.id}` ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    {expandedId === `captain-${captain.id}` && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Email: </span>
+                            <span className="font-medium">{captain.email || "N/A"}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">First Name: </span>
+                            <span className="font-medium">{captain.firstName || "N/A"}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Last Name: </span>
+                            <span className="font-medium">{captain.lastName || "N/A"}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Role: </span>
+                            <span className="font-medium">Captain</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Created: </span>
+                            <span className="font-medium">{captain.createdAt ? format(new Date(captain.createdAt), "MMM d, yyyy") : "N/A"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          )}
+          {showPlayers && filteredPlayers.length > 0 && (
+            <>
+              {typeFilter === "all" && <p className="text-sm font-medium text-muted-foreground pt-2">Players</p>}
           {filteredPlayers.map((player) => (
             <Card key={player.id} data-testid={`card-player-${player.id}`}>
               <CardContent className="p-4">
@@ -479,10 +583,10 @@ export default function AdminPlayers() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => setExpandedId(expandedId === player.id ? null : player.id)}
+                      onClick={() => setExpandedId(expandedId === `player-${player.id}` ? null : `player-${player.id}`)}
                       data-testid={`button-expand-admin-player-${player.id}`}
                     >
-                      {expandedId === player.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {expandedId === `player-${player.id}` ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
                     <Button size="icon" variant="ghost" onClick={() => setEditPlayer(player)} data-testid={`button-edit-player-${player.id}`}>
                       <Pencil className="h-4 w-4" />
@@ -492,7 +596,7 @@ export default function AdminPlayers() {
                     </Button>
                   </div>
                 </div>
-                {expandedId === player.id && (
+                {expandedId === `player-${player.id}` && (
                   <div className="mt-3 pt-3 border-t border-border">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                       <div>
@@ -547,6 +651,8 @@ export default function AdminPlayers() {
               </CardContent>
             </Card>
           ))}
+            </>
+          )}
         </div>
       )}
 
