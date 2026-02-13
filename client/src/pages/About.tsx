@@ -143,8 +143,8 @@ function UpcomingEventsCarousel({ tournaments, sports }: { tournaments: Tourname
                 : nameLC.includes("softball") ? "softball"
                 : nameLC.includes("soccer") || nameLC.includes("football") ? "soccer"
                 : "hockey");
-            const logo = sportLogoMap[detectedIcon] || sportLogoMap.hockey;
-            const bg = sportBgMap[detectedIcon] || sportBgMap.hockey;
+            const logo = t.logoUrl || sportLogoMap[detectedIcon] || sportLogoMap.hockey;
+            const bg = t.heroImage || sportBgMap[detectedIcon] || sportBgMap.hockey;
             const dateStr = t.startDate
               ? (() => { try { return format(parseISO(t.startDate), "MMM d, yyyy"); } catch { return t.startDate; } })()
               : "TBD";
