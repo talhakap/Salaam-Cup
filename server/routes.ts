@@ -231,10 +231,10 @@ export async function registerRoutes(
 
       await storage.claimTeamsByEmail(team.captainEmail, userId);
 
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
       if (isNewAccount && password) {
         try {
           const { sendCaptainCredentialsEmail } = await import("./gmail");
-          const baseUrl = `${req.protocol}://${req.get("host")}`;
           console.log(`Sending credentials email via Gmail to ${team.captainEmail}...`);
           const result = await sendCaptainCredentialsEmail(
             team.captainEmail,
@@ -247,6 +247,20 @@ export async function registerRoutes(
         } catch (emailErr: any) {
           console.error("Failed to send credentials email:", emailErr?.message || emailErr);
         }
+      } else if (!isNewAccount) {
+        try {
+          const { sendTeamApprovalEmail } = await import("./gmail");
+          console.log(`Sending approval email via Gmail to existing captain ${team.captainEmail}...`);
+          const result = await sendTeamApprovalEmail(
+            team.captainEmail,
+            team.captainName || "Captain",
+            team.name,
+            `${baseUrl}/captain-login`
+          );
+          console.log(`Gmail approval email sent: messageId=${result.messageId}`);
+        } catch (emailErr: any) {
+          console.error("Failed to send approval email:", emailErr?.message || emailErr);
+        }
       }
 
       res.json({
@@ -258,7 +272,7 @@ export async function registerRoutes(
         } : null,
         message: isNewAccount
           ? `Captain account created for ${team.captainEmail}`
-          : `Team approved. Captain already has an account (${team.captainEmail}) — no new password generated.`,
+          : `Team approved. Captain already has an account (${team.captainEmail}). Approval email sent.`,
       });
     } catch (err) {
       console.error("Team approval error:", err);
@@ -565,6 +579,9 @@ export async function registerRoutes(
 
   app.post(api.teams.create.path, async (req, res) => {
     try {
+      if (!req.body.waiverAgreed) {
+        return res.status(400).json({ message: "You must agree to the waiver to register." });
+      }
       const input = api.teams.create.input.parse(req.body);
       const tournament = await storage.getTournament(input.tournamentId);
       if (tournament && !tournament.registrationOpen) {
@@ -633,10 +650,10 @@ export async function registerRoutes(
         await storage.updateTeam(team.id, { captainUserId: userId });
         await storage.claimTeamsByEmail(team.captainEmail, userId);
 
+        const baseUrl = `${req.protocol}://${req.get("host")}`;
         if (isNewAccount && password) {
           try {
             const { sendCaptainCredentialsEmail } = await import("./gmail");
-            const baseUrl = `${req.protocol}://${req.get("host")}`;
             console.log(`Sending credentials email via Gmail to ${team.captainEmail}...`);
             const result = await sendCaptainCredentialsEmail(
               team.captainEmail,
@@ -649,6 +666,20 @@ export async function registerRoutes(
           } catch (emailErr: any) {
             console.error("Failed to send credentials email:", emailErr?.message || emailErr);
           }
+        } else if (!isNewAccount) {
+          try {
+            const { sendTeamApprovalEmail } = await import("./gmail");
+            console.log(`Sending approval email via Gmail to existing captain ${team.captainEmail}...`);
+            const result = await sendTeamApprovalEmail(
+              team.captainEmail,
+              team.captainName || "Captain",
+              team.name,
+              `${baseUrl}/captain-login`
+            );
+            console.log(`Gmail approval email sent: messageId=${result.messageId}`);
+          } catch (emailErr: any) {
+            console.error("Failed to send approval email:", emailErr?.message || emailErr);
+          }
         }
 
         return res.status(201).json({
@@ -660,7 +691,7 @@ export async function registerRoutes(
           } : null,
           message: isNewAccount
             ? `Team created & captain account created for ${team.captainEmail}`
-            : `Team created. Captain already has an account (${team.captainEmail}).`,
+            : `Team created. Captain already has an account (${team.captainEmail}). Approval email sent.`,
         });
       }
 
@@ -695,8 +726,13 @@ export async function registerRoutes(
 
       const existingTeam = await storage.getTeam(teamId);
       const isBeingRejected = input.status === "rejected" && existingTeam && existingTeam.status !== "rejected";
+      const divisionChanged = input.divisionId !== undefined && existingTeam && Number(input.divisionId) !== Number(existingTeam.divisionId);
 
       const team = await storage.updateTeam(teamId, input);
+
+      if (divisionChanged && existingTeam) {
+        await storage.recalculateStandings(existingTeam.tournamentId);
+      }
 
       if (isBeingRejected && existingTeam.captainEmail) {
         try {
@@ -779,6 +815,9 @@ export async function registerRoutes(
 
   app.post(api.players.register.path, async (req, res) => {
     try {
+      if (!req.body.waiverAgreed) {
+        return res.status(400).json({ message: "You must agree to the waiver to register." });
+      }
       const body = { ...req.body };
       if (body.jerseyNumber !== undefined && body.jerseyNumber !== null) {
         body.jerseyNumber = Number(body.jerseyNumber);
