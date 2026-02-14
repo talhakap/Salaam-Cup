@@ -37,7 +37,7 @@ export default function TournamentDetail() {
 
   const tournamentNews = useMemo(() => {
     if (!allNews || !numericId) return [];
-    return allNews.filter((n) => n.tournamentId === numericId);
+    return allNews.filter((n) => Number(n.tournamentId) === Number(numericId));
   }, [allNews, numericId]);
 
   const divisionTabsReady = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
