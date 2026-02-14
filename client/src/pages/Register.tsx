@@ -101,7 +101,7 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
   async function onSubmit(data: z.infer<typeof teamRegistrationSchema>) {
     try {
       const { waiverAgreed, ...teamData } = data;
-      await createTeam.mutateAsync({ ...teamData, status: "pending" });
+      await createTeam.mutateAsync({ ...teamData, status: "pending", waiverAgreed } as any);
       onSuccess();
     } catch (error) {
       toast({ title: "Registration Failed", description: (error as Error).message, variant: "destructive" });
@@ -260,7 +260,8 @@ function PlayerRegistrationForm({ onSuccess }: { onSuccess: (status: string) => 
         dob: data.dob,
         teamId: data.teamId,
         registrationType: "player",
-      });
+        waiverAgreed: data.waiverAgreed,
+      } as any);
       onSuccess(result.status);
     } catch (error) {
       toast({ title: "Registration Failed", description: (error as Error).message, variant: "destructive" });
@@ -426,7 +427,8 @@ function FreeAgentRegistrationForm({ onSuccess }: { onSuccess: (status: string) 
         dob: data.dob,
         teamId: null,
         registrationType: "free_agent",
-      });
+        waiverAgreed: data.waiverAgreed,
+      } as any);
       onSuccess(result.status);
     } catch (error) {
       toast({ title: "Registration Failed", description: (error as Error).message, variant: "destructive" });
