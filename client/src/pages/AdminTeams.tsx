@@ -456,7 +456,7 @@ export default function AdminTeams() {
   };
 
   const getTournamentName = (tournamentId: number) => {
-    return tournaments?.find(t => t.id === tournamentId)?.name || `Tournament #${tournamentId}`;
+    return tournaments?.find(t => Number(t.id) === Number(tournamentId))?.name || `Tournament #${tournamentId}`;
   };
 
   const statusBadgeVariant = (status: string) => {
