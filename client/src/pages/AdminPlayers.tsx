@@ -395,7 +395,7 @@ export default function AdminPlayers() {
           <h1 className="text-3xl font-bold font-display text-primary" data-testid="text-admin-players-title">Player Registrations</h1>
           <p className="text-muted-foreground mt-1">Review player and free agent registrations</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="hover:bg-white hover:text-stone-900 gap-2" data-testid="button-add-player">
+        <Button onClick={() => setCreateOpen(true)} className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-2" data-testid="button-add-player">
           <Plus className="h-4 w-4" /> Add Player
         </Button>
       </div>
@@ -403,7 +403,7 @@ export default function AdminPlayers() {
       <div className="flex flex-wrap gap-2 mb-3">
         {STATUS_FILTERS.map((s) => (
           <Button
-            className="hover:bg-stone-300 hover:text-stone-900"
+            className="hover:bg-stone-500 hover:text-white"
             key={s}
             variant={statusFilter === s ? "default" : "outline"}
             size="sm"
@@ -418,7 +418,7 @@ export default function AdminPlayers() {
       <div className="flex flex-wrap gap-2 mb-4">
         {TYPE_FILTERS.map((t) => (
           <Button
-            className="hover:bg-stone-300 hover:text-stone-900"
+            className="hover:bg-stone-500 hover:text-white"
             key={t}
             variant={typeFilter === t ? "default" : "outline"}
             size="sm"
@@ -521,6 +521,7 @@ export default function AdminPlayers() {
                           </span>
                         )}
                         <Button
+                          className="hover:bg-gray-500 hover:text-white"
                           size="icon"
                           variant="ghost"
                           onClick={() => setExpandedId(expandedId === `captain-${captain.id}` ? null : `captain-${captain.id}`)}
@@ -603,10 +604,11 @@ export default function AdminPlayers() {
                     >
                       {expandedId === `player-${player.id}` ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setEditPlayer(player)} data-testid={`button-edit-player-${player.id}`}>
+                    <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => setEditPlayer(player)} data-testid={`button-edit-player-${player.id}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setDeletePlayerState(player)} data-testid={`button-delete-player-${player.id}`}>
+                    <Button className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700
+" size="icon" variant="ghost" onClick={() => setDeletePlayerState(player)} data-testid={`button-delete-player-${player.id}`}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

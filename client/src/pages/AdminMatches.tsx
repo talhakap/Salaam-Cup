@@ -350,24 +350,24 @@ export default function AdminMatches() {
     <AdminLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-display text-secondary" data-testid="text-admin-matches-title">Match Management</h1>
+          <h1 className="text-2xl md:text-3xl font-bold font-display text-primary" data-testid="text-admin-matches-title">Match Management</h1>
           <p className="text-muted-foreground mt-1 text-sm">Schedule and manage matches</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadTemplate} data-testid="button-download-csv-template">
+          <Button variant="outline" size="sm" className="hover:text-white hover:bg-stone-500 gap-2" onClick={handleDownloadTemplate} data-testid="button-download-csv-template">
             <Download className="h-4 w-4" /> <span className="hidden sm:inline">CSV</span> Template
           </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={!activeTournamentId} data-testid="button-import-csv">
+          <Button variant="outline" size="sm" className="hover:text-white hover:bg-stone-500 gap-2" onClick={() => fileInputRef.current?.click()} disabled={!activeTournamentId} data-testid="button-import-csv">
             <Upload className="h-4 w-4" /> Import
           </Button>
           <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileSelect} />
-          <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)} disabled={!activeTournamentId} data-testid="button-create-match">
+          <Button size="sm" className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-2" onClick={() => setCreateOpen(true)} disabled={!activeTournamentId} data-testid="button-create-match">
             <Plus className="h-4 w-4" /> Create
           </Button>
           {draftCount > 0 && (
             <Button
               size="sm"
-              className="gap-2"
+              className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-2"
               onClick={handlePublish}
               disabled={publishMatches.isPending}
               data-testid="button-publish-matches"
@@ -484,10 +484,11 @@ export default function AdminMatches() {
                       </Label>
                     </div>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => setEditMatch(match)} data-testid={`button-edit-match-${match.id}`}>
+                  <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => setEditMatch(match)} data-testid={`button-edit-match-${match.id}`}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => setDeleteMatchState(match)} data-testid={`button-delete-match-${match.id}`}>
+                  <Button className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700
+" size="icon" variant="ghost" onClick={() => setDeleteMatchState(match)} data-testid={`button-delete-match-${match.id}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

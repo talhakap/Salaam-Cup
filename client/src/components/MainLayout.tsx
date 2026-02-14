@@ -396,7 +396,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="col-span-1">
               <h4 className="font-bold mb-4 text-sm tracking-wider">Connect With Us</h4>
               <div className="flex gap-3 mb-4">
-                <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-instagram">
+                <a href="https://www.instagram.com/salaamsportsofficial" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-instagram">
                   <Instagram className="h-4 w-4" />
                 </a>
                 <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-facebook">
@@ -405,18 +405,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-linkedin">
                   <Linkedin className="h-4 w-4" />
                 </a>
-                <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-tiktok">
+                <a href="https://www.tiktok.com/@salaamsportsofficial" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" data-testid="social-tiktok">
                   <SiTiktok className="h-4 w-4" />
                 </a>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <Mail className="h-4 w-4" />
-                <span>info@salaamcup.com</span>
+                <a href="mailto:info@salaamcup.com"
+                  className="hover:text-white transition-colors">
+                info@salaamcup.com
+                </a>
               </div>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-white/10 text-center text-xs text-gray-300">
-            Copyright &copy;2025 Salaam Cup. Powered by <u><a href="www.aethdigital.com">Aeth Digital.</a></u>
+            Copyright &copy;2025 Salaam Cup. Powered by <u><a href="https://www.aethdigital.com" target="_blank" rel="noopener noreferrer">Aeth Digital.</a></u>
           </div>
         </div>
       </footer>

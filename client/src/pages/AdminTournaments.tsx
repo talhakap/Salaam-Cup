@@ -190,7 +190,7 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
         <h4 className="text-sm font-semibold flex items-center gap-1"><Layers className="h-4 w-4" /> Divisions</h4>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="gap-1" data-testid={`button-add-division-${tournamentId}`}>
+            <Button size="sm" variant="outline" className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-1" data-testid={`button-add-division-${tournamentId}`}>
               <Plus className="h-3 w-3" /> Add Division
             </Button>
           </DialogTrigger>
@@ -266,10 +266,10 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
             <div key={div.id} className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-md" data-testid={`row-division-${div.id}`}>
               <div className="flex items-center gap-2 min-w-0">
                 <div className="flex flex-col flex-shrink-0">
-                  <Button size="icon" variant="ghost" className="h-5 w-5" disabled={index === 0} onClick={() => moveDivision(index, "up")} data-testid={`button-move-division-up-${div.id}`}>
+                  <Button size="icon" variant="ghost" className="hover:bg-gray-500 hover:text-white h-5 w-5" disabled={index === 0} onClick={() => moveDivision(index, "up")} data-testid={`button-move-division-up-${div.id}`}>
                     <ArrowUp className="h-3 w-3" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-5 w-5" disabled={index === divisions.length - 1} onClick={() => moveDivision(index, "down")} data-testid={`button-move-division-down-${div.id}`}>
+                  <Button size="icon" variant="ghost" className="hover:bg-gray-500 hover:text-white h-5 w-5" disabled={index === divisions.length - 1} onClick={() => moveDivision(index, "down")} data-testid={`button-move-division-down-${div.id}`}>
                     <ArrowDown className="h-3 w-3" />
                   </Button>
                 </div>
@@ -281,10 +281,11 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
                 </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <Button size="icon" variant="ghost" onClick={() => openEdit(div)} data-testid={`button-edit-division-${div.id}`}>
+                <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => openEdit(div)} data-testid={`button-edit-division-${div.id}`}>
                   <Pencil className="h-3 w-3" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => setDeleteDiv(div)} data-testid={`button-delete-division-${div.id}`}>
+                <Button className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700
+" size="icon" variant="ghost" onClick={() => setDeleteDiv(div)} data-testid={`button-delete-division-${div.id}`}>
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -630,7 +631,7 @@ export default function AdminTournaments() {
         <h1 className="text-3xl font-bold font-display" data-testid="text-admin-tournaments-title">Manage Tournaments</h1>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="hover:bg-white hover:text-stone-900 gap-2" data-testid="button-create-tournament"><Plus className="h-4 w-4" /> Create Tournament</Button>
+            <Button className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-2" data-testid="button-create-tournament"><Plus className="h-4 w-4" /> Create Tournament</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -665,10 +666,10 @@ export default function AdminTournaments() {
               <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="flex flex-col flex-shrink-0">
-                    <Button size="icon" variant="ghost" className="h-6 w-6" disabled={index === 0} onClick={() => moveTournament(index, "up")} data-testid={`button-move-tournament-up-${t.id}`}>
+                    <Button size="icon" variant="ghost" className="hover:bg-gray-500 hover:text-white h-6 w-6" disabled={index === 0} onClick={() => moveTournament(index, "up")} data-testid={`button-move-tournament-up-${t.id}`}>
                       <ArrowUp className="h-3 w-3" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-6 w-6" disabled={index === tournaments.length - 1} onClick={() => moveTournament(index, "down")} data-testid={`button-move-tournament-down-${t.id}`}>
+                    <Button size="icon" variant="ghost" className="hover:bg-gray-500 hover:text-white h-6 w-6" disabled={index === tournaments.length - 1} onClick={() => moveTournament(index, "down")} data-testid={`button-move-tournament-down-${t.id}`}>
                       <ArrowDown className="h-3 w-3" />
                     </Button>
                   </div>
@@ -702,16 +703,16 @@ export default function AdminTournaments() {
                       {t.registrationOpen ? "Reg. Open" : "Reg. Closed"}
                     </span>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} data-testid={`button-expand-tournament-${t.id}`}>
+                  <Button className="hover:bg-gray-500 hover:text-white" size="icon" variant="ghost" onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} data-testid={`button-expand-tournament-${t.id}`}>
                     {expandedId === t.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
-                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-stone-900 hover:text-white" size="icon" variant="ghost" onClick={() => openEdit(t)} data-testid={`button-edit-tournament-${t.id}`}>
+                  <Button className="bg-card rounded-md shadow bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => openEdit(t)} data-testid={`button-edit-tournament-${t.id}`}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-amber-400 hover:text-white" size="icon" variant="ghost" onClick={() => setResetTournamentState(t)} data-testid={`button-reset-tournament-${t.id}`} title="Reset tournament">
+                  <Button className="bg-card rounded-md shadow bg-orange-600 text-white hover:bg-white hover:text-orange-600 hover:border-orange-600" size="icon" variant="ghost" onClick={() => setResetTournamentState(t)} data-testid={`button-reset-tournament-${t.id}`} title="Reset tournament">
                     <RotateCcw className="h-4 w-4" />
                   </Button>
-                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-red-600 hover:text-white" size="icon" variant="ghost" onClick={() => setDeleteTournamentState(t)} data-testid={`button-delete-tournament-${t.id}`}>
+                  <Button className="bg-card rounded-md shadow bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700" size="icon" variant="ghost" onClick={() => setDeleteTournamentState(t)} data-testid={`button-delete-tournament-${t.id}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

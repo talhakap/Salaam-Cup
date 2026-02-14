@@ -64,7 +64,7 @@ export default function AdminDashboard() {
                       <p className="text-sm text-muted-foreground truncate">{team.captainName}</p>
                     </div>
                     <Link href="/admin/teams" className="flex-shrink-0">
-                      <Button size="sm" variant="outline" data-testid={`button-review-${team.id}`}>Review</Button>
+                      <Button className="bg-blue-600 text-white hover:bg-white hover:text-blue-600 hover:border-blue-600 " size="sm" variant="outline" data-testid={`button-review-${team.id}`}>Review</Button>
                     </Link>
                   </div>
                 ))}
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
             )}
             <div className="mt-4 pt-4 border-t">
               <Link href="/admin/teams">
-                <Button  variant="ghost" className="w-full hover:bg-stone-900 hover:text-white" data-testid="link-view-all-teams">View All Teams</Button>
+                <Button className="w-full bg-black hover:bg-white hover:text-black" data-testid="link-view-all-teams">View All Teams</Button>
               </Link>
             </div>
           </CardContent>
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
                      <p className="text-sm text-muted-foreground capitalize">{t.status}</p>
                    </div>
                    <Link href={`/tournaments/${t.slug}`} className="flex-shrink-0">
-                      <Button className="hover:bg-stone-900 hover:text-white"size="sm" variant="secondary">View</Button>
+                      <Button className="bg-blue-600 text-white hover:bg-white hover:text-blue-600 hover:border-blue-600"size="sm" variant="secondary">View</Button>
                    </Link>
                  </div>
                ))}
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
              </div>
              <div className="mt-4 pt-4 border-t">
               <Link href="/admin/tournaments">
-                <Button variant="ghost" className="w-full">View All Tournaments</Button>
+                <Button variant="ghost" className="w-full border-black bg-black text-white hover:bg-white hover:text-black">View All Tournaments</Button>
               </Link>
             </div>
           </CardContent>

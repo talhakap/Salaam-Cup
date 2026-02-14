@@ -475,14 +475,14 @@ export default function AdminTeams() {
           <h1 className="text-3xl font-bold font-display text-foreground" data-testid="text-admin-teams-title">Team Management</h1>
           <p className="text-muted-foreground mt-1">Review and manage team registrations</p>
         </div>
-        <Button  onClick={() => setCreateOpen(true)} className="hover:bg-white hover:text-stone-900 gap-2" data-testid="button-add-team">
+        <Button  onClick={() => setCreateOpen(true)} className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-2" data-testid="button-add-team">
           <Plus className="h-4 w-4" /> Add Team
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-3">
         {STATUS_FILTERS.map((s) => (
-          <Button className="hover:bg-stone-400 hover:text-white"
+          <Button className="hover:bg-stone-500 hover:text-white"
             key={s}
             variant={statusFilter === s ? "default" : "outline"}
             size="sm"
@@ -496,7 +496,7 @@ export default function AdminTeams() {
 
       <div className="flex flex-wrap gap-2 mb-4">
         {PAYMENT_FILTERS.map((p) => (
-          <Button className="hover:bg-stone-400 hover:text-white"
+          <Button className="hover:bg-stone-500 hover:text-white"
             key={p}
             variant={paymentFilter === p ? "default" : "outline"}
             size="sm"
@@ -566,18 +566,10 @@ export default function AdminTeams() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
-                  <Link href={`/teams/${team.id}`}>
-                    <Button className="hover:bg-stone-900 hover:text-white" size="sm" variant="outline" data-testid={`button-view-team-${team.id}`}>
-                      <Eye className="h-4 w-4 mr-1" /> View
-                    </Button>
-                  </Link>
-                  <Button className="hover:bg-stone-900 hover:text-white" size="sm" variant="outline" onClick={() => setEditTeam(team)} data-testid={`button-edit-team-${team.id}`}>
-                    <Pencil className="h-4 w-4 mr-1" /> Edit
-                  </Button>
                   {team.status === "pending" && (
                     <>
                       <Button 
-                        className="bg-card rounded-md shadow text-black border-stone-900 hover:bg-green-600 hover:text-white"
+                        className="bg-card rounded-md shadow text-white bg-green-600 hover:border-green-600 hover:bg-white hover:text-green-600"
                         size="sm"
                         onClick={() => handleApprove(team.id)}
                         disabled={approvingTeamId === team.id}
@@ -586,7 +578,7 @@ export default function AdminTeams() {
                         {approvingTeamId === team.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />} Approve
                       </Button>
                       <Button
-                        className=" bg-card rounded-md shadow text-black border-stone-900 hover:bg-red-600 hover:text-white"
+                        className=" bg-card rounded-md shadow bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700"
                         size="sm"
                         variant="destructive"
                         onClick={() => handleReject(team.id)}
@@ -597,7 +589,16 @@ export default function AdminTeams() {
                       </Button>
                     </>
                   )}
-                  <Button className="bg-card rounded-md shadow border-stone-900 hover:bg-red-600 hover:text-white" size="icon" variant="ghost" onClick={() => setDeleteTeamState(team)} data-testid={`button-delete-team-${team.id}`}>
+                  <Link href={`/teams/${team.id}`}>
+                    <Button className="hover:border-blue-600 bg-blue-600 text-white hover:bg-white hover:text-blue-600" size="sm" variant="outline" data-testid={`button-view-team-${team.id}`}>
+                      <Eye className="h-4 w-4 mr-1" /> View
+                    </Button>
+                  </Link>
+                  <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="sm" variant="outline" onClick={() => setEditTeam(team)} data-testid={`button-edit-team-${team.id}`}>
+                    <Pencil className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+
+                  <Button className="bg-card rounded-md shadow bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700" size="icon" variant="ghost" onClick={() => setDeleteTeamState(team)} data-testid={`button-delete-team-${team.id}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
