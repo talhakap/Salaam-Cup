@@ -3,6 +3,7 @@ import type { Server } from "http";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { storage } from "./storage";
+import { fixSequences } from "./db";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import type { InsertMatch } from "@shared/schema";
@@ -17,6 +18,7 @@ export async function registerRoutes(
   registerObjectStorageRoutes(app);
 
   seedAdminAccounts().catch(err => console.error("Admin seeding error:", err));
+  fixSequences().catch(err => console.error("Sequence fix error:", err));
 
   // === CAPTAIN AUTH (Supabase Auth - email/password) ===
   const captainLoginAttempts = new Map<string, { count: number; lastAttempt: number }>();

@@ -28,3 +28,13 @@ pool.on("error", (err) => {
 });
 
 export const db = drizzle(pool, { schema });
+
+export async function fixSequences() {
+  const tables = ['awards', 'news', 'sponsors', 'faqs', 'venues', 'special_awards', 'media_years', 'media_cards', 'tournaments', 'divisions', 'teams', 'players', 'matches', 'sports'];
+  for (const table of tables) {
+    try {
+      await pool.query(`SELECT setval(pg_get_serial_sequence('${table}', 'id'), COALESCE((SELECT MAX(id) FROM ${table}), 0) + 1, false)`);
+    } catch (_) {}
+  }
+  console.log("Database sequences synchronized");
+}
