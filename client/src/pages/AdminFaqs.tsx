@@ -140,9 +140,10 @@ export default function AdminFaqs() {
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div className="flex items-center gap-2">
           <HelpCircle className="w-6 h-6" />
-          <h1 className="text-2xl font-bold font-heading">FAQs</h1>
+          <h1 className="text-3xl font-bold font-heading">FAQs</h1>
         </div>
         <Button
+          className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600"
           onClick={() => { setEditItem(undefined); setDialogOpen(true); }}
           data-testid="button-add-faq"
         >
@@ -183,6 +184,7 @@ export default function AdminFaqs() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Button
+                  className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400"
                   size="icon"
                   variant="ghost"
                   onClick={() => { setEditItem(faq); setDialogOpen(true); }}
@@ -191,6 +193,7 @@ export default function AdminFaqs() {
                   <Pencil className="w-4 h-4" />
                 </Button>
                 <Button
+                  className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700"
                   size="icon"
                   variant="ghost"
                   onClick={() => setDeleteTarget(faq)}

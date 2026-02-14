@@ -68,7 +68,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex flex-col w-64 bg-secondary text-stone-900 h-screen fixed left-0 top-0 z-20">
         <div className="p-6 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+            <img 
+              src="/images/salaam-cup-logo-black.png" 
+              alt="Logo" 
+              className="h-7 w-7 object-contain" 
+            />
             <span className="text-stone-900 text-xl font-bold font-display">ADMIN PORTAL</span>
           </div>
         </div>

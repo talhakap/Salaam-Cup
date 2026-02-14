@@ -130,11 +130,11 @@ export default function TournamentAwards() {
                         .map((award: Award) => (
                         <div key={award.id} className="text-center" data-testid={`card-award-${award.id}`}>
                           <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center">
-                            {award.teamLogoUrl ? (
-                              <img src={award.teamLogoUrl} alt={award.teamName || award.playerName || ""} className="w-14 h-14 object-contain rounded-full" />
-                            ) : (
-                              <Trophy className="h-6 w-6 text-muted-foreground" />
-                            )}
+                            <img
+                              src={award.teamLogoUrl || "/images/salaam-cup-logo-black.png"}
+                              alt={award.teamName || award.playerName || ""}
+                              className="w-14 h-14 object-contain rounded-full"
+                            />
                           </div>
                           <p className="text-xs text-muted-foreground mb-1">{award.year}</p>
                           {category === "Champions" || category === "Runner Up" ? (

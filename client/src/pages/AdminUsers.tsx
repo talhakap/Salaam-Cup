@@ -188,10 +188,10 @@ export default function AdminUsers() {
     <AdminLayout>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="text-2xl font-bold font-display uppercase" data-testid="text-page-title">User Management</h1>
+          <h1 className="text-3xl font-bold font-display uppercase" data-testid="text-page-title">User Management</h1>
           <p className="text-muted-foreground text-sm mt-1">Create and manage admin and captain accounts.</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="gap-2" data-testid="button-create-user">
+        <Button onClick={() => setShowCreate(true)} className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-2" data-testid="button-create-user">
           <Plus className="h-4 w-4" /> Create User
         </Button>
       </div>
@@ -204,6 +204,7 @@ export default function AdminUsers() {
             { value: "captain", label: `Captains (${captainCount})` },
           ].map(f => (
             <Button
+              className="hover:bg-stone-500 hover:text-white"
               key={f.value}
               variant={roleFilter === f.value ? "default" : "outline"}
               size="sm"

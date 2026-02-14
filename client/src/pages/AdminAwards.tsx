@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Trophy, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useUpload } from "@/hooks/use-upload";
+import { Plus, Pencil, Trash2, Trophy, Loader2, Upload, X } from "lucide-react";
+import { useState, useRef } from "react";
 import type { Award } from "@shared/schema";
 
 const AWARD_CATEGORIES = [
@@ -55,6 +56,28 @@ function AwardDialog({
   const [teamName, setTeamName] = useState(award?.teamName || "");
   const [playerName, setPlayerName] = useState(award?.playerName || "");
   const [teamLogoUrl, setTeamLogoUrl] = useState(award?.teamLogoUrl || "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { uploadFile, isUploading } = useUpload({
+    folder: "awards",
+    onSuccess: (response) => {
+      setTeamLogoUrl(response.objectPath);
+      toast({ title: "Logo uploaded" });
+    },
+    onError: (error) => {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    await uploadFile(file);
+  };
 
   const handleTournamentChange = (val: string) => {
     setSelectedTournamentId(val);
@@ -225,13 +248,38 @@ function AwardDialog({
         />
       </div>
       <div>
-        <Label>Team Logo URL</Label>
-        <Input
-          value={teamLogoUrl}
-          onChange={(e) => setTeamLogoUrl(e.target.value)}
-          placeholder="https://..."
-          data-testid="input-award-logo-url"
+        <Label>Team Logo (optional)</Label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+          data-testid="input-award-logo-file"
         />
+        <div className="flex items-center gap-3 mt-1">
+          {teamLogoUrl ? (
+            <div className="flex items-center gap-2">
+              <img src={teamLogoUrl} alt="Logo preview" className="w-10 h-10 object-contain rounded-md border" />
+              <span className="text-sm text-muted-foreground truncate max-w-[200px]">{teamLogoUrl.split("/").pop()}</span>
+              <Button type="button" size="icon" variant="ghost" onClick={() => setTeamLogoUrl("")} data-testid="button-remove-award-logo">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No logo uploaded</p>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            data-testid="button-upload-award-logo"
+          >
+            {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+            {teamLogoUrl ? "Change" : "Upload"}
+          </Button>
+        </div>
       </div>
       <DialogFooter>
         <Button type="submit" disabled={createAward.isPending || updateAward.isPending} data-testid="button-submit-award">
@@ -350,11 +398,7 @@ gap-2" data-testid="button-create-award">
             <div key={award.id} className="bg-card border rounded-md p-4 flex items-center justify-between gap-4" data-testid={`card-award-${award.id}`}>
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  {award.teamLogoUrl ? (
-                    <img src={award.teamLogoUrl} alt="" className="w-8 h-8 object-contain rounded-full" />
-                  ) : (
-                    <Trophy className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  <img src={award.teamLogoUrl || "/images/salaam-cup-logo-black.png"} alt="" className="w-8 h-8 object-contain rounded-full" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

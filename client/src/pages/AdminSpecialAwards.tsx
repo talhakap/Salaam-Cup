@@ -183,10 +183,10 @@ export default function AdminSpecialAwards() {
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold font-display" data-testid="text-admin-special-awards-title">Special Awards</h1>
+            <h1 className="text-3xl font-bold font-display" data-testid="text-admin-special-awards-title">Special Awards</h1>
             <p className="text-muted-foreground text-sm">Manage the "We Admire Them" section on the About page</p>
           </div>
-          <Button onClick={() => { setEditing(undefined); setShowDialog(true); }} data-testid="button-add-special-award">
+          <Button className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600" onClick={() => { setEditing(undefined); setShowDialog(true); }} data-testid="button-add-special-award">
             <Plus className="h-4 w-4 mr-2" /> Add Award
           </Button>
         </div>
@@ -221,6 +221,7 @@ export default function AdminSpecialAwards() {
                   <p className="text-xs text-muted-foreground line-clamp-3" data-testid={`text-special-award-desc-${a.id}`}>{a.description}</p>
                   <div className="flex gap-2 pt-2">
                     <Button
+                      className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400"
                       size="icon"
                       variant="ghost"
                       onClick={() => { setEditing(a); setShowDialog(true); }}
@@ -229,6 +230,7 @@ export default function AdminSpecialAwards() {
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
+                      className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700"
                       size="icon"
                       variant="ghost"
                       onClick={() => setDeleteTarget(a)}
