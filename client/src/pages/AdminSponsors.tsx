@@ -174,10 +174,10 @@ export default function AdminSponsors() {
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold font-display" data-testid="text-admin-sponsors-title">Sponsors</h1>
+            <h1 className="text-3xl font-bold font-display" data-testid="text-admin-sponsors-title">Sponsors</h1>
             <p className="text-muted-foreground text-sm">Manage sponsor logos displayed on the home page</p>
           </div>
-          <Button onClick={() => { setEditing(undefined); setShowDialog(true); }} data-testid="button-add-sponsor">
+          <Button className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600" onClick={() => { setEditing(undefined); setShowDialog(true); }} data-testid="button-add-sponsor">
             <Plus className="h-4 w-4 mr-2" /> Add Sponsor
           </Button>
         </div>
@@ -215,6 +215,7 @@ export default function AdminSponsors() {
                 )}
                 <div className="flex gap-2">
                   <Button
+                    className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400"
                     size="icon"
                     variant="ghost"
                     onClick={() => { setEditing(s); setShowDialog(true); }}
@@ -223,12 +224,13 @@ export default function AdminSponsors() {
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
+                    className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700"
                     size="icon"
                     variant="ghost"
                     onClick={() => setDeleteTarget(s)}
                     data-testid={`button-delete-sponsor-${s.id}`}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

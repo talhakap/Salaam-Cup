@@ -78,13 +78,13 @@ export default function AdminAboutContent() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-2xl font-bold font-display uppercase" data-testid="text-admin-about-title">
+          <h1 className="text-3xl font-bold font-display uppercase" data-testid="text-admin-about-title">
             About Page Content
           </h1>
           <Button
             onClick={handleSave}
             disabled={upsertMutation.isPending}
-            className="gap-2"
+            className="hover:border-blue-600 bg-blue-600 text-white hover:bg-white hover:text-blue-600 gap-2"
             data-testid="button-save-about"
           >
             <Save className="h-4 w-4" />
@@ -100,7 +100,7 @@ export default function AdminAboutContent() {
           <Button
             variant={contentType === "richtext" ? "default" : "outline"}
             onClick={() => setContentType("richtext")}
-            className="gap-2"
+            className="hover:bg-stone-500 hover:text-white gap-2"
             data-testid="button-type-richtext"
           >
             <Type className="h-4 w-4" />
@@ -109,7 +109,7 @@ export default function AdminAboutContent() {
           <Button
             variant={contentType === "pdf" ? "default" : "outline"}
             onClick={() => setContentType("pdf")}
-            className="gap-2"
+            className="hover:bg-stone-500 hover:text-white gap-2"
             data-testid="button-type-pdf"
           >
             <FileText className="h-4 w-4" />
@@ -130,7 +130,7 @@ export default function AdminAboutContent() {
                     className="hidden"
                     data-testid="input-pdf-file"
                   />
-                  <Button variant="outline" className="gap-2" asChild>
+                  <Button variant="outline" className="hover:bg-stone-500 hover:text-white gap-2" asChild>
                     <span>
                       <Upload className="h-4 w-4" />
                       {isUploading ? "Uploading..." : "Upload PDF"}

@@ -128,10 +128,11 @@ export default function AdminSports() {
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold" data-testid="text-admin-sports-title">Sports</h1>
+            <h1 className="text-3xl font-bold" data-testid="text-admin-sports-title">Sports</h1>
             <p className="text-muted-foreground text-sm">Manage sports types for tournaments</p>
           </div>
           <Button
+            className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600"
             data-testid="button-add-sport"
             onClick={() => { setEditItem(undefined); setDialogOpen(true); }}
           >
@@ -170,6 +171,7 @@ export default function AdminSports() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
+                        className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400"
                         size="icon"
                         variant="ghost"
                         data-testid={`button-edit-sport-${sport.id}`}
@@ -178,6 +180,7 @@ export default function AdminSports() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
+                        className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700"
                         size="icon"
                         variant="ghost"
                         data-testid={`button-delete-sport-${sport.id}`}

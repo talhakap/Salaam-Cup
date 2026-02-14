@@ -66,13 +66,13 @@ export default function AdminWaiverContent() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-2xl font-bold font-display uppercase" data-testid="text-admin-waiver-title">
+          <h1 className="text-3xl font-bold font-display uppercase" data-testid="text-admin-waiver-title">
             Waiver Content
           </h1>
           <Button
             onClick={handleSave}
             disabled={upsertMutation.isPending}
-            className="gap-2"
+            className="hover:border-blue-600 bg-blue-600 text-white hover:bg-white hover:text-blue-600 gap-2"
             data-testid="button-save-waiver"
           >
             <Save className="h-4 w-4" />

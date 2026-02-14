@@ -263,13 +263,13 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
           <span className="text-sm text-muted-foreground">({yearData.items.length} cards)</span>
         </button>
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={() => setShowAddItem(true)} data-testid={`button-add-card-${yearData.year}`}>
+          <Button className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600" size="sm" onClick={() => setShowAddItem(true)} data-testid={`button-add-card-${yearData.year}`}>
             <Plus className="w-4 h-4 mr-1" /> Add Card
           </Button>
-          <Button size="icon" variant="ghost" onClick={() => setShowEditYear(true)} data-testid={`button-edit-year-${yearData.year}`}>
+          <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => setShowEditYear(true)} data-testid={`button-edit-year-${yearData.year}`}>
             <Pencil className="w-4 h-4" />
           </Button>
-          <Button size="icon" variant="destructive" onClick={() => setDeleteYearTarget(true)} data-testid={`button-delete-year-${yearData.year}`}>
+          <Button className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700" size="icon" variant="ghost" onClick={() => setDeleteYearTarget(true)} data-testid={`button-delete-year-${yearData.year}`}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -301,11 +301,11 @@ function YearSection({ yearData }: { yearData: MediaYearWithItems }) {
                       </a>
                     )}
                     <div className="flex items-center gap-1 mt-2">
-                      <Button size="icon" variant="ghost" onClick={() => setEditingItem(item)} data-testid={`button-edit-item-${item.id}`}>
+                      <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => setEditingItem(item)} data-testid={`button-edit-item-${item.id}`}>
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setDeleteItemTarget(item)} data-testid={`button-delete-item-${item.id}`}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
+                      <Button className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700" size="icon" variant="ghost" onClick={() => setDeleteItemTarget(item)} data-testid={`button-delete-item-${item.id}`}>
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -442,10 +442,10 @@ export default function AdminMedia() {
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold font-display" data-testid="text-admin-media-title">Media Gallery</h1>
+            <h1 className="text-3xl font-bold font-display" data-testid="text-admin-media-title">Media Gallery</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage media years and tournament cards for the gallery page.</p>
           </div>
-          <Button onClick={() => setShowAddYear(true)} data-testid="button-add-year">
+          <Button className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600" onClick={() => setShowAddYear(true)} data-testid="button-add-year">
             <Plus className="w-4 h-4 mr-2" /> Add Year
           </Button>
         </div>

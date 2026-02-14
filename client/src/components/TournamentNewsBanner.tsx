@@ -40,15 +40,15 @@ export function TournamentNewsBanner({ newsItems }: TournamentNewsBannerProps) {
   const currentItem = newsItems[currentIndex];
 
   return (
-    <section className="relative max-w-[1500px] h-[300px] md:h-[700px] overflow-hidden mx-auto" data-testid="tournament-news-banner">
+    <section className="relative max-w-[1500px] h-[300px] sm:h-[400px] sm:w-[700px] md:h-[400px] md:w-[700px] lg:h-[550px] lg:w-[1000px] xl:h-[625px] xl:w-[1250px] 2xl:h-[700px] 2xl:w-[1500px] overflow-hidden mx-auto" data-testid="tournament-news-banner">
       <div
         className={`absolute inset-0 bg-cover bg-center transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}
         style={{ backgroundImage: `url(${currentItem.imageUrl})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
 
-      <div className="relative h-full flex items-end">
-        <div className="container mx-auto px-4 pb-8 md:pb-12 w-full">
+      <div className="relative h-full flex items-end ">
+        <div className="container mx-auto px-10 pb-8 md:pb-12 w-full">
           <h3
             className={`text-white text-lg md:text-2xl lg:text-3xl font-bold font-display uppercase max-w-3xl leading-tight transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}
             data-testid={`news-headline-${currentItem.id}`}

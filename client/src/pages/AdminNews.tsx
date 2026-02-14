@@ -206,10 +206,10 @@ export default function AdminNews() {
   return (
     <AdminLayout>
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-        <h1 className="text-2xl font-bold font-display" data-testid="text-admin-news-title">
+        <h1 className="text-3xl font-bold font-display" data-testid="text-admin-news-title">
           News Management
         </h1>
-        <Button onClick={openCreate} className="gap-2" data-testid="button-create-news">
+        <Button onClick={openCreate} className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-2" data-testid="button-create-news">
           <Plus className="h-4 w-4" /> Add News
         </Button>
       </div>
@@ -246,11 +246,11 @@ export default function AdminNews() {
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(item)} data-testid={`button-edit-news-${item.id}`}>
+                  <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => openEdit(item)} data-testid={`button-edit-news-${item.id}`}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(item)} data-testid={`button-delete-news-${item.id}`}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                  <Button className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700" size="icon" variant="ghost" onClick={() => setDeleteTarget(item)} data-testid={`button-delete-news-${item.id}`}>
+                    <Trash2 className="h-4 w-4 " />
                   </Button>
                 </div>
               </div>
