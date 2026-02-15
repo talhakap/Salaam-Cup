@@ -49,6 +49,7 @@ export const tournaments = pgTable("tournaments", {
   venueId: integer("venue_id").references(() => venues.id),
   showInfoBanner: boolean("show_info_banner").default(false),
   showNewsBanner: boolean("show_news_banner").default(false),
+  rostersVisible: boolean("rosters_visible").default(false),
   sortOrder: integer("sort_order").default(0).notNull(),
 });
 
