@@ -18,33 +18,33 @@ export function TournamentSponsorBanner({ sponsors }: { sponsors: TournamentSpon
 
   return (
     <section
-      className="relative max-w-[1500px] sm:w-[700px] md:w-[700px] lg:w-[1000px] xl:w-[1250px] 2xl:w-[1500px] overflow-hidden mx-auto bg-muted/40 rounded-md"
+      className="w-full max-w-[1500px] sm:w-[700px] md:w-[700px] lg:w-[1000px] xl:w-[1250px] 2xl:w-[1500px] mx-auto bg-muted/40"
       data-testid="tournament-sponsor-banner"
     >
-      <div className="flex items-center justify-center py-3 gap-4">
-        <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium shrink-0">
+      <div className="flex flex-col items-center justify-center py-4 gap-2">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
           Sponsored by
         </span>
         <a
           href={current.websiteUrl || "#"}
           target={current.websiteUrl ? "_blank" : undefined}
           rel={current.websiteUrl ? "noopener noreferrer" : undefined}
-          className="flex items-center gap-3 transition-opacity duration-500"
+          className="flex items-center justify-center transition-opacity duration-500"
           data-testid={`tournament-sponsor-${current.id}`}
         >
           <img
             src={current.logoUrl}
             alt={current.name}
-            className="h-8 md:h-12 max-w-[180px] md:max-w-[260px] object-contain"
+            className="h-12 md:h-16 lg:h-20 max-w-[250px] md:max-w-[350px] object-contain"
           />
         </a>
         {sponsors.length > 1 && (
-          <div className="flex gap-1 ml-2">
+          <div className="flex gap-1.5 mt-1">
             {sponsors.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentIndex(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === currentIndex ? "bg-foreground" : "bg-muted-foreground/30"}`}
+                className={`w-2 h-2 rounded-full transition-colors ${i === currentIndex ? "bg-foreground" : "bg-muted-foreground/30"}`}
                 data-testid={`sponsor-dot-${i}`}
               />
             ))}
