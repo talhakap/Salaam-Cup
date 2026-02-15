@@ -51,6 +51,7 @@ export const tournaments = pgTable("tournaments", {
   showNewsBanner: boolean("show_news_banner").default(false),
   rostersVisible: boolean("rosters_visible").default(false),
   showSponsorBanner: boolean("show_sponsor_banner").default(false),
+  allowMultipleRegistrations: boolean("allow_multiple_registrations").default(false),
   sortOrder: integer("sort_order").default(0).notNull(),
 });
 

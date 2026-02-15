@@ -23,7 +23,7 @@ export function TournamentSponsorBanner({ sponsors }: { sponsors: TournamentSpon
     >
       <div className="flex flex-col items-center justify-center py-4 gap-2">
         <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
-          Sponsored by
+          Golden Sponsors
         </span>
         <a
           href={current.websiteUrl || "#"}
@@ -35,7 +35,7 @@ export function TournamentSponsorBanner({ sponsors }: { sponsors: TournamentSpon
           <img
             src={current.logoUrl}
             alt={current.name}
-            className="h-12 md:h-16 lg:h-20 max-w-[250px] md:max-w-[350px] object-contain"
+            className="relative max-w-[1500px] h-[200px] sm:h-[200px] sm:w-[700px] md:h-[200px] md:w-[700px] lg:h-[225px] lg:w-[1000px] xl:h-[275px] xl:w-[1250px] 2xl:h-[350px] 2xl:w-[1500px] overflow-hidden mx-auto  "
           />
         </a>
         {sponsors.length > 1 && (

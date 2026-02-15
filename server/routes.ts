@@ -587,11 +587,13 @@ export async function registerRoutes(
       if (tournament && !tournament.registrationOpen) {
         return res.status(403).json({ message: "Registration is currently closed for this tournament." });
       }
-      const existingTeams = await storage.getTeams(input.tournamentId, undefined, input.divisionId);
-      const emailNormalized = input.captainEmail.trim().toLowerCase();
-      const duplicate = existingTeams.find(t => t.captainEmail.trim().toLowerCase() === emailNormalized);
-      if (duplicate) {
-        return res.status(409).json({ message: "This email has already been used to register a team in this division." });
+      if (!tournament?.allowMultipleRegistrations) {
+        const existingTeams = await storage.getTeams(input.tournamentId, undefined, input.divisionId);
+        const emailNormalized = input.captainEmail.trim().toLowerCase();
+        const duplicate = existingTeams.find(t => t.captainEmail.trim().toLowerCase() === emailNormalized);
+        if (duplicate) {
+          return res.status(409).json({ message: "This email has already been used to register a team in this division." });
+        }
       }
       const team = await storage.createTeam(input);
       res.status(201).json(team);
@@ -605,11 +607,14 @@ export async function registerRoutes(
     try {
       const input = api.teams.create.input.parse(req.body);
 
-      const existingTeams = await storage.getTeams(input.tournamentId, undefined, input.divisionId);
-      const emailNormalized = input.captainEmail.trim().toLowerCase();
-      const duplicate = existingTeams.find(t => t.captainEmail.trim().toLowerCase() === emailNormalized);
-      if (duplicate) {
-        return res.status(409).json({ message: "This email has already been used to register a team in this division." });
+      const adminTournament = await storage.getTournament(input.tournamentId);
+      if (!adminTournament?.allowMultipleRegistrations) {
+        const existingTeams = await storage.getTeams(input.tournamentId, undefined, input.divisionId);
+        const emailNormalized = input.captainEmail.trim().toLowerCase();
+        const duplicate = existingTeams.find(t => t.captainEmail.trim().toLowerCase() === emailNormalized);
+        if (duplicate) {
+          return res.status(409).json({ message: "This email has already been used to register a team in this division." });
+        }
       }
 
       const team = await storage.createTeam(input);

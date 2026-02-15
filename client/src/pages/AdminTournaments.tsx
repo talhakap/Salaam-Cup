@@ -647,6 +647,7 @@ export default function AdminTournaments() {
       showInfoBanner: false,
       showNewsBanner: false,
       showSponsorBanner: false,
+      allowMultipleRegistrations: false,
       rostersVisible: false,
     },
   });
@@ -667,6 +668,7 @@ export default function AdminTournaments() {
       showInfoBanner: false,
       showNewsBanner: false,
       showSponsorBanner: false,
+      allowMultipleRegistrations: false,
       rostersVisible: false,
     },
   });
@@ -699,6 +701,7 @@ export default function AdminTournaments() {
       showInfoBanner: t.showInfoBanner || false,
       showNewsBanner: t.showNewsBanner || false,
       showSponsorBanner: t.showSponsorBanner || false,
+      allowMultipleRegistrations: t.allowMultipleRegistrations || false,
       rostersVisible: t.rostersVisible || false,
     });
   };
@@ -826,6 +829,14 @@ export default function AdminTournaments() {
               <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" data-testid={`${prefix}checkbox-show-sponsor-banner`} />
             </FormControl>
             <FormLabel className="!mt-0">Show Sponsor Banner</FormLabel>
+          </FormItem>
+        )} />
+        <FormField control={form.control} name="allowMultipleRegistrations" render={({ field }: any) => (
+          <FormItem className="flex items-end gap-2 pb-2">
+            <FormControl>
+              <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" data-testid={`${prefix}checkbox-allow-multiple-reg`} />
+            </FormControl>
+            <FormLabel className="!mt-0">Allow Multiple Registrations Per Email</FormLabel>
           </FormItem>
         )} />
         <FormField control={form.control} name="rostersVisible" render={({ field }: any) => (
