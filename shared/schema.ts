@@ -50,6 +50,7 @@ export const tournaments = pgTable("tournaments", {
   showInfoBanner: boolean("show_info_banner").default(false),
   showNewsBanner: boolean("show_news_banner").default(false),
   rostersVisible: boolean("rosters_visible").default(false),
+  showSponsorBanner: boolean("show_sponsor_banner").default(false),
   sortOrder: integer("sort_order").default(0).notNull(),
 });
 
@@ -200,6 +201,20 @@ export const news = pgTable("news", {
 export const insertNewsSchema = createInsertSchema(news).omit({ id: true, createdAt: true });
 export type News = typeof news.$inferSelect;
 export type InsertNews = z.infer<typeof insertNewsSchema>;
+
+// === TOURNAMENT SPONSORS ===
+export const tournamentSponsors = pgTable("tournament_sponsors", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => tournaments.id).notNull(),
+  name: text("name").notNull(),
+  logoUrl: text("logo_url").notNull(),
+  websiteUrl: text("website_url"),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertTournamentSponsorSchema = createInsertSchema(tournamentSponsors).omit({ id: true });
+export type TournamentSponsor = typeof tournamentSponsors.$inferSelect;
+export type InsertTournamentSponsor = z.infer<typeof insertTournamentSponsorSchema>;
 
 // === SPONSORS ===
 export const sponsors = pgTable("sponsors", {

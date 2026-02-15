@@ -1,12 +1,12 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, specialAwards, aboutContent, waiverContent, mediaYears, mediaItems, faqs,
+  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, tournamentSponsors, specialAwards, aboutContent, waiverContent, mediaYears, mediaItems, faqs,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
-  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertSpecialAward, type InsertAboutContent,
+  type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertTournamentSponsor, type InsertSpecialAward, type InsertAboutContent,
   type InsertWaiverContent, type WaiverContent,
   type InsertMediaYear, type InsertMediaItem, type InsertFaq,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
-  type Standing, type Sport, type Award, type News, type Sponsor, type SpecialAward, type AboutContent,
+  type Standing, type Sport, type Award, type News, type Sponsor, type TournamentSponsor, type SpecialAward, type AboutContent,
   type MediaYear, type MediaItem, type MediaYearWithItems, type Faq,
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
@@ -91,6 +91,12 @@ export interface IStorage {
   createSponsor(data: InsertSponsor): Promise<Sponsor>;
   updateSponsor(id: number, data: Partial<InsertSponsor>): Promise<Sponsor>;
   deleteSponsor(id: number): Promise<void>;
+
+  // Tournament Sponsors
+  getTournamentSponsors(tournamentId: number): Promise<TournamentSponsor[]>;
+  createTournamentSponsor(data: InsertTournamentSponsor): Promise<TournamentSponsor>;
+  updateTournamentSponsor(id: number, data: Partial<InsertTournamentSponsor>): Promise<TournamentSponsor>;
+  deleteTournamentSponsor(id: number): Promise<void>;
 
   // Special Awards
   getSpecialAwards(): Promise<SpecialAward[]>;
@@ -775,6 +781,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSponsor(id: number): Promise<void> {
     await db.delete(sponsors).where(eq(sponsors.id, id));
+  }
+
+  // Tournament Sponsors
+  async getTournamentSponsors(tournamentId: number): Promise<TournamentSponsor[]> {
+    return await db.select().from(tournamentSponsors).where(eq(tournamentSponsors.tournamentId, tournamentId)).orderBy(tournamentSponsors.sortOrder);
+  }
+
+  async createTournamentSponsor(data: InsertTournamentSponsor): Promise<TournamentSponsor> {
+    const [item] = await db.insert(tournamentSponsors).values(data).returning();
+    return item;
+  }
+
+  async updateTournamentSponsor(id: number, data: Partial<InsertTournamentSponsor>): Promise<TournamentSponsor> {
+    const [item] = await db.update(tournamentSponsors).set(data).where(eq(tournamentSponsors.id, id)).returning();
+    return item;
+  }
+
+  async deleteTournamentSponsor(id: number): Promise<void> {
+    await db.delete(tournamentSponsors).where(eq(tournamentSponsors.id, id));
   }
 
   // Special Awards

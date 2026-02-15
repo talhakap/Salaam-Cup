@@ -11,6 +11,7 @@ import {
   insertAwardSchema,
   insertNewsSchema,
   insertSponsorSchema,
+  insertTournamentSponsorSchema,
   insertSpecialAwardSchema,
   insertAboutContentSchema,
   insertWaiverContentSchema,
@@ -29,6 +30,7 @@ import {
   awards,
   news,
   sponsors,
+  tournamentSponsors,
   specialAwards,
   aboutContent,
   mediaYears,
@@ -470,6 +472,43 @@ export const api = {
     delete: {
       method: 'DELETE' as const,
       path: '/api/sponsors/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        403: errorSchemas.forbidden,
+      },
+    },
+  },
+
+  // === TOURNAMENT SPONSORS ===
+  tournamentSponsors: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/tournaments/:tournamentId/sponsors' as const,
+      responses: {
+        200: z.array(z.custom<typeof tournamentSponsors.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/tournaments/:tournamentId/sponsors' as const,
+      input: insertTournamentSponsorSchema.omit({ tournamentId: true }),
+      responses: {
+        201: z.custom<typeof tournamentSponsors.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/tournament-sponsors/:id' as const,
+      input: insertTournamentSponsorSchema.omit({ tournamentId: true }).partial(),
+      responses: {
+        200: z.custom<typeof tournamentSponsors.$inferSelect>(),
+        403: errorSchemas.forbidden,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/tournament-sponsors/:id' as const,
       responses: {
         200: z.object({ message: z.string() }),
         403: errorSchemas.forbidden,

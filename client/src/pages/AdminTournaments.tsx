@@ -1,10 +1,11 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { useTournaments, useCreateTournament, useUpdateTournament, useDeleteTournament, useDivisions, useCreateDivision, useUpdateDivision, useDeleteDivision, useReorderTournaments, useReorderDivisions } from "@/hooks/use-tournaments";
+import { useTournamentSponsors, useCreateTournamentSponsor, useUpdateTournamentSponsor, useDeleteTournamentSponsor } from "@/hooks/use-tournament-sponsors";
 import { useVenues } from "@/hooks/use-venues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon, RotateCcw, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon, RotateCcw, ArrowUp, ArrowDown, GripVertical, Handshake } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTournamentSchema, insertDivisionSchema } from "@shared/schema";
-import type { Tournament, Division, Venue } from "@shared/schema";
+import type { Tournament, Division, Venue, TournamentSponsor } from "@shared/schema";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
@@ -374,6 +375,246 @@ function DivisionManager({ tournamentId: rawTournamentId, venues }: { tournament
   );
 }
 
+function TournamentSponsorManager({ tournamentId: rawTournamentId }: { tournamentId: number | string }) {
+  const tournamentId = Number(rawTournamentId);
+  const { data: tSponsors, isLoading } = useTournamentSponsors(tournamentId);
+  const createSponsor = useCreateTournamentSponsor();
+  const updateSponsor = useUpdateTournamentSponsor();
+  const deleteSponsor = useDeleteTournamentSponsor();
+  const { toast } = useToast();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editItem, setEditItem] = useState<TournamentSponsor | null>(null);
+  const [deleteItem, setDeleteItem] = useState<TournamentSponsor | null>(null);
+
+  const [name, setName] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadFile, isUploading } = useUpload({
+    folder: "tournament-sponsors",
+    onSuccess: (response) => {
+      if (editItem) {
+        setLogoUrl(response.objectPath);
+      } else {
+        setLogoUrl(response.objectPath);
+      }
+      toast({ title: "Logo uploaded" });
+    },
+    onError: (error) => {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    await uploadFile(file);
+  };
+
+  const resetForm = () => {
+    setName("");
+    setLogoUrl("");
+    setWebsiteUrl("");
+    setSortOrder(0);
+  };
+
+  const handleCreate = async () => {
+    if (!name || !logoUrl) {
+      toast({ title: "Name and logo are required", variant: "destructive" });
+      return;
+    }
+    try {
+      await createSponsor.mutateAsync({ tournamentId, name, logoUrl, websiteUrl: websiteUrl || null, sortOrder });
+      toast({ title: "Sponsor added" });
+      setCreateOpen(false);
+      resetForm();
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const openEdit = (item: TournamentSponsor) => {
+    setEditItem(item);
+    setName(item.name);
+    setLogoUrl(item.logoUrl);
+    setWebsiteUrl(item.websiteUrl || "");
+    setSortOrder(item.sortOrder || 0);
+  };
+
+  const handleEdit = async () => {
+    if (!editItem || !name || !logoUrl) return;
+    try {
+      await updateSponsor.mutateAsync({ id: editItem.id, tournamentId, name, logoUrl, websiteUrl: websiteUrl || null, sortOrder });
+      toast({ title: "Sponsor updated" });
+      setEditItem(null);
+      resetForm();
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteItem) return;
+    try {
+      await deleteSponsor.mutateAsync({ id: deleteItem.id, tournamentId });
+      toast({ title: "Sponsor deleted" });
+      setDeleteItem(null);
+    } catch (err) {
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  if (isLoading) return <div className="py-4 text-center text-sm text-muted-foreground">Loading sponsors...</div>;
+
+  return (
+    <div className="mt-2 border-t pt-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h4 className="text-sm font-semibold flex items-center gap-1"><Handshake className="h-4 w-4" /> Tournament Sponsors</h4>
+        <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) resetForm(); }}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="bg-green-600 text-white hover:bg-white hover:text-green-600 hover:border-green-600 gap-1" data-testid={`button-add-tsponsor-${tournamentId}`}>
+              <Plus className="h-3 w-3" /> Add Sponsor
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Tournament Sponsor</DialogTitle>
+              <DialogDescription>Add a sponsor banner for this tournament.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Name *</label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} data-testid="input-tsponsor-name" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Logo *</label>
+                {logoUrl && (
+                  <div className="bg-muted rounded-md p-3 flex items-center justify-center mb-2">
+                    <img src={logoUrl} alt="Preview" className="max-h-16 object-contain" />
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                    {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                    {isUploading ? "Uploading..." : "Upload Logo"}
+                  </Button>
+                </div>
+                <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="Or paste logo URL" className="mt-2" data-testid="input-tsponsor-logo" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Website URL</label>
+                <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://..." data-testid="input-tsponsor-website" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Sort Order</label>
+                <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleCreate} disabled={createSponsor.isPending} data-testid="button-create-tsponsor-submit">
+                {createSponsor.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Add Sponsor
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {!tSponsors || tSponsors.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-2">No tournament sponsors yet</p>
+      ) : (
+        <div className="space-y-2">
+          {tSponsors.map((sp) => (
+            <div key={sp.id} className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-md" data-testid={`row-tsponsor-${sp.id}`}>
+              <div className="flex items-center gap-3 min-w-0">
+                {sp.logoUrl && <img src={sp.logoUrl} alt={sp.name} className="h-8 w-auto object-contain max-w-[80px]" />}
+                <div className="min-w-0">
+                  <span className="font-medium text-sm">{sp.name}</span>
+                  {sp.websiteUrl && <span className="text-xs text-muted-foreground ml-2 truncate">{sp.websiteUrl}</span>}
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <Button className="bg-amber-400 text-white hover:bg-white hover:text-amber-400 hover:border-amber-400" size="icon" variant="ghost" onClick={() => openEdit(sp)} data-testid={`button-edit-tsponsor-${sp.id}`}>
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <Button className="bg-red-700 text-white hover:bg-white hover:text-red-700 hover:border-red-700" size="icon" variant="ghost" onClick={() => setDeleteItem(sp)} data-testid={`button-delete-tsponsor-${sp.id}`}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={!!editItem} onOpenChange={(o) => { if (!o) { setEditItem(null); resetForm(); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Tournament Sponsor</DialogTitle>
+            <DialogDescription>Update sponsor details.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Name *</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} data-testid="input-edit-tsponsor-name" />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Logo *</label>
+              {logoUrl && (
+                <div className="bg-muted rounded-md p-3 flex items-center justify-center mb-2">
+                  <img src={logoUrl} alt="Preview" className="max-h-16 object-contain" />
+                </div>
+              )}
+              <input ref={editFileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => editFileInputRef.current?.click()} disabled={isUploading}>
+                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                  {isUploading ? "Uploading..." : "Upload Logo"}
+                </Button>
+              </div>
+              <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="Or paste logo URL" className="mt-2" />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Website URL</label>
+              <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://..." />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Sort Order</label>
+              <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEdit} disabled={updateSponsor.isPending} data-testid="button-update-tsponsor-submit">
+              {updateSponsor.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Sponsor</DialogTitle>
+            <DialogDescription>Are you sure you want to delete "{deleteItem?.name}"?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteSponsor.isPending} data-testid="button-confirm-delete-tsponsor">
+              {deleteSponsor.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function AdminTournaments() {
   const { data: tournaments, isLoading } = useTournaments();
   const { data: venues } = useVenues();
@@ -405,6 +646,7 @@ export default function AdminTournaments() {
       venueId: null as number | null,
       showInfoBanner: false,
       showNewsBanner: false,
+      showSponsorBanner: false,
       rostersVisible: false,
     },
   });
@@ -424,6 +666,7 @@ export default function AdminTournaments() {
       venueId: null as number | null,
       showInfoBanner: false,
       showNewsBanner: false,
+      showSponsorBanner: false,
       rostersVisible: false,
     },
   });
@@ -455,6 +698,7 @@ export default function AdminTournaments() {
       venueId: t.venueId || null,
       showInfoBanner: t.showInfoBanner || false,
       showNewsBanner: t.showNewsBanner || false,
+      showSponsorBanner: t.showSponsorBanner || false,
       rostersVisible: t.rostersVisible || false,
     });
   };
@@ -574,6 +818,14 @@ export default function AdminTournaments() {
               <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" data-testid={`${prefix}checkbox-show-news-banner`} />
             </FormControl>
             <FormLabel className="!mt-0">Show News Banner</FormLabel>
+          </FormItem>
+        )} />
+        <FormField control={form.control} name="showSponsorBanner" render={({ field }: any) => (
+          <FormItem className="flex items-end gap-2 pb-2">
+            <FormControl>
+              <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" data-testid={`${prefix}checkbox-show-sponsor-banner`} />
+            </FormControl>
+            <FormLabel className="!mt-0">Show Sponsor Banner</FormLabel>
           </FormItem>
         )} />
         <FormField control={form.control} name="rostersVisible" render={({ field }: any) => (
@@ -731,6 +983,23 @@ export default function AdminTournaments() {
                       {t.rostersVisible ? "Rosters On" : "Rosters Off"}
                     </span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={!!t.showSponsorBanner}
+                      onCheckedChange={async (checked) => {
+                        try {
+                          await updateTournament.mutateAsync({ id: t.id, showSponsorBanner: checked });
+                          toast({ title: checked ? "Sponsor banner shown" : "Sponsor banner hidden" });
+                        } catch (err) {
+                          toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+                        }
+                      }}
+                      data-testid={`switch-sponsor-banner-${t.id}`}
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {t.showSponsorBanner ? "Sponsors On" : "Sponsors Off"}
+                    </span>
+                  </div>
                   <Button className="hover:bg-gray-500 hover:text-white" size="icon" variant="ghost" onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} data-testid={`button-expand-tournament-${t.id}`}>
                     {expandedId === t.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
@@ -748,6 +1017,7 @@ export default function AdminTournaments() {
               {expandedId === t.id && (
                 <div className="px-4 pb-4">
                   <DivisionManager tournamentId={t.id} venues={venues || []} />
+                  <TournamentSponsorManager tournamentId={t.id} />
                 </div>
               )}
             </div>

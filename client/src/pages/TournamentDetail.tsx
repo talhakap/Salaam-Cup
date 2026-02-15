@@ -6,7 +6,9 @@ import { SponsorBar } from "@/components/SponsorBar";
 import { ReadyToCompete } from "@/components/ReadyToCompete";
 import { FAQSection } from "@/components/FAQSection";
 import { TournamentNewsBanner } from "@/components/TournamentNewsBanner";
+import { TournamentSponsorBanner } from "@/components/TournamentSponsorBanner";
 import { useTournament, useDivisions } from "@/hooks/use-tournaments";
+import { useTournamentSponsors } from "@/hooks/use-tournament-sponsors";
 import { useTeams } from "@/hooks/use-teams";
 import { useMatches } from "@/hooks/use-matches";
 import { useVenues } from "@/hooks/use-venues";
@@ -34,6 +36,7 @@ export default function TournamentDetail() {
   const { data: venues } = useVenues();
   const { data: allStandings, isLoading: standingsLoading } = useStandings(numericId);
   const { data: allNews } = useNews();
+  const { data: tournamentSponsorsList } = useTournamentSponsors(numericId);
 
   const tournamentNews = useMemo(() => {
     if (!allNews || !numericId) return [];
@@ -119,6 +122,10 @@ export default function TournamentDetail() {
 
       {tournament.showNewsBanner && tournamentNews.length > 0 && (
         <TournamentNewsBanner newsItems={tournamentNews} />
+      )}
+
+      {tournament.showSponsorBanner && tournamentSponsorsList && tournamentSponsorsList.length > 0 && (
+        <TournamentSponsorBanner sponsors={tournamentSponsorsList} />
       )}
 
       {tournament.showInfoBanner && (

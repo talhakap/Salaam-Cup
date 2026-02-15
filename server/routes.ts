@@ -1308,6 +1308,43 @@ export async function registerRoutes(
     }
   });
 
+  // === TOURNAMENT SPONSORS ===
+  app.get(api.tournamentSponsors.list.path, async (req, res) => {
+    const data = await storage.getTournamentSponsors(Number(req.params.tournamentId));
+    res.json(data);
+  });
+
+  app.post(api.tournamentSponsors.create.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.tournamentSponsors.create.input.parse(req.body);
+      const item = await storage.createTournamentSponsor({ ...input, tournamentId: Number(req.params.tournamentId) });
+      res.status(201).json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.patch(api.tournamentSponsors.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const input = api.tournamentSponsors.update.input.parse(req.body);
+      const item = await storage.updateTournamentSponsor(Number(req.params.id), input);
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      throw err;
+    }
+  });
+
+  app.delete(api.tournamentSponsors.delete.path, isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteTournamentSponsor(Number(req.params.id));
+      res.json({ message: "Tournament sponsor deleted" });
+    } catch (err) {
+      throw err;
+    }
+  });
+
   // === SPECIAL AWARDS ===
   app.get(api.specialAwards.list.path, async (_req, res) => {
     const data = await storage.getSpecialAwards();
