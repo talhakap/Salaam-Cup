@@ -205,7 +205,7 @@ export default function TeamDetail() {
 }
 
 function PlayerRow({ player }: { player: Player }) {
-  const isRegistered = player.status === "confirmed" || player.status === "verified";
+  const isRegistered = player.status === "confirmed";
 
   return (
     <div className="flex items-center py-4 border-b gap-4" data-testid={`player-row-${player.id}`}>

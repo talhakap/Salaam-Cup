@@ -407,7 +407,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllRegisteredPlayers(status?: string): Promise<(Player & { team: Team | null })[]> {
     const conditions: any[] = [
-      sql`(${players.registrationType} IN ('player', 'free_agent') OR (${players.registrationType} = 'roster' AND ${players.status} = 'confirmed'))`
+      sql`(${players.registrationType} IN ('player', 'free_agent') OR (${players.registrationType} = 'roster' AND ${players.status} IN ('staging', 'confirmed')))`
     ];
     if (status) conditions.push(eq(players.status, status as any));
     const allPlayers = await db.select().from(players)

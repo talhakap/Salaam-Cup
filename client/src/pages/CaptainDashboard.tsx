@@ -69,7 +69,7 @@ function AddPlayerDialog({ teamId }: { teamId: number }) {
         <DialogHeader>
           <DialogTitle>Add New Player</DialogTitle>
           <DialogDescription>
-            Enter player details. They will need to be verified by admin.
+            Enter player details. They will appear on your roster once confirmed.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -159,7 +159,7 @@ function RosterList({ teamId }: { teamId: number }) {
                   <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
                   <TableCell>{player.jerseyNumber}</TableCell>
                   <TableCell>
-                    <Badge variant={player.status === 'verified' || player.status === 'confirmed' ? 'default' : player.status === 'flagged' || player.status === 'rejected' ? 'destructive' : 'secondary'} data-testid={`badge-player-status-${player.id}`}>
+                    <Badge variant={player.status === 'confirmed' ? 'default' : player.status === 'flagged' || player.status === 'rejected' ? 'destructive' : 'secondary'} data-testid={`badge-player-status-${player.id}`}>
                       {player.status}
                     </Badge>
                   </TableCell>

@@ -1749,36 +1749,36 @@ async function seedDatabase() {
 
   // Players for Dirty Clan
   const dcPlayers = [
-    { firstName: "Ali", lastName: "Hassan", email: "ali@example.com", dob: "1995-05-15", jerseyNumber: 10, status: "verified" as const, position: "Forward" },
-    { firstName: "Zain", lastName: "Malik", email: "zain@example.com", dob: "1997-03-22", jerseyNumber: 7, status: "verified" as const, position: "Defense" },
-    { firstName: "Hamza", lastName: "Sheikh", email: "hamza@example.com", dob: "1996-11-08", jerseyNumber: 4, status: "verified" as const, position: "Goalie" },
-    { firstName: "Usman", lastName: "Farooq", email: "usman@example.com", dob: "1998-01-30", jerseyNumber: 11, status: "verified" as const, position: "Forward" },
+    { firstName: "Ali", lastName: "Hassan", email: "ali@example.com", dob: "1995-05-15", jerseyNumber: 10, status: "confirmed" as const, position: "Forward" },
+    { firstName: "Zain", lastName: "Malik", email: "zain@example.com", dob: "1997-03-22", jerseyNumber: 7, status: "confirmed" as const, position: "Defense" },
+    { firstName: "Hamza", lastName: "Sheikh", email: "hamza@example.com", dob: "1996-11-08", jerseyNumber: 4, status: "confirmed" as const, position: "Goalie" },
+    { firstName: "Usman", lastName: "Farooq", email: "usman@example.com", dob: "1998-01-30", jerseyNumber: 11, status: "confirmed" as const, position: "Forward" },
     { firstName: "Kareem", lastName: "Noor", email: "kareem@example.com", dob: "1994-07-12", jerseyNumber: 22, status: "staging" as const, position: "Defense" },
     { firstName: "Faisal", lastName: "Qureshi", email: "faisal@example.com", dob: "1999-09-05", jerseyNumber: 15, status: "staging" as const, position: "Forward", adminNotes: "Missing waiver signature" },
   ];
   for (const p of dcPlayers) {
-    await storage.createPlayer({ ...p, teamId: dirtyClan.id, waiverSigned: p.status === "verified" });
+    await storage.createPlayer({ ...p, teamId: dirtyClan.id, waiverSigned: p.status === "confirmed" });
   }
 
   // Players for The Mafia
   const mafiaPlayers = [
-    { firstName: "Ibrahim", lastName: "Ahmed", email: "ibrahim@example.com", dob: "1996-02-14", jerseyNumber: 9, status: "verified" as const, position: "Forward" },
-    { firstName: "Saad", lastName: "Khan", email: "saad@example.com", dob: "1997-08-21", jerseyNumber: 3, status: "verified" as const, position: "Defense" },
-    { firstName: "Amir", lastName: "Raza", email: "amir@example.com", dob: "1995-12-03", jerseyNumber: 1, status: "verified" as const, position: "Goalie" },
+    { firstName: "Ibrahim", lastName: "Ahmed", email: "ibrahim@example.com", dob: "1996-02-14", jerseyNumber: 9, status: "confirmed" as const, position: "Forward" },
+    { firstName: "Saad", lastName: "Khan", email: "saad@example.com", dob: "1997-08-21", jerseyNumber: 3, status: "confirmed" as const, position: "Defense" },
+    { firstName: "Amir", lastName: "Raza", email: "amir@example.com", dob: "1995-12-03", jerseyNumber: 1, status: "confirmed" as const, position: "Goalie" },
     { firstName: "Nabil", lastName: "Younis", email: "nabil@example.com", dob: "1998-06-17", jerseyNumber: 18, status: "rejected" as const, position: "Forward", adminNotes: "Age eligibility issue" },
   ];
   for (const p of mafiaPlayers) {
-    await storage.createPlayer({ ...p, teamId: mafia.id, waiverSigned: p.status === "verified" });
+    await storage.createPlayer({ ...p, teamId: mafia.id, waiverSigned: p.status === "confirmed" });
   }
 
   // Players for Stoughton
   const stoughtonPlayers = [
-    { firstName: "Jamal", lastName: "Hassan", email: "jamal@example.com", dob: "1997-04-09", jerseyNumber: 5, status: "verified" as const, position: "Forward" },
-    { firstName: "Khalid", lastName: "Osman", email: "khalid@example.com", dob: "1996-10-28", jerseyNumber: 8, status: "verified" as const, position: "Defense" },
+    { firstName: "Jamal", lastName: "Hassan", email: "jamal@example.com", dob: "1997-04-09", jerseyNumber: 5, status: "confirmed" as const, position: "Forward" },
+    { firstName: "Khalid", lastName: "Osman", email: "khalid@example.com", dob: "1996-10-28", jerseyNumber: 8, status: "confirmed" as const, position: "Defense" },
     { firstName: "Rashid", lastName: "Ali", email: "rashid@example.com", dob: "1998-07-02", jerseyNumber: 12, status: "staging" as const, position: "Goalie" },
   ];
   for (const p of stoughtonPlayers) {
-    await storage.createPlayer({ ...p, teamId: stoughton.id, waiverSigned: p.status === "verified" });
+    await storage.createPlayer({ ...p, teamId: stoughton.id, waiverSigned: p.status === "confirmed" });
   }
 
   // Matches - Pool A round robin (all final to generate standings)

@@ -108,7 +108,7 @@ export const players = pgTable("players", {
   dob: date("dob", { mode: "string" }).notNull(),
   jerseyNumber: integer("jersey_number"),
   position: text("position"),
-  status: text("status", { enum: ["staging", "confirmed", "flagged", "verified", "rejected"] }).default("staging").notNull(),
+  status: text("status", { enum: ["staging", "confirmed", "flagged", "rejected"] }).default("staging").notNull(),
   registrationType: text("registration_type", { enum: ["roster", "player", "free_agent"] }).default("roster").notNull(),
   photoUrl: text("photo_url"),
   waiverSigned: boolean("waiver_signed").default(false),

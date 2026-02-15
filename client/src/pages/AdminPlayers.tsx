@@ -110,7 +110,6 @@ function EditPlayerDialog({ player, onClose }: { player: PlayerWithTeam; onClose
                 <SelectItem value="staging">Staging</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="flagged">Flagged</SelectItem>
-                <SelectItem value="verified">Verified</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
@@ -247,7 +246,6 @@ function CreatePlayerDialog({ teams, onClose }: { teams: Team[]; onClose: () => 
                 <SelectItem value="staging">Staging</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="flagged">Flagged</SelectItem>
-                <SelectItem value="verified">Verified</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
@@ -299,7 +297,7 @@ export default function AdminPlayers() {
     return players.filter((p) => {
       if (statusFilter !== "all") {
         if (statusFilter === "confirmed") {
-          if (p.status !== "confirmed" && p.status !== "verified") return false;
+          if (p.status !== "confirmed") return false;
         } else {
           if (p.status !== statusFilter) return false;
         }
@@ -373,7 +371,6 @@ export default function AdminPlayers() {
   const statusBadgeVariant = (status: string) => {
     switch (status) {
       case "confirmed": return "default" as const;
-      case "verified": return "default" as const;
       case "flagged": return "destructive" as const;
       case "rejected": return "destructive" as const;
       default: return "secondary" as const;
