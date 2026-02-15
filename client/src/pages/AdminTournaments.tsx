@@ -405,6 +405,7 @@ export default function AdminTournaments() {
       venueId: null as number | null,
       showInfoBanner: false,
       showNewsBanner: false,
+      rostersVisible: false,
     },
   });
 
@@ -423,6 +424,7 @@ export default function AdminTournaments() {
       venueId: null as number | null,
       showInfoBanner: false,
       showNewsBanner: false,
+      rostersVisible: false,
     },
   });
 
@@ -453,6 +455,7 @@ export default function AdminTournaments() {
       venueId: t.venueId || null,
       showInfoBanner: t.showInfoBanner || false,
       showNewsBanner: t.showNewsBanner || false,
+      rostersVisible: t.rostersVisible || false,
     });
   };
 
@@ -571,6 +574,14 @@ export default function AdminTournaments() {
               <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" data-testid={`${prefix}checkbox-show-news-banner`} />
             </FormControl>
             <FormLabel className="!mt-0">Show News Banner</FormLabel>
+          </FormItem>
+        )} />
+        <FormField control={form.control} name="rostersVisible" render={({ field }: any) => (
+          <FormItem className="flex items-end gap-2 pb-2">
+            <FormControl>
+              <input type="checkbox" checked={field.value} onChange={field.onChange} className="h-4 w-4" data-testid={`${prefix}checkbox-rosters-visible`} />
+            </FormControl>
+            <FormLabel className="!mt-0">Show Rosters Publicly</FormLabel>
           </FormItem>
         )} />
       </div>
@@ -701,6 +712,23 @@ export default function AdminTournaments() {
                     />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       {t.registrationOpen ? "Reg. Open" : "Reg. Closed"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={!!t.rostersVisible}
+                      onCheckedChange={async (checked) => {
+                        try {
+                          await updateTournament.mutateAsync({ id: t.id, rostersVisible: checked });
+                          toast({ title: checked ? "Rosters now visible" : "Rosters hidden" });
+                        } catch (err) {
+                          toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+                        }
+                      }}
+                      data-testid={`switch-rosters-visible-${t.id}`}
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {t.rostersVisible ? "Rosters On" : "Rosters Off"}
                     </span>
                   </div>
                   <Button className="hover:bg-gray-500 hover:text-white" size="icon" variant="ghost" onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} data-testid={`button-expand-tournament-${t.id}`}>

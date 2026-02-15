@@ -6,6 +6,7 @@ import { useTeam } from "@/hooks/use-teams";
 import { usePlayers } from "@/hooks/use-players";
 import { useMatches } from "@/hooks/use-matches";
 import { useVenues } from "@/hooks/use-venues";
+import { useTournament } from "@/hooks/use-tournaments";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +19,13 @@ export default function TeamDetail() {
   const teamId = Number(params?.id);
 
   const { data: team, isLoading } = useTeam(teamId);
+  const { data: tournament } = useTournament(team?.tournamentId || 0);
   const { data: players } = usePlayers(teamId);
   const { data: allMatches } = useMatches(team?.tournamentId || 0);
   const { data: venues } = useVenues();
 
-  const [activeTab, setActiveTab] = useState<"roster" | "schedule">("roster");
+  const rostersVisible = !!tournament?.rostersVisible;
+  const [activeTab, setActiveTab] = useState<"roster" | "schedule">("schedule");
 
   if (isLoading) {
     return (
@@ -97,14 +100,16 @@ export default function TeamDetail() {
       <section className="bg-background">
         <div className="container mx-auto px-4">
           <div className="flex gap-2 py-6">
-            <Button
-              variant={activeTab === "roster" ? "default" : "outline"}
-              className="hover:bg-stone-500 hover:text-background rounded-full text-xs font-bold uppercase tracking-wider"
-              onClick={() => setActiveTab("roster")}
-              data-testid="tab-roster"
-            >
-              Roster
-            </Button>
+            {rostersVisible && (
+              <Button
+                variant={activeTab === "roster" ? "default" : "outline"}
+                className="hover:bg-stone-500 hover:text-background rounded-full text-xs font-bold uppercase tracking-wider"
+                onClick={() => setActiveTab("roster")}
+                data-testid="tab-roster"
+              >
+                Roster
+              </Button>
+            )}
             <Button
               variant={activeTab === "schedule" ? "default" : "outline"}
               className="hover:bg-stone-500 hover:text-background rounded-full text-xs font-bold uppercase tracking-wider"
@@ -117,7 +122,7 @@ export default function TeamDetail() {
         </div>
       </section>
 
-      {activeTab === "roster" && (
+      {activeTab === "roster" && rostersVisible && (
         <section className="py-8 bg-background">
           <div className="container mx-auto px-4">
             {rosterPlayers.length > 0 ? (
