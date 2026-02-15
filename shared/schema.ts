@@ -52,6 +52,7 @@ export const tournaments = pgTable("tournaments", {
   rostersVisible: boolean("rosters_visible").default(false),
   showSponsorBanner: boolean("show_sponsor_banner").default(false),
   allowMultipleRegistrations: boolean("allow_multiple_registrations").default(false),
+  standingsType: text("standings_type", { enum: ["hockey_standard", "soccer_standard", "basketball_standard", "softball_standard"] }).default("hockey_standard"),
   sortOrder: integer("sort_order").default(0).notNull(),
 });
 
