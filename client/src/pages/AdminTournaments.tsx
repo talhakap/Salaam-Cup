@@ -977,40 +977,6 @@ export default function AdminTournaments() {
                       {t.registrationOpen ? "Reg. Open" : "Reg. Closed"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={!!t.rostersVisible}
-                      onCheckedChange={async (checked) => {
-                        try {
-                          await updateTournament.mutateAsync({ id: t.id, rostersVisible: checked });
-                          toast({ title: checked ? "Rosters now visible" : "Rosters hidden" });
-                        } catch (err) {
-                          toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
-                        }
-                      }}
-                      data-testid={`switch-rosters-visible-${t.id}`}
-                    />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {t.rostersVisible ? "Rosters On" : "Rosters Off"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={!!t.showSponsorBanner}
-                      onCheckedChange={async (checked) => {
-                        try {
-                          await updateTournament.mutateAsync({ id: t.id, showSponsorBanner: checked });
-                          toast({ title: checked ? "Sponsor banner shown" : "Sponsor banner hidden" });
-                        } catch (err) {
-                          toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
-                        }
-                      }}
-                      data-testid={`switch-sponsor-banner-${t.id}`}
-                    />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {t.showSponsorBanner ? "Sponsors On" : "Sponsors Off"}
-                    </span>
-                  </div>
                   <Button className="hover:bg-gray-500 hover:text-white" size="icon" variant="ghost" onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} data-testid={`button-expand-tournament-${t.id}`}>
                     {expandedId === t.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
