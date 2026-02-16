@@ -59,10 +59,9 @@ export default function TournamentSchedule() {
         }
         if (filterRound !== "all") {
           const r = (m.round || "").toLowerCase();
-          const playoffKeywords = ["quarter", "semi", "final", "playoff", "bracket", "elimination", "consolation"];
-          const isPlayoff = playoffKeywords.some(k => r.includes(k));
-          if (filterRound === "round-robin" && isPlayoff) return false;
-          if (filterRound === "playoffs" && !isPlayoff) return false;
+          const isRoundRobin = r === "" || r === "round robin" || r === "round-robin";
+          if (filterRound === "round-robin" && !isRoundRobin) return false;
+          if (filterRound === "playoffs" && isRoundRobin) return false;
         }
         return true;
       })
