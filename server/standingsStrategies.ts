@@ -129,20 +129,24 @@ function basketballStandard(): StandingsStrategy {
   };
 }
 
+function softballWinPct(s: InsertStanding): number {
+  const gp = s.gamesPlayed ?? 0;
+  if (gp === 0) return 0;
+  return (s.wins! + 0.5 * s.ties!) / gp;
+}
+
 function softballStandard(): StandingsStrategy {
   return {
-    calculatePoints: (wins, _losses, _ties) => wins * 2,
-    sortStandings: (a, b) => (b.points! - a.points!) || ((b.cappedRunDifferential ?? 0) - (a.cappedRunDifferential ?? 0)),
+    calculatePoints: (wins, _losses, ties) => wins * 2 + ties,
+    sortStandings: (a, b) => (softballWinPct(b) - softballWinPct(a)) || ((b.cappedRunDifferential ?? 0) - (a.cappedRunDifferential ?? 0)),
     sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
       divStandings.sort((a, b) => {
-        const ptsDiff = b.points! - a.points!;
-        if (ptsDiff !== 0) return ptsDiff;
+        const pctDiff = softballWinPct(b) - softballWinPct(a);
+        if (Math.abs(pctDiff) > 0.0001) return pctDiff;
 
-        const tiedTeamIds = divStandings
-          .filter(s => s.points === a.points)
-          .map(s => s.teamId);
+        const tiedTeams = divStandings.filter(s => Math.abs(softballWinPct(s) - softballWinPct(a)) < 0.0001);
 
-        if (tiedTeamIds.length === 2) {
+        if (tiedTeams.length === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
