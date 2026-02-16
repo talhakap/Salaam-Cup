@@ -607,7 +607,7 @@ export class DatabaseStorage implements IStorage {
 
   // Standings
   async getStandings(tournamentId: number): Promise<StandingWithTeam[]> {
-    const rows = await db.select().from(standings).where(eq(standings.tournamentId, tournamentId));
+    const rows = await db.select().from(standings).where(eq(standings.tournamentId, tournamentId)).orderBy(standings.position);
     const approvedTeams = await db.select().from(teams)
       .where(and(eq(teams.tournamentId, tournamentId), eq(teams.status, "approved")));
 

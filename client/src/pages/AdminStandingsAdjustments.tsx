@@ -1,255 +1,225 @@
 import { AdminLayout } from "@/components/AdminLayout";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
 import { useStandings } from "@/hooks/use-standings";
-import { useStandingsAdjustments, useUpsertStandingsAdjustment, useDeleteStandingsAdjustment } from "@/hooks/use-standings-adjustments";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
-import type { Tournament, Division, StandingWithTeam, StandingsAdjustment } from "@shared/schema";
+import { useState, useEffect, useCallback } from "react";
+import { ArrowUp, ArrowDown, Loader2, Save, RotateCcw } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { getStandingsColumns } from "@shared/standingsConfig";
+import { api } from "@shared/routes";
+import type { Tournament, Division, StandingWithTeam } from "@shared/schema";
 
 export default function AdminStandingsAdjustments() {
   const { data: tournaments } = useTournaments();
   const [selectedTournamentId, setSelectedTournamentId] = useState<number | null>(null);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>("");
   const { data: divisions } = useDivisions(selectedTournamentId || 0);
   const { data: allStandings } = useStandings(selectedTournamentId || 0);
-  const { data: adjustments } = useStandingsAdjustments(selectedTournamentId || 0);
-  const upsertAdjustment = useUpsertStandingsAdjustment();
-  const deleteAdjustment = useDeleteStandingsAdjustment();
   const { toast } = useToast();
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
-  const [selectedDivisionId, setSelectedDivisionId] = useState<number | null>(null);
-  const [pointsAdj, setPointsAdj] = useState(0);
-  const [winsAdj, setWinsAdj] = useState(0);
-  const [lossesAdj, setLossesAdj] = useState(0);
-  const [tiesAdj, setTiesAdj] = useState(0);
-  const [gfAdj, setGfAdj] = useState(0);
-  const [gaAdj, setGaAdj] = useState(0);
-  const [notes, setNotes] = useState("");
+  const selectedTournament = (tournaments || []).find((t: Tournament) => Number(t.id) === selectedTournamentId);
+  const columns = getStandingsColumns(selectedTournament?.standingsType);
 
-  const resetForm = () => {
-    setSelectedTeamId(null);
-    setSelectedDivisionId(null);
-    setPointsAdj(0);
-    setWinsAdj(0);
-    setLossesAdj(0);
-    setTiesAdj(0);
-    setGfAdj(0);
-    setGaAdj(0);
-    setNotes("");
-  };
+  const filteredStandings = (allStandings || [])
+    .filter((s: StandingWithTeam) => String(s.divisionId) === selectedDivisionId)
+    .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0));
 
-  const teamsInStandings = (allStandings || []).filter((s: StandingWithTeam) => s.team);
+  const [localOrder, setLocalOrder] = useState<StandingWithTeam[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!selectedTournamentId || !selectedTeamId || !selectedDivisionId) {
-      toast({ title: "Please select a team", variant: "destructive" });
-      return;
+  useEffect(() => {
+    if (filteredStandings.length > 0) {
+      setLocalOrder([...filteredStandings]);
+      setHasChanges(false);
+    } else {
+      setLocalOrder([]);
+      setHasChanges(false);
     }
-    try {
-      await upsertAdjustment.mutateAsync({
-        tournamentId: selectedTournamentId,
-        teamId: selectedTeamId,
-        divisionId: selectedDivisionId,
-        pointsAdjustment: pointsAdj,
-        winsAdjustment: winsAdj,
-        lossesAdjustment: lossesAdj,
-        tiesAdjustment: tiesAdj,
-        goalsForAdjustment: gfAdj,
-        goalsAgainstAdjustment: gaAdj,
-        notes,
-      });
-      toast({ title: "Adjustment saved and standings recalculated" });
-      setDialogOpen(false);
-      resetForm();
-    } catch (err) {
-      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
+  }, [allStandings, selectedDivisionId]);
+
+  useEffect(() => {
+    if (selectedDivisionId === "" && divisions && divisions.length > 0) {
+      setSelectedDivisionId(String(divisions[0].id));
     }
+  }, [divisions, selectedDivisionId]);
+
+  useEffect(() => {
+    setSelectedDivisionId("");
+  }, [selectedTournamentId]);
+
+  const moveTeam = useCallback((index: number, direction: "up" | "down") => {
+    const newOrder = [...localOrder];
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= newOrder.length) return;
+    [newOrder[index], newOrder[swapIndex]] = [newOrder[swapIndex], newOrder[index]];
+    newOrder.forEach((s, i) => { s.position = i + 1; });
+    setLocalOrder(newOrder);
+    setHasChanges(true);
+  }, [localOrder]);
+
+  const reorderMutation = useMutation({
+    mutationFn: async (data: { tournamentId: number; divisionId: number; teamPositions: { teamId: number; position: number }[] }) => {
+      const res = await apiRequest("POST", `/api/tournaments/${data.tournamentId}/standings/reorder`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      if (selectedTournamentId) {
+        queryClient.invalidateQueries({ queryKey: [api.standings.list.path, selectedTournamentId] });
+      }
+      toast({ title: "Standings order saved" });
+      setHasChanges(false);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error saving order", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleSave = () => {
+    if (!selectedTournamentId || !selectedDivisionId) return;
+    const teamPositions = localOrder.map((s, i) => ({
+      teamId: Number(s.teamId),
+      position: i + 1,
+    }));
+    reorderMutation.mutate({
+      tournamentId: selectedTournamentId,
+      divisionId: Number(selectedDivisionId),
+      teamPositions,
+    });
   };
 
-  const handleDelete = async (adj: StandingsAdjustment) => {
-    if (!selectedTournamentId) return;
-    try {
-      await deleteAdjustment.mutateAsync({ id: adj.id, tournamentId: selectedTournamentId });
-      toast({ title: "Adjustment removed and standings recalculated" });
-    } catch (err) {
-      toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
-    }
-  };
-
-  const openEditAdjustment = (adj: StandingsAdjustment) => {
-    setSelectedTeamId(adj.teamId);
-    setSelectedDivisionId(adj.divisionId);
-    setPointsAdj(adj.pointsAdjustment);
-    setWinsAdj(adj.winsAdjustment);
-    setLossesAdj(adj.lossesAdjustment);
-    setTiesAdj(adj.tiesAdjustment);
-    setGfAdj(adj.goalsForAdjustment);
-    setGaAdj(adj.goalsAgainstAdjustment);
-    setNotes(adj.notes || "");
-    setDialogOpen(true);
-  };
-
-  const getTeamName = (teamId: number) => {
-    const standing = teamsInStandings.find((s: StandingWithTeam) => Number(s.teamId) === teamId);
-    return standing?.team?.name || `Team #${teamId}`;
-  };
-
-  const getDivisionName = (divisionId: number) => {
-    const div = (divisions || []).find((d: Division) => Number(d.id) === divisionId);
-    return div?.name || `Division #${divisionId}`;
+  const handleReset = () => {
+    setLocalOrder([...filteredStandings]);
+    setHasChanges(false);
   };
 
   return (
     <AdminLayout>
       <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold font-display mb-6" data-testid="text-standings-adjustments-title">Standings Adjustments</h1>
+        <h1 className="text-2xl font-bold font-display mb-6" data-testid="text-standings-reorder-title">Reorder Standings</h1>
 
-        <div className="mb-6">
-          <label className="text-sm font-medium mb-2 block">Select Tournament</label>
-          <Select
-            value={selectedTournamentId ? String(selectedTournamentId) : "none"}
-            onValueChange={(v) => setSelectedTournamentId(v === "none" ? null : Number(v))}
-          >
-            <SelectTrigger className="max-w-md" data-testid="select-adj-tournament">
-              <SelectValue placeholder="Choose a tournament" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">-- Select Tournament --</SelectItem>
-              {(tournaments || []).map((t: Tournament) => (
-                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Tournament</label>
+            <Select
+              value={selectedTournamentId ? String(selectedTournamentId) : "none"}
+              onValueChange={(v) => setSelectedTournamentId(v === "none" ? null : Number(v))}
+            >
+              <SelectTrigger data-testid="select-reorder-tournament">
+                <SelectValue placeholder="Choose a tournament" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">-- Select Tournament --</SelectItem>
+                {(tournaments || []).map((t: Tournament) => (
+                  <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedTournamentId && divisions && divisions.length > 0 && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">Division</label>
+              <Select
+                value={selectedDivisionId || "none"}
+                onValueChange={(v) => setSelectedDivisionId(v === "none" ? "" : v)}
+              >
+                <SelectTrigger data-testid="select-reorder-division">
+                  <SelectValue placeholder="Choose a division" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">-- Select Division --</SelectItem>
+                  {divisions.map((d: Division) => (
+                    <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
-        {selectedTournamentId && (
+        {selectedTournamentId && selectedDivisionId && (
           <>
-            <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-              <h2 className="text-lg font-semibold">Current Adjustments</h2>
-              <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-1" data-testid="button-add-adjustment">
-                    <Plus className="h-4 w-4" /> Add Adjustment
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add / Edit Standings Adjustment</DialogTitle>
-                    <DialogDescription>Override calculated standings for a specific team. Adjustments are added to the calculated values.</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Team</label>
-                      <Select value={selectedTeamId ? String(selectedTeamId) : "none"} onValueChange={(v) => {
-                        const tid = Number(v);
-                        setSelectedTeamId(tid);
-                        const standing = teamsInStandings.find((s: StandingWithTeam) => Number(s.teamId) === tid);
-                        if (standing) setSelectedDivisionId(standing.divisionId);
-                      }}>
-                        <SelectTrigger data-testid="select-adj-team"><SelectValue placeholder="Select team" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">-- Select Team --</SelectItem>
-                          {teamsInStandings.map((s: StandingWithTeam) => (
-                            <SelectItem key={s.teamId} value={String(s.teamId)}>{s.team?.name || `Team #${s.teamId}`}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-sm font-medium">Points Adj.</label>
-                        <Input type="number" value={pointsAdj} onChange={(e) => setPointsAdj(parseInt(e.target.value) || 0)} data-testid="input-adj-points" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Wins Adj.</label>
-                        <Input type="number" value={winsAdj} onChange={(e) => setWinsAdj(parseInt(e.target.value) || 0)} data-testid="input-adj-wins" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Losses Adj.</label>
-                        <Input type="number" value={lossesAdj} onChange={(e) => setLossesAdj(parseInt(e.target.value) || 0)} data-testid="input-adj-losses" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Ties Adj.</label>
-                        <Input type="number" value={tiesAdj} onChange={(e) => setTiesAdj(parseInt(e.target.value) || 0)} data-testid="input-adj-ties" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Goals For Adj.</label>
-                        <Input type="number" value={gfAdj} onChange={(e) => setGfAdj(parseInt(e.target.value) || 0)} data-testid="input-adj-gf" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Goals Against Adj.</label>
-                        <Input type="number" value={gaAdj} onChange={(e) => setGaAdj(parseInt(e.target.value) || 0)} data-testid="input-adj-ga" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Notes (reason for adjustment)</label>
-                      <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Penalty deduction" data-testid="input-adj-notes" />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleSubmit} disabled={upsertAdjustment.isPending} data-testid="button-save-adjustment">
-                      {upsertAdjustment.isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} Save Adjustment
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
+            {hasChanges && (
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <Button onClick={handleSave} disabled={reorderMutation.isPending} data-testid="button-save-reorder">
+                  {reorderMutation.isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+                  Save Order
+                </Button>
+                <Button variant="outline" onClick={handleReset} data-testid="button-reset-reorder">
+                  <RotateCcw className="mr-2 h-4 w-4" /> Reset
+                </Button>
+                <span className="text-sm text-muted-foreground">You have unsaved changes</span>
+              </div>
+            )}
 
-            {(!adjustments || adjustments.length === 0) ? (
-              <p className="text-muted-foreground text-center py-8">No standings adjustments for this tournament.</p>
-            ) : (
+            {localOrder.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Team</TableHead>
-                      <TableHead>Division</TableHead>
-                      <TableHead className="text-center">PTS</TableHead>
-                      <TableHead className="text-center">W</TableHead>
-                      <TableHead className="text-center">L</TableHead>
-                      <TableHead className="text-center">T</TableHead>
-                      <TableHead className="text-center">GF</TableHead>
-                      <TableHead className="text-center">GA</TableHead>
-                      <TableHead>Notes</TableHead>
-                      <TableHead className="w-12"></TableHead>
+                    <TableRow className="border-b-2 border-foreground">
+                      <TableHead className="w-16 font-bold text-foreground">Pos</TableHead>
+                      <TableHead className="w-20 font-bold text-foreground">Move</TableHead>
+                      <TableHead className="font-bold text-foreground">Team</TableHead>
+                      {columns.map((col) => (
+                        <TableHead key={col.key} className="text-center font-bold text-foreground">{col.label}</TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {adjustments.map((adj: StandingsAdjustment) => (
-                      <TableRow key={adj.id} data-testid={`row-adjustment-${adj.id}`}>
-                        <TableCell className="font-medium">{getTeamName(adj.teamId)}</TableCell>
-                        <TableCell>{getDivisionName(adj.divisionId)}</TableCell>
-                        <TableCell className="text-center">{adj.pointsAdjustment > 0 ? `+${adj.pointsAdjustment}` : adj.pointsAdjustment}</TableCell>
-                        <TableCell className="text-center">{adj.winsAdjustment > 0 ? `+${adj.winsAdjustment}` : adj.winsAdjustment}</TableCell>
-                        <TableCell className="text-center">{adj.lossesAdjustment > 0 ? `+${adj.lossesAdjustment}` : adj.lossesAdjustment}</TableCell>
-                        <TableCell className="text-center">{adj.tiesAdjustment > 0 ? `+${adj.tiesAdjustment}` : adj.tiesAdjustment}</TableCell>
-                        <TableCell className="text-center">{adj.goalsForAdjustment > 0 ? `+${adj.goalsForAdjustment}` : adj.goalsForAdjustment}</TableCell>
-                        <TableCell className="text-center">{adj.goalsAgainstAdjustment > 0 ? `+${adj.goalsAgainstAdjustment}` : adj.goalsAgainstAdjustment}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{adj.notes || "—"}</TableCell>
+                    {localOrder.map((s: StandingWithTeam, index: number) => (
+                      <TableRow key={`${s.divisionId}-${s.teamId}`} className="border-b" data-testid={`row-reorder-${s.teamId}`}>
+                        <TableCell className="font-bold text-lg">{index + 1}</TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => openEditAdjustment(adj)} data-testid={`button-edit-adj-${adj.id}`}>
-                              <Plus className="h-3 w-3" />
+                          <div className="flex flex-col">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              disabled={index === 0}
+                              onClick={() => moveTeam(index, "up")}
+                              data-testid={`button-move-up-${s.teamId}`}
+                            >
+                              <ArrowUp className="h-4 w-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(adj)} disabled={deleteAdjustment.isPending} data-testid={`button-delete-adj-${adj.id}`}>
-                              <Trash2 className="h-3 w-3" />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              disabled={index === localOrder.length - 1}
+                              onClick={() => moveTeam(index, "down")}
+                              data-testid={`button-move-down-${s.teamId}`}
+                            >
+                              <ArrowDown className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
+                        <TableCell className="font-medium">{s.team?.name || `Team #${s.teamId}`}</TableCell>
+                        {columns.map((col) => (
+                          <TableCell key={col.key} className={`text-center ${col.key === 'pts' || col.key === 'pct' ? 'font-bold' : ''}`}>
+                            {col.getValue(s)}
+                          </TableCell>
+                        ))}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-12">No standings available for this division yet.</p>
             )}
           </>
+        )}
+
+        {selectedTournamentId && !selectedDivisionId && divisions && divisions.length > 0 && (
+          <p className="text-muted-foreground text-center py-12">Select a division to view and reorder standings.</p>
+        )}
+
+        {selectedTournamentId && divisions && divisions.length === 0 && (
+          <p className="text-muted-foreground text-center py-12">No divisions found for this tournament.</p>
         )}
       </div>
     </AdminLayout>
