@@ -168,46 +168,54 @@ export default function TournamentDetail() {
             </div>
           )}
 
-          <DetailBracket tournamentId={numericId} divisionId={selectedDivision} tournamentSlug={tournamentSlug} />
+          <div className="max-w-5xl mx-auto">
+            <DetailBracket tournamentId={numericId} divisionId={selectedDivision} tournamentSlug={tournamentSlug} />
 
-          {matchesLoading ? (
-            <div className="mb-8 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
+            <h3 className="text-xl md:text-2xl font-bold font-display uppercase text-center mb-6" data-testid="text-schedule-heading">
+              Schedule
+            </h3>
+
+            {matchesLoading ? (
+              <div className="mb-8 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : filteredMatches.length > 0 ? (
+              <div className="mb-8">
+                {filteredMatches.map((m: MatchWithTeams) => (
+                  <MatchRow key={m.id} match={m} divisions={divisions} venues={venues} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">No matches scheduled yet.</p>
+            )}
+
+            <div className="text-center mt-4 mb-16">
+              <Link href={`/tournaments/${tournamentSlug}/schedule`}>
+                <Button variant="outline" className="rounded-full font-bold uppercase text-xs hover:bg-stone-500 hover:text-background tracking-wider px-8 gap-2" data-testid="button-full-schedule">
+                  See Full Schedule <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
-          ) : filteredMatches.length > 0 ? (
-            <div className="mb-8">
-              {filteredMatches.map((m: MatchWithTeams) => (
-                <MatchRow key={m.id} match={m} divisions={divisions} venues={venues} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center py-8">No matches scheduled yet.</p>
-          )}
 
-          <div className="text-center mt-4 mb-16">
-            <Link href={`/tournaments/${tournamentSlug}/schedule`}>
-              <Button variant="outline" className="rounded-full font-bold uppercase text-xs hover:bg-stone-500 hover:text-background tracking-wider px-8 gap-2" data-testid="button-full-schedule">
-                See Full Schedule <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
+            {standingsLoading && (
+              <div className="mb-8 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            )}
 
-          {standingsLoading && (
-            <div className="mb-8 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          )}
-
-          {!standingsLoading && filteredStandings.length > 0 && (() => {
-            const columns = getStandingsColumns(tournament?.standingsType);
-            return (
-            <>
-              <div className="overflow-x-auto -mx-4 px-4">
-              <Table>
+            {!standingsLoading && filteredStandings.length > 0 && (() => {
+              const columns = getStandingsColumns(tournament?.standingsType);
+              return (
+              <>
+                <h3 className="text-xl md:text-2xl font-bold font-display uppercase text-center mb-6" data-testid="text-standings-heading">
+                  Standings
+                </h3>
+                <div className="overflow-x-auto -mx-4 px-4">
+                <Table>
                 <TableHeader>
                   <TableRow className="border-b-2 border-foreground">
                     <TableHead className="w-12 font-bold text-foreground">Pos</TableHead>
@@ -248,6 +256,7 @@ export default function TournamentDetail() {
             </>
             );
           })()}
+          </div>
 
           {sortedTeams.length > 0 && (
             <div className="mb-16">
