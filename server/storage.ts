@@ -207,6 +207,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async resetTournament(id: number): Promise<void> {
+    await db.delete(playoffMatches).where(eq(playoffMatches.tournamentId, id));
+    await db.delete(playoffSettings).where(eq(playoffSettings.tournamentId, id));
+    await db.delete(standingsAdjustments).where(eq(standingsAdjustments.tournamentId, id));
     await db.delete(standings).where(eq(standings.tournamentId, id));
     await db.delete(matches).where(eq(matches.tournamentId, id));
     const teamRows = await db.select().from(teams).where(eq(teams.tournamentId, id));
@@ -219,6 +222,9 @@ export class DatabaseStorage implements IStorage {
   async deleteTournament(id: number): Promise<void> {
     await db.update(awards).set({ tournamentId: null, divisionId: null }).where(eq(awards.tournamentId, id));
     await db.update(news).set({ tournamentId: null }).where(eq(news.tournamentId, id));
+    await db.delete(playoffMatches).where(eq(playoffMatches.tournamentId, id));
+    await db.delete(playoffSettings).where(eq(playoffSettings.tournamentId, id));
+    await db.delete(standingsAdjustments).where(eq(standingsAdjustments.tournamentId, id));
     await db.delete(standings).where(eq(standings.tournamentId, id));
     await db.delete(matches).where(eq(matches.tournamentId, id));
     const teamRows = await db.select().from(teams).where(eq(teams.tournamentId, id));
