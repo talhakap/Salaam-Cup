@@ -1065,13 +1065,13 @@ export async function registerRoutes(
         let awayTeamId: number | null = null;
         if (row.homeTeam && row.homeTeam.trim()) {
           let ht = allTeams.find(
-            (t) => t.name.toLowerCase().trim() === row.homeTeam.toLowerCase().trim() && t.divisionId === division.id
+            (t) => t.name.toLowerCase().trim() === row.homeTeam.toLowerCase().trim() && Number(t.divisionId) === Number(division.id)
           );
           if (!ht) {
             try {
               ht = await storage.createTeam({
                 tournamentId,
-                divisionId: division.id,
+                divisionId: Number(division.id),
                 name: row.homeTeam.trim(),
                 captainName: "",
                 captainEmail: "",
@@ -1089,13 +1089,13 @@ export async function registerRoutes(
         }
         if (row.awayTeam && row.awayTeam.trim()) {
           let at = allTeams.find(
-            (t) => t.name.toLowerCase().trim() === row.awayTeam.toLowerCase().trim() && t.divisionId === division.id
+            (t) => t.name.toLowerCase().trim() === row.awayTeam.toLowerCase().trim() && Number(t.divisionId) === Number(division.id)
           );
           if (!at) {
             try {
               at = await storage.createTeam({
                 tournamentId,
-                divisionId: division.id,
+                divisionId: Number(division.id),
                 name: row.awayTeam.trim(),
                 captainName: "",
                 captainEmail: "",
