@@ -80,6 +80,15 @@ export default function TournamentDetail() {
 
   const filteredMatches = (allMatches || [])
     .filter((m: MatchWithTeams) => m.divisionId === Number(selectedDivision))
+    .sort((a: MatchWithTeams, b: MatchWithTeams) => {
+      const statusOrder: Record<string, number> = { live: 0, scheduled: 1, final: 2, cancelled: 3 };
+      const sa = statusOrder[a.status] ?? 1;
+      const sb = statusOrder[b.status] ?? 1;
+      if (sa !== sb) return sa - sb;
+      const timeA = a.startTime ? new Date(a.startTime).getTime() : Infinity;
+      const timeB = b.startTime ? new Date(b.startTime).getTime() : Infinity;
+      return timeA - timeB;
+    })
     .slice(0, 4);
 
   const filteredStandings = (allStandings || [])
