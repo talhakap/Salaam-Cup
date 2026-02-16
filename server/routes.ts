@@ -1230,6 +1230,26 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/tournaments/:tournamentId/standings/reorder", isAuthenticated, async (req, res) => {
+    try {
+      const tournamentId = Number(req.params.tournamentId);
+      if (isNaN(tournamentId)) return res.status(400).json({ message: "Invalid tournament ID" });
+      const schema = z.object({
+        divisionId: z.coerce.number().int().positive(),
+        teamPositions: z.array(z.object({
+          teamId: z.coerce.number().int().positive(),
+          position: z.coerce.number().int().min(1),
+        })),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+      await storage.reorderStandings(tournamentId, parsed.data.divisionId, parsed.data.teamPositions);
+      res.json({ message: "Standings reordered" });
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
+    }
+  });
+
   app.delete("/api/tournaments/:tournamentId/standings/adjustments/:id", isAuthenticated, async (req, res) => {
     try {
       const tournamentId = Number(req.params.tournamentId);

@@ -79,6 +79,7 @@ export interface IStorage {
   getStandingsAdjustments(tournamentId: number): Promise<StandingsAdjustment[]>;
   upsertStandingsAdjustment(data: InsertStandingsAdjustment): Promise<StandingsAdjustment>;
   deleteStandingsAdjustment(id: number): Promise<void>;
+  reorderStandings(tournamentId: number, divisionId: number, teamPositions: { teamId: number; position: number }[]): Promise<void>;
 
   // Awards
   getAwards(tournamentId: number): Promise<Award[]>;
@@ -769,6 +770,20 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStandingsAdjustment(id: number): Promise<void> {
     await db.delete(standingsAdjustments).where(eq(standingsAdjustments.id, id));
+  }
+
+  async reorderStandings(tournamentId: number, divisionId: number, teamPositions: { teamId: number; position: number }[]): Promise<void> {
+    for (const tp of teamPositions) {
+      await db.update(standings)
+        .set({ position: tp.position })
+        .where(
+          and(
+            eq(standings.tournamentId, tournamentId),
+            eq(standings.divisionId, divisionId),
+            eq(standings.teamId, tp.teamId)
+          )
+        );
+    }
   }
 
   // Awards
