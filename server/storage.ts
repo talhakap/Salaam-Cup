@@ -636,6 +636,9 @@ export class DatabaseStorage implements IStorage {
           points: 0,
           penaltyMinutes: 0,
           shutouts: 0,
+          cappedRunsFor: 0,
+          cappedRunsAgainst: 0,
+          cappedRunDifferential: 0,
           position: 0,
           team,
         });
@@ -680,6 +683,9 @@ export class DatabaseStorage implements IStorage {
         points: 0,
         penaltyMinutes: 0,
         shutouts: 0,
+        cappedRunsFor: 0,
+        cappedRunsAgainst: 0,
+        cappedRunDifferential: 0,
         position: 0,
       });
     }
@@ -729,6 +735,26 @@ export class DatabaseStorage implements IStorage {
       if (!awayPulled) {
         away.goalDifference = away.goalsFor! - away.goalsAgainst!;
         if (hs === 0) away.shutouts!++;
+      }
+
+      const rawDiff = hs - as_;
+      const cappedDiff = Math.max(-7, Math.min(7, rawDiff));
+      let cappedHome = hs;
+      let cappedAway = as_;
+      if (rawDiff > 7) {
+        cappedHome = as_ + 7;
+      } else if (rawDiff < -7) {
+        cappedAway = hs + 7;
+      }
+      if (!homePulled) {
+        home.cappedRunsFor! += cappedHome;
+        home.cappedRunsAgainst! += cappedAway;
+        home.cappedRunDifferential! += cappedDiff;
+      }
+      if (!awayPulled) {
+        away.cappedRunsFor! += cappedAway;
+        away.cappedRunsAgainst! += cappedHome;
+        away.cappedRunDifferential! += -cappedDiff;
       }
     }
 

@@ -131,11 +131,36 @@ function basketballStandard(): StandingsStrategy {
 
 function softballStandard(): StandingsStrategy {
   return {
-    calculatePoints: (wins, _losses, _ties) => wins,
-    sortStandings: (a, b) => {
-      const aPct = a.gamesPlayed! > 0 ? a.wins! / a.gamesPlayed! : 0;
-      const bPct = b.gamesPlayed! > 0 ? b.wins! / b.gamesPlayed! : 0;
-      return (bPct - aPct) || (b.goalDifference! - a.goalDifference!);
+    calculatePoints: (wins, _losses, _ties) => wins * 2,
+    sortStandings: (a, b) => (b.points! - a.points!) || ((b.cappedRunDifferential ?? 0) - (a.cappedRunDifferential ?? 0)),
+    sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
+      divStandings.sort((a, b) => {
+        const ptsDiff = b.points! - a.points!;
+        if (ptsDiff !== 0) return ptsDiff;
+
+        const tiedTeamIds = divStandings
+          .filter(s => s.points === a.points)
+          .map(s => s.teamId);
+
+        if (tiedTeamIds.length === 2) {
+          const h2h = getHeadToHead(a.teamId, b.teamId, matches);
+          if (h2h !== 0) return h2h;
+        }
+
+        const cappedRdDiff = (b.cappedRunDifferential ?? 0) - (a.cappedRunDifferential ?? 0);
+        if (cappedRdDiff !== 0) return cappedRdDiff;
+
+        const actualRdDiff = b.goalDifference! - a.goalDifference!;
+        if (actualRdDiff !== 0) return actualRdDiff;
+
+        const cappedRfDiff = (b.cappedRunsFor ?? 0) - (a.cappedRunsFor ?? 0);
+        if (cappedRfDiff !== 0) return cappedRfDiff;
+
+        const actualRfDiff = b.goalsFor! - a.goalsFor!;
+        if (actualRfDiff !== 0) return actualRfDiff;
+
+        return 0;
+      });
     },
   };
 }
