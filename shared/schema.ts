@@ -507,6 +507,7 @@ export const playoffMatches = pgTable("playoff_matches", {
   venueId: integer("venue_id").references(() => venues.id),
   fieldLocation: text("field_location"),
   isBye: boolean("is_bye").default(false).notNull(),
+  linkedMatchId: integer("linked_match_id").references(() => matches.id),
 });
 
 export const insertPlayoffMatchSchema = createInsertSchema(playoffMatches).omit({ id: true }).extend({
