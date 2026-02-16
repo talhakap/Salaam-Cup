@@ -14,15 +14,17 @@ import { useMatches } from "@/hooks/use-matches";
 import { useVenues } from "@/hooks/use-venues";
 import { useStandings } from "@/hooks/use-standings";
 import { useNews } from "@/hooks/use-news";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
-import { Users, ArrowRight } from "lucide-react";
+import { Users, ArrowRight, Trophy, Clock, MapPin, Loader2 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
-import type { Division, Team, StandingWithTeam, MatchWithTeams, Venue } from "@shared/schema";
+import { cn } from "@/lib/utils";
+import type { Division, Team, StandingWithTeam, MatchWithTeams, Venue, PlayoffSettings, PlayoffMatchWithTeams } from "@shared/schema";
 import { getStandingsColumns } from "@shared/standingsConfig";
 
 export default function TournamentDetail() {
@@ -165,6 +167,8 @@ export default function TournamentDetail() {
               </div>
             </div>
           )}
+
+          <DetailBracket tournamentId={numericId} divisionId={selectedDivision} tournamentSlug={tournamentSlug} />
 
           {matchesLoading ? (
             <div className="mb-8 space-y-4">
@@ -389,6 +393,132 @@ function TournamentInfoBanner({
         )}
       </div>
     </section>
+  );
+}
+
+function getBracketRoundName(round: number, totalRounds: number): string {
+  if (round === totalRounds) return "Final";
+  if (round === totalRounds - 1) return "Semifinals";
+  if (round === totalRounds - 2) return "Quarterfinals";
+  return `Round ${round}`;
+}
+
+function DetailBracket({ tournamentId, divisionId, tournamentSlug }: { tournamentId: number; divisionId: string; tournamentSlug: string }) {
+  const { data: settings } = useQuery<PlayoffSettings | null>({
+    queryKey: ['/api/tournaments', tournamentId, 'divisions', divisionId, 'playoffs', 'settings'],
+    queryFn: async () => {
+      const res = await fetch(`/api/tournaments/${tournamentId}/divisions/${divisionId}/playoffs/settings`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!tournamentId && !!divisionId,
+  });
+
+  const { data: matches, isLoading } = useQuery<PlayoffMatchWithTeams[]>({
+    queryKey: ['/api/tournaments', tournamentId, 'divisions', divisionId, 'playoffs', 'matches'],
+    queryFn: async () => {
+      const res = await fetch(`/api/tournaments/${tournamentId}/divisions/${divisionId}/playoffs/matches`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: settings?.showBracket === true && settings?.generated === true,
+  });
+
+  if (!settings?.showBracket || !settings?.generated) return null;
+  if (isLoading) return <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto my-8" />;
+  if (!matches || matches.length === 0) return null;
+
+  const matchesByRound = matches.reduce<Record<number, PlayoffMatchWithTeams[]>>((acc, m) => {
+    if (!acc[m.round]) acc[m.round] = [];
+    acc[m.round].push(m);
+    return acc;
+  }, {});
+
+  const totalRounds = Math.max(...Object.keys(matchesByRound).map(Number));
+  const rounds = Object.entries(matchesByRound).sort(([a], [b]) => Number(a) - Number(b));
+  const finalMatch = matchesByRound[totalRounds]?.[0];
+  const champion = finalMatch?.winnerTeam;
+
+  return (
+    <div className="mb-12" data-testid="detail-bracket-section">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl md:text-2xl font-bold font-display uppercase">Playoff Bracket</h3>
+        <Link href={`/tournaments/${tournamentSlug}/playoffs`}>
+          <Button variant="outline" size="sm" className="rounded-full font-bold uppercase text-xs tracking-wider gap-1">
+            Full Bracket <ArrowRight className="h-3 w-3" />
+          </Button>
+        </Link>
+      </div>
+
+      {champion && (
+        <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-md mb-4" data-testid="detail-champion-banner">
+          <Trophy className="h-6 w-6 text-primary" />
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Champion</p>
+            <p className="text-lg font-bold font-display">{champion.name}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {rounds.map(([round, roundMatches]) => {
+          const roundNum = Number(round);
+          return (
+            <div key={round} className="min-w-[200px] flex-shrink-0 space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {getBracketRoundName(roundNum, totalRounds)}
+              </p>
+              <div className="space-y-2" style={{ paddingTop: `${(Math.pow(2, roundNum - 1) - 1) * 24}px` }}>
+                {roundMatches.map((match) => {
+                  const isFinal = match.status === "final";
+                  return (
+                    <div key={match.id} style={{ marginBottom: `${(Math.pow(2, roundNum) - 1) * 16}px` }}>
+                      {match.isBye ? (
+                        <div className="border border-border rounded-md p-2 opacity-50 bg-card">
+                          <div className="text-sm font-medium">{match.homeTeam?.name || match.awayTeam?.name || "TBD"}</div>
+                          <div className="text-xs text-muted-foreground">BYE</div>
+                        </div>
+                      ) : (
+                        <div className={cn("border border-border rounded-md bg-card", roundNum === totalRounds && isFinal && "ring-2 ring-primary")}>
+                          <div className={cn("flex items-center gap-2 px-3 py-2 border-b border-border", isFinal && match.winnerTeamId === match.homeTeamId && "bg-primary/5 font-bold")}>
+                            {match.homeSeed && <span className="text-xs text-muted-foreground w-5 text-right">{match.homeSeed}</span>}
+                            <span className="text-sm flex-1 min-w-0 truncate">{match.homeTeam?.name || "TBD"}</span>
+                            <span className="text-sm font-mono w-6 text-center">{match.homeScore ?? "-"}</span>
+                          </div>
+                          <div className={cn("flex items-center gap-2 px-3 py-2", isFinal && match.winnerTeamId === match.awayTeamId && "bg-primary/5 font-bold", !(match.startTime || match.venue || match.fieldLocation) && "rounded-b-md")}>
+                            {match.awaySeed && <span className="text-xs text-muted-foreground w-5 text-right">{match.awaySeed}</span>}
+                            <span className="text-sm flex-1 min-w-0 truncate">{match.awayTeam?.name || "TBD"}</span>
+                            <span className="text-sm font-mono w-6 text-center">{match.awayScore ?? "-"}</span>
+                          </div>
+                          {(match.startTime || match.venue || match.fieldLocation) && (
+                            <div className="px-3 py-1.5 border-t border-border bg-muted/30 rounded-b-md">
+                              <div className="flex items-center gap-3 flex-wrap text-[10px] text-muted-foreground">
+                                {match.startTime && (
+                                  <span className="flex items-center gap-0.5">
+                                    <Clock className="h-2.5 w-2.5" />
+                                    {format(new Date(match.startTime), "MMM d, h:mm a")}
+                                  </span>
+                                )}
+                                {(match.venue || match.fieldLocation) && (
+                                  <span className="flex items-center gap-0.5">
+                                    <MapPin className="h-2.5 w-2.5" />
+                                    {[match.venue?.name, match.fieldLocation].filter(Boolean).join(" — ")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
