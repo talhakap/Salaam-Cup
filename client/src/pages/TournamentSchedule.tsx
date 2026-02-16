@@ -33,6 +33,7 @@ export default function TournamentSchedule() {
   const [filterDivision, setFilterDivision] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterRound, setFilterRound] = useState<string>("all");
 
   const uniqueDates = useMemo(() => {
     if (!allMatches) return [];
@@ -56,6 +57,13 @@ export default function TournamentSchedule() {
           const mDate = new Date(m.startTime).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
           if (mDate !== filterDate) return false;
         }
+        if (filterRound !== "all") {
+          const r = (m.round || "").toLowerCase();
+          const playoffKeywords = ["quarter", "semi", "final", "playoff", "bracket", "elimination", "consolation"];
+          const isPlayoff = playoffKeywords.some(k => r.includes(k));
+          if (filterRound === "round-robin" && isPlayoff) return false;
+          if (filterRound === "playoffs" && !isPlayoff) return false;
+        }
         return true;
       })
       .slice()
@@ -68,7 +76,7 @@ export default function TournamentSchedule() {
         const timeB = b.startTime ? new Date(b.startTime).getTime() : Infinity;
         return timeA - timeB;
       });
-  }, [allMatches, filterDivision, filterDate, filterStatus]);
+  }, [allMatches, filterDivision, filterDate, filterStatus, filterRound]);
 
   if (isLoading) {
     return (
@@ -155,6 +163,20 @@ export default function TournamentSchedule() {
                   <SelectItem value="scheduled">Scheduled</SelectItem>
                   <SelectItem value="live">Live</SelectItem>
                   <SelectItem value="final">Final</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex-1 min-w-[150px]">
+              <label className="text-xs text-muted-foreground mb-1 block">Round</label>
+              <Select value={filterRound} onValueChange={setFilterRound}>
+                <SelectTrigger data-testid="select-round-filter">
+                  <SelectValue placeholder="Select Round" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Rounds</SelectItem>
+                  <SelectItem value="round-robin">Round Robin</SelectItem>
+                  <SelectItem value="playoffs">Playoffs</SelectItem>
                 </SelectContent>
               </Select>
             </div>
