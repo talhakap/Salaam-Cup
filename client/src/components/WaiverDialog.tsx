@@ -53,12 +53,15 @@ export function WaiverDialog({ open, onOpenChange, onRead }: WaiverDialogProps) 
   useEffect(() => {
     if (open) {
       setHasScrolledToBottom(false);
-      requestAnimationFrame(() => {
+      const checkHeight = () => {
         const el = scrollRef.current;
         if (el && el.scrollHeight <= el.clientHeight + 30) {
           setHasScrolledToBottom(true);
         }
-      });
+      };
+      requestAnimationFrame(checkHeight);
+      const timer = setTimeout(checkHeight, 300);
+      return () => clearTimeout(timer);
     }
   }, [open, waiverHtml]);
 

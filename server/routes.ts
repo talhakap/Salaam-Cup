@@ -10,6 +10,11 @@ import type { InsertMatch } from "@shared/schema";
 import { insertStandingsAdjustmentSchema } from "@shared/schema";
 import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin, seedAdminAccounts } from "./supabaseAdmin";
 
+function parseId(value: string): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -516,7 +521,9 @@ export async function registerRoutes(
 
   // === DIVISIONS ===
   app.get(api.divisions.list.path, async (req, res) => {
-    const data = await storage.getDivisions(Number(req.params.tournamentId));
+    const tournamentId = parseId(req.params.tournamentId);
+    if (!tournamentId) return res.status(400).json({ message: "Invalid tournament ID" });
+    const data = await storage.getDivisions(tournamentId);
     res.json(data);
   });
 
@@ -566,16 +573,23 @@ export async function registerRoutes(
 
   // === TEAMS ===
   app.get(api.teams.list.path, async (req, res) => {
-    const tournamentId = Number(req.params.tournamentId);
+    const tournamentId = parseId(req.params.tournamentId);
+    if (!tournamentId) return res.status(400).json({ message: "Invalid tournament ID" });
     const { status, divisionId } = req.query;
-    const data = await storage.getTeams(tournamentId, status as string, divisionId ? Number(divisionId) : undefined);
+    const data = await storage.getTeams(tournamentId, status as string, divisionId ? Number(divisionId as string) : undefined);
     res.json(data);
   });
 
   app.get(api.teams.get.path, async (req, res) => {
-    const team = await storage.getTeam(Number(req.params.id));
-    if (!team) return res.status(404).json({ message: "Team not found" });
-    res.json(team);
+    try {
+      const id = parseId(req.params.id);
+      if (!id) return res.status(400).json({ message: "Invalid team ID" });
+      const team = await storage.getTeam(id);
+      if (!team) return res.status(404).json({ message: "Team not found" });
+      res.json(team);
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
   });
 
   app.post(api.teams.create.path, async (req, res) => {
@@ -801,7 +815,9 @@ export async function registerRoutes(
 
   // === PLAYERS ===
   app.get(api.players.list.path, async (req, res) => {
-    const data = await storage.getPlayers(Number(req.params.teamId));
+    const teamId = parseId(req.params.teamId);
+    if (!teamId) return res.status(400).json({ message: "Invalid team ID" });
+    const data = await storage.getPlayers(teamId);
     res.json(data);
   });
 
@@ -961,8 +977,10 @@ export async function registerRoutes(
 
   // === MATCHES ===
   app.get(api.matches.list.path, async (req, res) => {
+    const tournamentId = parseId(req.params.tournamentId);
+    if (!tournamentId) return res.status(400).json({ message: "Invalid tournament ID" });
     const includeDrafts = req.query.includeDrafts === "true";
-    const data = await storage.getMatches(Number(req.params.tournamentId), includeDrafts);
+    const data = await storage.getMatches(tournamentId, includeDrafts);
     res.json(data);
   });
 
@@ -1213,7 +1231,9 @@ export async function registerRoutes(
 
   // === STANDINGS ===
   app.get(api.standings.list.path, async (req, res) => {
-    const data = await storage.getStandings(Number(req.params.tournamentId));
+    const tournamentId = parseId(req.params.tournamentId);
+    if (!tournamentId) return res.status(400).json({ message: "Invalid tournament ID" });
+    const data = await storage.getStandings(tournamentId);
     res.json(data);
   });
 
@@ -1839,6 +1859,16 @@ ${allPages
     } catch (err) {
       res.status(500).send("Error generating sitemap");
     }
+  });
+
+  app.use((err: any, _req: any, res: any, next: any) => {
+    if (res.headersSent) return next(err);
+    const msg = err?.message || "";
+    if (msg.includes("invalid input syntax for type integer") ||
+        msg.includes("invalid input syntax for type bigint")) {
+      return res.status(400).json({ message: "Invalid ID parameter" });
+    }
+    next(err);
   });
 
   // Seed database on startup
