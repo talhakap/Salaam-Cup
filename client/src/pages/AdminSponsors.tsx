@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
-import { Plus, Pencil, Trash2, Handshake, Upload, Loader2, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Handshake, Upload, Loader2, ImageIcon, Images } from "lucide-react";
+import { ImagePicker } from "@/components/ImagePicker";
 import { useState, useRef } from "react";
 import { Pagination, usePagination } from "@/components/Pagination";
 import type { Sponsor } from "@shared/schema";
@@ -29,6 +30,8 @@ function SponsorDialog({
   const [logoUrl, setLogoUrl] = useState(item?.logoUrl || "");
   const [websiteUrl, setWebsiteUrl] = useState(item?.websiteUrl || "");
   const [sortOrder, setSortOrder] = useState(item?.sortOrder ?? 0);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { uploadFile, isUploading } = useUpload({
     folder: "sponsors",
@@ -120,6 +123,9 @@ function SponsorDialog({
                   {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
                   {isUploading ? "Uploading..." : "Upload Logo"}
                 </Button>
+                <Button type="button" variant="outline" className="gap-2" onClick={() => setPickerOpen(true)} data-testid="button-browse-sponsor-images">
+                  <Images className="h-4 w-4" /> Browse Library
+                </Button>
               </div>
               <Input
                 value={logoUrl}
@@ -143,6 +149,7 @@ function SponsorDialog({
               {isPending ? "Saving..." : isEdit ? "Update" : "Create"}
             </Button>
           </DialogFooter>
+          <ImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => setLogoUrl(url)} currentImage={logoUrl} />
         </form>
       </DialogContent>
     </Dialog>

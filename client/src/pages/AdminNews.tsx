@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
-import { Plus, Pencil, Trash2, Newspaper, Upload, Loader2, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Newspaper, Upload, Loader2, ImageIcon, Images } from "lucide-react";
+import { ImagePicker } from "@/components/ImagePicker";
 import { useState, useRef } from "react";
 import { Pagination, usePagination } from "@/components/Pagination";
 import type { News, Tournament } from "@shared/schema";
@@ -33,6 +34,8 @@ function NewsDialog({
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || "");
   const [publishedDate, setPublishedDate] = useState(item?.publishedDate || new Date().toISOString().split("T")[0]);
   const [tournamentId, setTournamentId] = useState<string>(item?.tournamentId ? String(item.tournamentId) : "none");
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { uploadFile, isUploading } = useUpload({
     folder: "news",
@@ -114,6 +117,9 @@ function NewsDialog({
                 <><Upload className="h-4 w-4" /> Upload Image</>
               )}
             </Button>
+            <Button type="button" variant="outline" className="gap-2 flex-1" onClick={() => setPickerOpen(true)} data-testid="button-browse-news-images">
+              <Images className="h-4 w-4" /> Browse Library
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
@@ -167,6 +173,7 @@ function NewsDialog({
           {isEdit ? "Update" : "Create"} News
         </Button>
       </DialogFooter>
+      <ImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => setImageUrl(url)} currentImage={imageUrl} />
     </form>
   );
 }

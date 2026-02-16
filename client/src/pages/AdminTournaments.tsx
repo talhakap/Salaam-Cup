@@ -5,7 +5,8 @@ import { useVenues } from "@/hooks/use-venues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon, RotateCcw, ArrowUp, ArrowDown, GripVertical, Handshake } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, ChevronDown, ChevronUp, Layers, Upload, ImageIcon, RotateCcw, ArrowUp, ArrowDown, GripVertical, Handshake, Images } from "lucide-react";
+import { ImagePicker } from "@/components/ImagePicker";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -33,6 +34,7 @@ function ImageUploadField({
   testIdPrefix: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const { toast } = useToast();
   const { uploadFile, isUploading } = useUpload({
     folder: "tournaments",
@@ -69,23 +71,29 @@ function ImageUploadField({
         onChange={handleFileSelect}
         className="hidden"
       />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isUploading}
-        data-testid={`${testIdPrefix}-upload`}
-      >
-        {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-        {isUploading ? "Uploading..." : `Upload ${label}`}
-      </Button>
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          data-testid={`${testIdPrefix}-upload`}
+        >
+          {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+          {isUploading ? "Uploading..." : `Upload ${label}`}
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => setPickerOpen(true)} data-testid={`${testIdPrefix}-browse`}>
+          <Images className="h-4 w-4" /> Browse Library
+        </Button>
+      </div>
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Or paste ${label.toLowerCase()} URL`}
         data-testid={`${testIdPrefix}-url`}
       />
+      <ImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => onChange(url)} currentImage={value} />
     </div>
   );
 }

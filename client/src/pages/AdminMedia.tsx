@@ -25,7 +25,9 @@ import {
   Loader2,
   ImageIcon,
   ChevronDown,
+  Images,
 } from "lucide-react";
+import { ImagePicker } from "@/components/ImagePicker";
 import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import type { MediaYear, MediaItem, MediaYearWithItems } from "@shared/schema";
@@ -45,6 +47,7 @@ function MediaItemDialog({
   const isEdit = !!item;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || "");
   const [category, setCategory] = useState(item?.category || "");
   const [tournamentName, setTournamentName] = useState(item?.tournamentName || "");
@@ -151,6 +154,9 @@ function MediaItemDialog({
                 className="hidden"
                 onChange={handleFileSelect}
               />
+              <Button type="button" variant="outline" className="gap-2" onClick={() => setPickerOpen(true)} data-testid="button-browse-media-images">
+                <Images className="h-4 w-4" /> Browse Library
+              </Button>
               <Input
                 placeholder="Or paste image URL"
                 value={imageUrl}
@@ -211,6 +217,7 @@ function MediaItemDialog({
               {isEdit ? "Update" : "Add"}
             </Button>
           </DialogFooter>
+          <ImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => setImageUrl(url)} currentImage={imageUrl} />
         </form>
       </DialogContent>
     </Dialog>

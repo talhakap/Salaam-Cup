@@ -1568,6 +1568,92 @@ export async function registerRoutes(
     }
   });
 
+  // === IMAGE LIBRARY ===
+  app.get("/api/admin/images", isAuthenticated, async (_req, res) => {
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const imageSet = new Set<string>();
+
+      const staticDir = path.resolve(process.cwd(), "client", "public", "images");
+      if (fs.existsSync(staticDir)) {
+        const files = fs.readdirSync(staticDir);
+        for (const file of files) {
+          if (/\.(png|jpe?g|gif|svg|webp)$/i.test(file)) {
+            imageSet.add(`/images/${file}`);
+          }
+        }
+      }
+
+      const uploadsDir = path.resolve(process.cwd(), "attached_assets", "uploads");
+      if (fs.existsSync(uploadsDir)) {
+        const walkDir = (dir: string) => {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              walkDir(full);
+            } else if (/\.(png|jpe?g|gif|svg|webp)$/i.test(entry.name)) {
+              const rel = path.relative(uploadsDir, full).replace(/\\/g, "/");
+              imageSet.add(`/uploads/${rel}`);
+            }
+          }
+        };
+        walkDir(uploadsDir);
+      }
+
+      try {
+        const { ObjectStorageService } = await import("./replit_integrations/object_storage/objectStorage");
+        const objService = new ObjectStorageService();
+        const publicDir = objService.getPublicUploadDir();
+        const { bucketName, objectName: prefix } = (() => {
+          let p = publicDir;
+          if (!p.startsWith("/")) p = `/${p}`;
+          const parts = p.split("/");
+          return { bucketName: parts[1], objectName: parts.slice(2).join("/") };
+        })();
+        const { objectStorageClient } = await import("./replit_integrations/object_storage/objectStorage");
+        const bucket = objectStorageClient.bucket(bucketName);
+        const [files] = await bucket.getFiles({ prefix: prefix ? `${prefix}/uploads/` : "uploads/" });
+        for (const file of files) {
+          const name = file.name;
+          const publicPrefix = prefix ? `${prefix}/` : "";
+          if (name.startsWith(publicPrefix)) {
+            const relativePath = name.slice(publicPrefix.length);
+            imageSet.add(`/objects/${relativePath}`);
+          }
+        }
+      } catch (objErr) {
+        // Object storage may not be available in all environments
+      }
+
+      const [newsItems, sponsors, tournaments, specialAwards] = await Promise.all([
+        storage.getNews(),
+        storage.getSponsors(),
+        storage.getTournaments(),
+        storage.getSpecialAwards(),
+      ]);
+
+      for (const n of newsItems) if (n.imageUrl) imageSet.add(n.imageUrl);
+      for (const s of sponsors) if (s.logoUrl) imageSet.add(s.logoUrl);
+      for (const t of tournaments) {
+        if (t.heroImage) imageSet.add(t.heroImage);
+        if (t.logoUrl) imageSet.add(t.logoUrl);
+      }
+      for (const sa of specialAwards) if (sa.imageUrl) imageSet.add(sa.imageUrl);
+
+      const divisionPromises = tournaments.map(t => storage.getDivisions(t.id));
+      const allDivisions = (await Promise.all(divisionPromises)).flat();
+      for (const d of allDivisions) if (d.heroImage) imageSet.add(d.heroImage);
+
+      const images = Array.from(imageSet).sort();
+      res.json(images);
+    } catch (err) {
+      console.error("Error listing images:", err);
+      res.status(500).json({ message: "Failed to list images" });
+    }
+  });
+
   // === SPECIAL AWARDS ===
   app.get(api.specialAwards.list.path, async (_req, res) => {
     const data = await storage.getSpecialAwards();

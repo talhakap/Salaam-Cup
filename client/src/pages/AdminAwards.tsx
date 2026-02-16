@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
-import { Plus, Pencil, Trash2, Trophy, Loader2, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Trophy, Loader2, Upload, X, Images } from "lucide-react";
+import { ImagePicker } from "@/components/ImagePicker";
 import { useState, useRef } from "react";
 import type { Award } from "@shared/schema";
 
@@ -56,6 +57,7 @@ function AwardDialog({
   const [teamName, setTeamName] = useState(award?.teamName || "");
   const [playerName, setPlayerName] = useState(award?.playerName || "");
   const [teamLogoUrl, setTeamLogoUrl] = useState(award?.teamLogoUrl || "");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { uploadFile, isUploading } = useUpload({
@@ -279,6 +281,9 @@ function AwardDialog({
             {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
             {teamLogoUrl ? "Change" : "Upload"}
           </Button>
+          <Button type="button" variant="outline" className="gap-2" onClick={() => setPickerOpen(true)} data-testid="button-browse-award-images">
+            <Images className="h-4 w-4" /> Browse Library
+          </Button>
         </div>
       </div>
       <DialogFooter>
@@ -286,6 +291,7 @@ function AwardDialog({
           {isEdit ? "Update" : "Create"} Award
         </Button>
       </DialogFooter>
+      <ImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => setTeamLogoUrl(url)} currentImage={teamLogoUrl} />
     </form>
   );
 }

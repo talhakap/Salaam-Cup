@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
-import { Plus, Pencil, Trash2, Award, Upload, Loader2, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Award, Upload, Loader2, ImageIcon, Images } from "lucide-react";
+import { ImagePicker } from "@/components/ImagePicker";
 import { useState, useRef } from "react";
 import type { SpecialAward } from "@shared/schema";
 
@@ -29,6 +30,8 @@ function SpecialAwardDialog({
   const [description, setDescription] = useState(item?.description || "");
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || "");
   const [sortOrder, setSortOrder] = useState(item?.sortOrder ?? 0);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { uploadFile, isUploading } = useUpload({
     folder: "special-awards",
@@ -134,6 +137,9 @@ function SpecialAwardDialog({
                   {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
                   {isUploading ? "Uploading..." : "Upload Image"}
                 </Button>
+                <Button type="button" variant="outline" className="gap-2" onClick={() => setPickerOpen(true)} data-testid="button-browse-special-award-images">
+                  <Images className="h-4 w-4" /> Browse Library
+                </Button>
               </div>
               <Input
                 value={imageUrl}
@@ -153,6 +159,7 @@ function SpecialAwardDialog({
               {isPending ? "Saving..." : isEdit ? "Update" : "Create"}
             </Button>
           </DialogFooter>
+          <ImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => setImageUrl(url)} currentImage={imageUrl} />
         </form>
       </DialogContent>
     </Dialog>
