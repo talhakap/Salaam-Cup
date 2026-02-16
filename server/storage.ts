@@ -677,6 +677,7 @@ export class DatabaseStorage implements IStorage {
         goalsAgainst: 0,
         goalDifference: 0,
         points: 0,
+        penaltyMinutes: 0,
         position: 0,
       });
     }
@@ -699,11 +700,13 @@ export class DatabaseStorage implements IStorage {
         home.gamesPlayed!++;
         home.goalsFor! += hs;
         home.goalsAgainst! += as_;
+        home.penaltyMinutes! += (m.homePenaltyMinutes ?? 0);
       }
       if (!awayPulled) {
         away.gamesPlayed!++;
         away.goalsFor! += as_;
         away.goalsAgainst! += hs;
+        away.penaltyMinutes! += (m.awayPenaltyMinutes ?? 0);
       }
 
       if (hs > as_) {
@@ -737,7 +740,11 @@ export class DatabaseStorage implements IStorage {
       byDiv.get(s.divisionId)!.push(s);
     }
     Array.from(byDiv.values()).forEach(divStandings => {
-      divStandings.sort(strategy.sortStandings);
+      if (strategy.sortDivisionStandings) {
+        strategy.sortDivisionStandings(divStandings, finalMatches);
+      } else {
+        divStandings.sort(strategy.sortStandings);
+      }
       divStandings.forEach((s: InsertStanding, i: number) => { s.position = i + 1; });
     });
 

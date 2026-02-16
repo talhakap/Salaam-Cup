@@ -1,15 +1,66 @@
-import type { InsertStanding, StandingsAdjustment, StandingsType } from "@shared/schema";
+import type { InsertStanding, StandingsAdjustment, StandingsType, Match } from "@shared/schema";
 
 export interface StandingsStrategy {
   calculatePoints(wins: number, losses: number, ties: number): number;
   sortStandings(a: InsertStanding, b: InsertStanding): number;
+  sortDivisionStandings?(standings: InsertStanding[], matches: Match[]): void;
 }
 
 function hockeyStandard(): StandingsStrategy {
   return {
     calculatePoints: (wins, _losses, ties) => wins * 2 + ties * 1,
     sortStandings: (a, b) => (b.points! - a.points!) || (b.goalDifference! - a.goalDifference!),
+    sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
+      divStandings.sort((a, b) => {
+        const ptsDiff = b.points! - a.points!;
+        if (ptsDiff !== 0) return ptsDiff;
+
+        const tiedTeamIds = divStandings
+          .filter(s => s.points === a.points)
+          .map(s => s.teamId);
+
+        if (tiedTeamIds.length === 2) {
+          const h2h = getHeadToHead(a.teamId, b.teamId, matches);
+          if (h2h !== 0) return h2h;
+        }
+
+        const gdDiff = b.goalDifference! - a.goalDifference!;
+        if (gdDiff !== 0) return gdDiff;
+
+        const gfDiff = b.goalsFor! - a.goalsFor!;
+        if (gfDiff !== 0) return gfDiff;
+
+        const pimDiff = (a.penaltyMinutes ?? 0) - (b.penaltyMinutes ?? 0);
+        if (pimDiff !== 0) return pimDiff;
+
+        return 0;
+      });
+    },
   };
+}
+
+function getHeadToHead(teamAId: number, teamBId: number, matches: Match[]): number {
+  let aWins = 0;
+  let bWins = 0;
+  for (const m of matches) {
+    if (m.status !== "final" || m.draft) continue;
+    if (m.pulled || m.pulledHomeTeam || m.pulledAwayTeam) continue;
+    const hId = Number(m.homeTeamId);
+    const aId = Number(m.awayTeamId);
+    const hs = m.homeScore ?? 0;
+    const as_ = m.awayScore ?? 0;
+
+    if (hId === teamAId && aId === teamBId) {
+      if (hs > as_) aWins++;
+      else if (as_ > hs) bWins++;
+    } else if (hId === teamBId && aId === teamAId) {
+      if (hs > as_) bWins++;
+      else if (as_ > hs) aWins++;
+    }
+  }
+  if (aWins > bWins) return -1;
+  if (bWins > aWins) return 1;
+  return 0;
 }
 
 function soccerStandard(): StandingsStrategy {

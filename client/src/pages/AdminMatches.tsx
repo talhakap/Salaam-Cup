@@ -49,6 +49,8 @@ function MatchFormDialog({
   const [startTime, setStartTime] = useState(match?.startTime ? new Date(match.startTime).toISOString().slice(0, 16) : "");
   const [homeScore, setHomeScore] = useState(match?.homeScore ?? 0);
   const [awayScore, setAwayScore] = useState(match?.awayScore ?? 0);
+  const [homePenaltyMinutes, setHomePenaltyMinutes] = useState(match?.homePenaltyMinutes ?? 0);
+  const [awayPenaltyMinutes, setAwayPenaltyMinutes] = useState(match?.awayPenaltyMinutes ?? 0);
   const [status, setStatus] = useState<string>(match?.status || "scheduled");
   const [round, setRound] = useState(match?.round || "");
   const [matchNumber, setMatchNumber] = useState(match?.matchNumber ?? 0);
@@ -67,6 +69,8 @@ function MatchFormDialog({
       startTime: startTime ? new Date(startTime).toISOString() : null,
       homeScore,
       awayScore,
+      homePenaltyMinutes,
+      awayPenaltyMinutes,
       status,
       round: round || null,
       matchNumber: matchNumber || null,
@@ -129,11 +133,21 @@ function MatchFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Home Score</label>
-              <Input type="number" value={homeScore} onChange={e => setHomeScore(parseInt(e.target.value) || 0)} />
+              <Input type="number" value={homeScore} onChange={e => setHomeScore(parseInt(e.target.value) || 0)} data-testid="input-home-score" />
             </div>
             <div>
               <label className="text-sm font-medium">Away Score</label>
-              <Input type="number" value={awayScore} onChange={e => setAwayScore(parseInt(e.target.value) || 0)} />
+              <Input type="number" value={awayScore} onChange={e => setAwayScore(parseInt(e.target.value) || 0)} data-testid="input-away-score" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">Home PIM</label>
+              <Input type="number" value={homePenaltyMinutes} onChange={e => setHomePenaltyMinutes(parseInt(e.target.value) || 0)} data-testid="input-home-pim" />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Away PIM</label>
+              <Input type="number" value={awayPenaltyMinutes} onChange={e => setAwayPenaltyMinutes(parseInt(e.target.value) || 0)} data-testid="input-away-pim" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
