@@ -168,6 +168,7 @@ export const standings = pgTable("standings", {
   goalDifference: integer("goal_difference").default(0).notNull(),
   points: integer("points").default(0).notNull(),
   penaltyMinutes: integer("penalty_minutes").default(0).notNull(),
+  shutouts: integer("shutouts").default(0).notNull(),
   position: integer("position").default(0),
 });
 

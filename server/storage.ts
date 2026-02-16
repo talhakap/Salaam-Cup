@@ -635,6 +635,7 @@ export class DatabaseStorage implements IStorage {
           goalDifference: 0,
           points: 0,
           penaltyMinutes: 0,
+          shutouts: 0,
           position: 0,
           team,
         });
@@ -678,6 +679,7 @@ export class DatabaseStorage implements IStorage {
         goalDifference: 0,
         points: 0,
         penaltyMinutes: 0,
+        shutouts: 0,
         position: 0,
       });
     }
@@ -720,8 +722,14 @@ export class DatabaseStorage implements IStorage {
         if (!awayPulled) { away.ties!++; }
       }
 
-      if (!homePulled) home.goalDifference = home.goalsFor! - home.goalsAgainst!;
-      if (!awayPulled) away.goalDifference = away.goalsFor! - away.goalsAgainst!;
+      if (!homePulled) {
+        home.goalDifference = home.goalsFor! - home.goalsAgainst!;
+        if (as_ === 0) home.shutouts!++;
+      }
+      if (!awayPulled) {
+        away.goalDifference = away.goalsFor! - away.goalsAgainst!;
+        if (hs === 0) away.shutouts!++;
+      }
     }
 
     let standingsArr = Array.from(statsMap.values());

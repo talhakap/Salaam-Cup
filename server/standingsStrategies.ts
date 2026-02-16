@@ -67,6 +67,35 @@ function soccerStandard(): StandingsStrategy {
   return {
     calculatePoints: (wins, _losses, ties) => wins * 3 + ties * 1,
     sortStandings: (a, b) => (b.points! - a.points!) || (b.goalDifference! - a.goalDifference!),
+    sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
+      divStandings.sort((a, b) => {
+        const ptsDiff = b.points! - a.points!;
+        if (ptsDiff !== 0) return ptsDiff;
+
+        const tiedTeamIds = divStandings
+          .filter(s => s.points === a.points)
+          .map(s => s.teamId);
+
+        if (tiedTeamIds.length === 2) {
+          const h2h = getHeadToHead(a.teamId, b.teamId, matches);
+          if (h2h !== 0) return h2h;
+        }
+
+        const winsDiff = b.wins! - a.wins!;
+        if (winsDiff !== 0) return winsDiff;
+
+        const gdDiff = b.goalDifference! - a.goalDifference!;
+        if (gdDiff !== 0) return gdDiff;
+
+        const gfDiff = b.goalsFor! - a.goalsFor!;
+        if (gfDiff !== 0) return gfDiff;
+
+        const soDiff = (b.shutouts ?? 0) - (a.shutouts ?? 0);
+        if (soDiff !== 0) return soDiff;
+
+        return 0;
+      });
+    },
   };
 }
 

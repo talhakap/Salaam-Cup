@@ -3,7 +3,7 @@ import type { StandingsType } from "./schema";
 export interface StandingsColumnDef {
   key: string;
   label: string;
-  getValue: (s: { gamesPlayed: number; wins: number; losses: number; ties: number; goalsFor: number; goalsAgainst: number; goalDifference: number; points: number; penaltyMinutes?: number }) => string | number;
+  getValue: (s: { gamesPlayed: number; wins: number; losses: number; ties: number; goalsFor: number; goalsAgainst: number; goalDifference: number; points: number; penaltyMinutes?: number; shutouts?: number }) => string | number;
 }
 
 const hockeyColumns: StandingsColumnDef[] = [
@@ -23,10 +23,11 @@ const soccerColumns: StandingsColumnDef[] = [
   { key: "w", label: "W", getValue: (s) => s.wins },
   { key: "d", label: "D", getValue: (s) => s.ties },
   { key: "l", label: "L", getValue: (s) => s.losses },
+  { key: "pts", label: "PTS", getValue: (s) => s.points },
   { key: "gf", label: "GF", getValue: (s) => s.goalsFor },
   { key: "ga", label: "GA", getValue: (s) => s.goalsAgainst },
   { key: "gd", label: "GD", getValue: (s) => { const d = s.goalDifference; return d > 0 ? `+${d}` : d; } },
-  { key: "pts", label: "PTS", getValue: (s) => s.points },
+  { key: "so", label: "SO", getValue: (s) => s.shutouts ?? 0 },
 ];
 
 const basketballColumns: StandingsColumnDef[] = [
