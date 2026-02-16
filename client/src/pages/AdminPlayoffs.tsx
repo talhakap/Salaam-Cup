@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Loader2, Trophy, RefreshCw, Trash2, Check, ChevronRight } from "lucide-react";
+import { Loader2, Trophy, RefreshCw, Trash2, Check, ChevronRight, MapPin, Clock } from "lucide-react";
+import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Tournament, Division, PlayoffSettings, PlayoffMatchWithTeams } from "@shared/schema";
@@ -128,6 +129,22 @@ function PlayoffMatchCard({ match, onUpdate }: {
             </span>
           )}
         </div>
+        {(match.startTime || match.venue || match.fieldLocation) && (
+          <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground pt-1 border-t border-border" data-testid={`playoff-match-info-${match.id}`}>
+            {match.startTime && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {format(new Date(match.startTime), "MMM d, h:mm a")}
+              </span>
+            )}
+            {(match.venue || match.fieldLocation) && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {[match.venue?.name, match.fieldLocation].filter(Boolean).join(" — ")}
+              </span>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

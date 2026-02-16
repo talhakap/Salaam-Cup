@@ -10,9 +10,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
-import { Trophy, Loader2 } from "lucide-react";
+import { Trophy, Loader2, MapPin, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import type { Division, PlayoffSettings, PlayoffMatchWithTeams } from "@shared/schema";
 
 function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLast?: boolean }) {
@@ -47,7 +48,8 @@ function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLas
       </div>
       <div className={cn(
         "flex items-center gap-2 px-3 py-2",
-        isFinal && match.winnerTeamId === match.awayTeamId && "bg-primary/5 font-bold"
+        isFinal && match.winnerTeamId === match.awayTeamId && "bg-primary/5 font-bold",
+        (match.startTime || match.venue || match.fieldLocation) ? "" : "rounded-b-md"
       )}>
         {match.awaySeed && (
           <span className="text-xs text-muted-foreground w-5 text-right">{match.awaySeed}</span>
@@ -55,6 +57,24 @@ function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLas
         <span className="text-sm flex-1 min-w-0 truncate">{match.awayTeam?.name || "TBD"}</span>
         <span className="text-sm font-mono w-6 text-center">{match.awayScore ?? "-"}</span>
       </div>
+      {(match.startTime || match.venue || match.fieldLocation) && (
+        <div className="px-3 py-1.5 border-t border-border bg-muted/30 rounded-b-md" data-testid={`bracket-match-info-${match.id}`}>
+          <div className="flex items-center gap-3 flex-wrap text-[10px] text-muted-foreground">
+            {match.startTime && (
+              <span className="flex items-center gap-0.5">
+                <Clock className="h-2.5 w-2.5" />
+                {format(new Date(match.startTime), "MMM d, h:mm a")}
+              </span>
+            )}
+            {(match.venue || match.fieldLocation) && (
+              <span className="flex items-center gap-0.5">
+                <MapPin className="h-2.5 w-2.5" />
+                {[match.venue?.name, match.fieldLocation].filter(Boolean).join(" — ")}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

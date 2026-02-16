@@ -520,6 +520,7 @@ export type PlayoffMatchWithTeams = PlayoffMatch & {
   homeTeam: Team | null;
   awayTeam: Team | null;
   winnerTeam: Team | null;
+  venue: Venue | null;
 };
 
 // === STANDINGS TYPE DEFINITIONS ===

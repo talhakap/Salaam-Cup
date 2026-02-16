@@ -1089,7 +1089,8 @@ export class DatabaseStorage implements IStorage {
       const homeTeam = row.homeTeamId ? (await db.select().from(teams).where(eq(teams.id, row.homeTeamId)))[0] || null : null;
       const awayTeam = row.awayTeamId ? (await db.select().from(teams).where(eq(teams.id, row.awayTeamId)))[0] || null : null;
       const winnerTeam = row.winnerTeamId ? (await db.select().from(teams).where(eq(teams.id, row.winnerTeamId)))[0] || null : null;
-      enriched.push({ ...row, homeTeam, awayTeam, winnerTeam });
+      const venue = row.venueId ? (await db.select().from(venues).where(eq(venues.id, row.venueId)))[0] || null : null;
+      enriched.push({ ...row, homeTeam, awayTeam, winnerTeam, venue });
     }
     return enriched;
   }
@@ -1175,6 +1176,8 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
+    await this._linkPlaceholderMatches(tournamentId, divisionId, totalRounds);
+
     await db.update(playoffSettings).set({ generated: true, locked: true })
       .where(eq(playoffSettings.id, settings.id));
 
@@ -1211,6 +1214,116 @@ export class DatabaseStorage implements IStorage {
         ? { homeTeamId: winnerTeamId }
         : { awayTeamId: winnerTeamId };
       await db.update(playoffMatches).set(updateData).where(eq(playoffMatches.id, nextMatch.id));
+    }
+  }
+
+  async _linkPlaceholderMatches(tournamentId: number, divisionId: number, totalRounds: number): Promise<void> {
+    const placeholderRows = await db.select().from(matches).where(
+      and(
+        eq(matches.tournamentId, tournamentId),
+        eq(matches.divisionId, divisionId),
+        isNull(matches.homeTeamId),
+        isNull(matches.awayTeamId)
+      )
+    ).orderBy(asc(matches.matchNumber));
+
+    if (placeholderRows.length === 0) return;
+
+    const roundGroupMap = new Map<string, typeof placeholderRows>();
+    for (const m of placeholderRows) {
+      const roundName = m.round || "";
+      if (!roundGroupMap.has(roundName)) roundGroupMap.set(roundName, []);
+      roundGroupMap.get(roundName)!.push(m);
+    }
+    const roundGroups = Array.from(roundGroupMap.entries()).map(([roundName, ms]) => ({
+      roundName,
+      matches: ms.sort((a, b) => (a.matchNumber || 0) - (b.matchNumber || 0)),
+    }));
+
+    const generatedMatches = await db.select().from(playoffMatches).where(
+      and(
+        eq(playoffMatches.tournamentId, tournamentId),
+        eq(playoffMatches.divisionId, divisionId),
+        eq(playoffMatches.isBye, false)
+      )
+    ).orderBy(asc(playoffMatches.round), asc(playoffMatches.matchIndex));
+
+    const bracketByRound: Map<number, typeof generatedMatches> = new Map();
+    for (const m of generatedMatches) {
+      if (!bracketByRound.has(m.round)) bracketByRound.set(m.round, []);
+      bracketByRound.get(m.round)!.push(m);
+    }
+
+    const bracketRounds = Array.from(bracketByRound.entries()).sort((a, b) => a[0] - b[0]);
+
+    const normalizeRound = (name: string): string => {
+      const lower = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (lower.includes("final") || lower.includes("championship")) return "final";
+      if (lower.includes("semi")) return "semi";
+      if (lower.includes("quarter")) return "quarter";
+      return lower;
+    };
+
+    const roundNameToOffset: Record<string, number> = {
+      "final": 0,
+      "semi": 1,
+      "quarter": 2,
+    };
+
+    const linked = new Set<number>();
+
+    for (const group of roundGroups) {
+      const normalized = normalizeRound(group.roundName);
+      const offset = roundNameToOffset[normalized];
+      if (offset === undefined) continue;
+
+      const bracketRoundNum = totalRounds - offset;
+      const bracketMatchesInRound = bracketByRound.get(bracketRoundNum);
+      if (!bracketMatchesInRound) continue;
+
+      const limit = Math.min(group.matches.length, bracketMatchesInRound.length);
+      for (let j = 0; j < limit; j++) {
+        const pm = group.matches[j];
+        const bm = bracketMatchesInRound[j];
+        if (linked.has(bm.id)) continue;
+        await db.update(playoffMatches).set({
+          linkedMatchId: pm.id,
+          startTime: pm.startTime,
+          venueId: pm.venueId,
+          fieldLocation: pm.fieldLocation,
+        }).where(eq(playoffMatches.id, bm.id));
+        linked.add(bm.id);
+      }
+    }
+
+    const unmatched = roundGroups.filter(g => {
+      const normalized = normalizeRound(g.roundName);
+      return roundNameToOffset[normalized] === undefined;
+    });
+
+    if (unmatched.length > 0) {
+      const unmatchedMatches = unmatched.flatMap(g => g.matches);
+      unmatchedMatches.sort((a, b) => (a.matchNumber || 0) - (b.matchNumber || 0));
+
+      const unmatchedBracket: typeof generatedMatches = [];
+      for (const [, bms] of bracketRounds) {
+        for (const bm of bms) {
+          if (!linked.has(bm.id)) unmatchedBracket.push(bm);
+        }
+      }
+
+      const limit = Math.min(unmatchedMatches.length, unmatchedBracket.length);
+      for (let j = 0; j < limit; j++) {
+        const pm = unmatchedMatches[j];
+        const bm = unmatchedBracket[j];
+        await db.update(playoffMatches).set({
+          linkedMatchId: pm.id,
+          startTime: pm.startTime,
+          venueId: pm.venueId,
+          fieldLocation: pm.fieldLocation,
+        }).where(eq(playoffMatches.id, bm.id));
+        linked.add(bm.id);
+      }
     }
   }
 
