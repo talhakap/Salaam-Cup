@@ -1117,8 +1117,24 @@ export async function registerRoutes(
           const dateStr = row.date.trim();
           const timeStr = (row.time || "").trim();
           try {
-            const isoStr = timeStr
-              ? `${dateStr}T${timeStr}`
+            let time24 = "";
+            if (timeStr) {
+              const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
+              if (ampmMatch) {
+                let h = parseInt(ampmMatch[1]);
+                const m = ampmMatch[2];
+                const s = ampmMatch[3] || "00";
+                const period = ampmMatch[4].toUpperCase();
+                if (period === "AM" && h === 12) h = 0;
+                if (period === "PM" && h !== 12) h += 12;
+                time24 = `${h.toString().padStart(2, "0")}:${m}:${s}`;
+              } else {
+                time24 = timeStr.includes(":") && timeStr.split(":").length === 2
+                  ? `${timeStr}:00` : timeStr;
+              }
+            }
+            const isoStr = time24
+              ? `${dateStr}T${time24}`
               : `${dateStr}T00:00:00`;
             const utcGuess = new Date(isoStr + "Z");
             if (isNaN(utcGuess.getTime())) {
