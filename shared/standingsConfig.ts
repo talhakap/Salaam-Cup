@@ -44,6 +44,8 @@ const softballColumns: StandingsColumnDef[] = [
   { key: "gp", label: "GP", getValue: (s) => s.gamesPlayed },
   { key: "w", label: "W", getValue: (s) => s.wins },
   { key: "l", label: "L", getValue: (s) => s.losses },
+  { key: "t", label: "T", getValue: (s) => s.ties },
+  { key: "pct", label: "WIN%", getValue: (s) => s.gamesPlayed > 0 ? ((s.wins + 0.5 * s.ties) / s.gamesPlayed).toFixed(3) : ".000" },
   { key: "rf", label: "RF", getValue: (s) => s.goalsFor },
   { key: "ra", label: "RA", getValue: (s) => s.goalsAgainst },
   { key: "rd", label: "RD", getValue: (s) => { const d = s.goalDifference; return d > 0 ? `+${d}` : d; } },

@@ -476,7 +476,7 @@ export const STANDINGS_TYPES = {
   hockey_standard: { label: "Hockey Standard", description: "W=2, T=1, L=0" },
   soccer_standard: { label: "Soccer Standard", description: "W=3, D=1, L=0" },
   basketball_standard: { label: "Basketball Standard", description: "Win %" },
-  softball_standard: { label: "Softball Standard", description: "W=2, L=0, Capped RD" },
+  softball_standard: { label: "Softball Standard", description: "W=2, T=1, L=0, Win%" },
 } as const;
 
 export type StandingsType = keyof typeof STANDINGS_TYPES;
