@@ -471,6 +471,56 @@ export const standingsAdjustmentsRelations = relations(standingsAdjustments, ({ 
   }),
 }));
 
+// === PLAYOFFS ===
+export const playoffSettings = pgTable("playoff_settings", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => tournaments.id).notNull(),
+  divisionId: integer("division_id").references(() => divisions.id).notNull(),
+  qualifyCount: integer("qualify_count").default(4).notNull(),
+  bracketMode: text("bracket_mode", { enum: ["byes", "play_in"] }).default("byes").notNull(),
+  seedingSource: text("seeding_source", { enum: ["standings", "manual"] }).default("standings").notNull(),
+  reseedEachRound: boolean("reseed_each_round").default(false).notNull(),
+  locked: boolean("locked").default(false).notNull(),
+  showBracket: boolean("show_bracket").default(false).notNull(),
+  generated: boolean("generated").default(false).notNull(),
+});
+
+export const insertPlayoffSettingsSchema = createInsertSchema(playoffSettings).omit({ id: true });
+export type PlayoffSettings = typeof playoffSettings.$inferSelect;
+export type InsertPlayoffSettings = z.infer<typeof insertPlayoffSettingsSchema>;
+
+export const playoffMatches = pgTable("playoff_matches", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => tournaments.id).notNull(),
+  divisionId: integer("division_id").references(() => divisions.id).notNull(),
+  round: integer("round").notNull(),
+  matchIndex: integer("match_index").notNull(),
+  homeSeed: integer("home_seed"),
+  awaySeed: integer("away_seed"),
+  homeTeamId: integer("home_team_id").references(() => teams.id),
+  awayTeamId: integer("away_team_id").references(() => teams.id),
+  winnerTeamId: integer("winner_team_id").references(() => teams.id),
+  homeScore: integer("home_score"),
+  awayScore: integer("away_score"),
+  status: text("status", { enum: ["pending", "scheduled", "live", "final"] }).default("pending").notNull(),
+  startTime: timestamp("start_time"),
+  venueId: integer("venue_id").references(() => venues.id),
+  fieldLocation: text("field_location"),
+  isBye: boolean("is_bye").default(false).notNull(),
+});
+
+export const insertPlayoffMatchSchema = createInsertSchema(playoffMatches).omit({ id: true }).extend({
+  startTime: z.coerce.date().nullable().optional(),
+});
+export type PlayoffMatch = typeof playoffMatches.$inferSelect;
+export type InsertPlayoffMatch = z.infer<typeof insertPlayoffMatchSchema>;
+
+export type PlayoffMatchWithTeams = PlayoffMatch & {
+  homeTeam: Team | null;
+  awayTeam: Team | null;
+  winnerTeam: Team | null;
+};
+
 // === STANDINGS TYPE DEFINITIONS ===
 export const STANDINGS_TYPES = {
   hockey_standard: { label: "Hockey Standard", description: "W=2, T=1, L=0" },
