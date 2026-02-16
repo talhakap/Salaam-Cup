@@ -33,10 +33,10 @@ const basketballColumns: StandingsColumnDef[] = [
   { key: "gp", label: "GP", getValue: (s) => s.gamesPlayed },
   { key: "w", label: "W", getValue: (s) => s.wins },
   { key: "l", label: "L", getValue: (s) => s.losses },
-  { key: "pct", label: "WIN%", getValue: (s) => s.gamesPlayed > 0 ? (s.wins / s.gamesPlayed).toFixed(3) : ".000" },
+  { key: "pts", label: "PTS", getValue: (s) => s.points },
   { key: "pf", label: "PF", getValue: (s) => s.goalsFor },
   { key: "pa", label: "PA", getValue: (s) => s.goalsAgainst },
-  { key: "diff", label: "DIFF", getValue: (s) => { const d = s.goalDifference; return d > 0 ? `+${d}` : d; } },
+  { key: "pd", label: "PD", getValue: (s) => { const d = s.goalDifference; return d > 0 ? `+${d}` : d; } },
 ];
 
 const softballColumns: StandingsColumnDef[] = [
