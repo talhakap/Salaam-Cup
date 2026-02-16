@@ -1114,12 +1114,21 @@ export async function registerRoutes(
 
         let startTime: Date | null = null;
         if (row.date) {
-          const dateStr = row.date.trim();
-          const timeStr = (row.time || "").trim();
+          let rawDate = row.date.trim();
+          let rawTime = (row.time || "").trim();
+
+          if (!rawTime) {
+            const dtMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})\s+(.+)$/);
+            if (dtMatch) {
+              rawDate = dtMatch[1];
+              rawTime = dtMatch[2];
+            }
+          }
+
           try {
-            let time24 = "";
-            if (timeStr) {
-              const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
+            let time24 = "00:00:00";
+            if (rawTime) {
+              const ampmMatch = rawTime.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
               if (ampmMatch) {
                 let h = parseInt(ampmMatch[1]);
                 const m = ampmMatch[2];
@@ -1129,16 +1138,14 @@ export async function registerRoutes(
                 if (period === "PM" && h !== 12) h += 12;
                 time24 = `${h.toString().padStart(2, "0")}:${m}:${s}`;
               } else {
-                time24 = timeStr.includes(":") && timeStr.split(":").length === 2
-                  ? `${timeStr}:00` : timeStr;
+                time24 = rawTime.includes(":") && rawTime.split(":").length === 2
+                  ? `${rawTime}:00` : rawTime;
               }
             }
-            const isoStr = time24
-              ? `${dateStr}T${time24}`
-              : `${dateStr}T00:00:00`;
+            const isoStr = `${rawDate}T${time24}`;
             const utcGuess = new Date(isoStr + "Z");
             if (isNaN(utcGuess.getTime())) {
-              errors.push(`Row ${rowNum}: Invalid date/time "${dateStr} ${timeStr}"`);
+              errors.push(`Row ${rowNum}: Invalid date/time "${row.date.trim()} ${(row.time || "").trim()}"`);
               continue;
             }
             const parts = new Intl.DateTimeFormat("en-US", {
@@ -1152,7 +1159,7 @@ export async function registerRoutes(
             const offsetMs = utcGuess.getTime() - torontoAtUtc.getTime();
             startTime = new Date(utcGuess.getTime() + offsetMs);
           } catch {
-            errors.push(`Row ${rowNum}: Invalid date/time "${dateStr} ${timeStr}"`);
+            errors.push(`Row ${rowNum}: Invalid date/time "${row.date.trim()} ${(row.time || "").trim()}"`);
             continue;
           }
         }
