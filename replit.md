@@ -37,6 +37,8 @@ Core features include:
 - Venue management: venues table with name, address, mapLink; Admin Venues page (/admin/venues) with full CRUD; venueId on tournaments, divisions, and matches tables; fieldLocation text field on matches for specific field/rink designation; venue selector in tournament, division, and match admin forms; venue + field info displayed on public schedule page and admin match cards
 - SEO: react-helmet-async for per-page meta tags; SEO component (`client/src/components/SEO.tsx`) added to all 13 public pages with Toronto/GTA-targeted titles, descriptions, keywords, and canonical URLs; index.html has base OG/Twitter/geo meta tags and JSON-LD SportsOrganization schema; server-side `/sitemap.xml` (dynamic with tournaments + approved teams) and `/robots.txt` endpoints
 - Standings calculation: Now supports per-team pulled flags (pulledHomeTeam, pulledAwayTeam) allowing match to be excluded from one team's standings while counting for the opponent; legacy pulled flag still supported for backward compatibility
+- Configurable standings system: Per-tournament `standingsType` field (hockey_standard W=2/T=1/L=0, soccer_standard W=3/D=1/L=0, basketball_standard win%-based, softball_standard win%-based); strategy pattern in `server/standingsStrategies.ts`; dynamic column rendering via `shared/standingsConfig.ts`; admin selects type in tournament create/edit form
+- Standings adjustments: `standings_adjustments` table for admin manual overrides (points, wins, losses, ties, goals for/against adjustments with notes); Admin Standings Adjustments page (/admin/standings-adjustments) with CRUD; adjustments applied after base calculation in `recalculateStandings`, then re-sorted
 - Team rejection email: Automatic Gmail notification sent to captain when admin rejects a team registration (server/gmail.ts sendTeamRejectionEmail)
 
 ## User Preferences
@@ -76,7 +78,7 @@ The project uses a monorepo layout with three top-level code directories:
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
 - **Schema Location**: `shared/schema.ts` (main tables), `shared/models/auth.ts` (auth tables)
 - **Migrations**: Managed via `drizzle-kit push` (`npm run db:push`)
-- **Core Tables**: `sports`, `tournaments`, `divisions`, `teams`, `players`, `matches`, `venues`, `standings`, `users`, `sessions`
+- **Core Tables**: `sports`, `tournaments`, `divisions`, `teams`, `players`, `matches`, `venues`, `standings`, `standings_adjustments`, `users`, `sessions`
 
 ### Key Design Decisions
 

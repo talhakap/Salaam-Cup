@@ -172,6 +172,25 @@ export const insertStandingSchema = createInsertSchema(standings).omit({ id: tru
 export type Standing = typeof standings.$inferSelect;
 export type InsertStanding = z.infer<typeof insertStandingSchema>;
 
+// === STANDINGS ADJUSTMENTS (admin overrides) ===
+export const standingsAdjustments = pgTable("standings_adjustments", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => tournaments.id).notNull(),
+  divisionId: integer("division_id").references(() => divisions.id).notNull(),
+  teamId: integer("team_id").references(() => teams.id).notNull(),
+  pointsAdjustment: integer("points_adjustment").default(0).notNull(),
+  winsAdjustment: integer("wins_adjustment").default(0).notNull(),
+  lossesAdjustment: integer("losses_adjustment").default(0).notNull(),
+  tiesAdjustment: integer("ties_adjustment").default(0).notNull(),
+  goalsForAdjustment: integer("goals_for_adjustment").default(0).notNull(),
+  goalsAgainstAdjustment: integer("goals_against_adjustment").default(0).notNull(),
+  notes: text("notes"),
+});
+
+export const insertStandingsAdjustmentSchema = createInsertSchema(standingsAdjustments).omit({ id: true });
+export type StandingsAdjustment = typeof standingsAdjustments.$inferSelect;
+export type InsertStandingsAdjustment = z.infer<typeof insertStandingsAdjustmentSchema>;
+
 // === AWARDS ===
 export const awards = pgTable("awards", {
   id: serial("id").primaryKey(),
@@ -430,11 +449,36 @@ export const awardsRelations = relations(awards, ({ one }) => ({
   }),
 }));
 
+export const standingsAdjustmentsRelations = relations(standingsAdjustments, ({ one }) => ({
+  tournament: one(tournaments, {
+    fields: [standingsAdjustments.tournamentId],
+    references: [tournaments.id],
+  }),
+  division: one(divisions, {
+    fields: [standingsAdjustments.divisionId],
+    references: [divisions.id],
+  }),
+  team: one(teams, {
+    fields: [standingsAdjustments.teamId],
+    references: [teams.id],
+  }),
+}));
+
+// === STANDINGS TYPE DEFINITIONS ===
+export const STANDINGS_TYPES = {
+  hockey_standard: { label: "Hockey Standard", description: "W=2, T=1, L=0" },
+  soccer_standard: { label: "Soccer Standard", description: "W=3, D=1, L=0" },
+  basketball_standard: { label: "Basketball Standard", description: "Win %" },
+  softball_standard: { label: "Softball Standard", description: "Win %" },
+} as const;
+
+export type StandingsType = keyof typeof STANDINGS_TYPES;
+
 // === API TYPES ===
 export type CreateTeamRequest = InsertTeam;
 export type UpdateTeamRequest = Partial<InsertTeam>;
 export type CreatePlayerRequest = InsertPlayer;
 export type UpdatePlayerRequest = Partial<InsertPlayer>;
 export type TeamWithPlayers = Team & { players: Player[] };
-export type StandingWithTeam = Standing & { team: Team };
+export type StandingWithTeam = Standing & { team: Team; adjustment?: StandingsAdjustment | null };
 export type MatchWithTeams = Match & { homeTeam: Team | null, awayTeam: Team | null };

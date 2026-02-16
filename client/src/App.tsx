@@ -32,6 +32,7 @@ import AdminSpecialAwards from "@/pages/AdminSpecialAwards";
 import AdminVenues from "@/pages/AdminVenues";
 import AdminSports from "@/pages/AdminSports";
 import AdminUsers from "@/pages/AdminUsers";
+import AdminStandingsAdjustments from "@/pages/AdminStandingsAdjustments";
 import AdminLogin from "@/pages/AdminLogin";
 import Media from "@/pages/Media";
 import Faq from "@/pages/Faq";
@@ -84,6 +85,7 @@ function Router() {
       <Route path="/admin/venues" component={AdminVenues} />
       <Route path="/admin/sports" component={AdminSports} />
       <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/standings-adjustments" component={AdminStandingsAdjustments} />
 
       <Route path="/media" component={Media} /> 
       <Route path="/faq" component={Faq} />

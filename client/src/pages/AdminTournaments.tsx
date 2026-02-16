@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTournamentSchema, insertDivisionSchema } from "@shared/schema";
+import { insertTournamentSchema, insertDivisionSchema, STANDINGS_TYPES } from "@shared/schema";
 import type { Tournament, Division, Venue, TournamentSponsor } from "@shared/schema";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -648,6 +648,7 @@ export default function AdminTournaments() {
       showNewsBanner: false,
       showSponsorBanner: false,
       allowMultipleRegistrations: false,
+      standingsType: "hockey_standard" as string,
       rostersVisible: false,
     },
   });
@@ -669,6 +670,7 @@ export default function AdminTournaments() {
       showNewsBanner: false,
       showSponsorBanner: false,
       allowMultipleRegistrations: false,
+      standingsType: "hockey_standard" as string,
       rostersVisible: false,
     },
   });
@@ -702,6 +704,7 @@ export default function AdminTournaments() {
       showNewsBanner: t.showNewsBanner || false,
       showSponsorBanner: t.showSponsorBanner || false,
       allowMultipleRegistrations: t.allowMultipleRegistrations || false,
+      standingsType: t.standingsType || "hockey_standard",
       rostersVisible: t.rostersVisible || false,
     });
   };
@@ -861,6 +864,22 @@ export default function AdminTournaments() {
             <SelectContent>
               <SelectItem value="none">-- None --</SelectItem>
               {(venues || []).map((v: Venue) => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )} />
+      <FormField control={form.control} name="standingsType" render={({ field }: any) => (
+        <FormItem>
+          <FormLabel>Standings Calculation Type</FormLabel>
+          <Select value={field.value || "hockey_standard"} onValueChange={field.onChange}>
+            <FormControl>
+              <SelectTrigger data-testid={`${prefix}select-standings-type`}><SelectValue placeholder="Select standings type" /></SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {Object.entries(STANDINGS_TYPES).map(([key, { label, description }]) => (
+                <SelectItem key={key} value={key}>{label} — {description}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <FormMessage />

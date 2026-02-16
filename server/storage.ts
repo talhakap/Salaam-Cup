@@ -1,16 +1,18 @@
 import { db } from "./db";
 import { 
-  tournaments, divisions, teams, players, matches, venues, standings, sports, awards, news, sponsors, tournamentSponsors, specialAwards, aboutContent, waiverContent, mediaYears, mediaItems, faqs,
+  tournaments, divisions, teams, players, matches, venues, standings, standingsAdjustments, sports, awards, news, sponsors, tournamentSponsors, specialAwards, aboutContent, waiverContent, mediaYears, mediaItems, faqs,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
   type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertTournamentSponsor, type InsertSpecialAward, type InsertAboutContent,
   type InsertWaiverContent, type WaiverContent,
   type InsertMediaYear, type InsertMediaItem, type InsertFaq,
+  type InsertStandingsAdjustment, type StandingsAdjustment,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
   type Standing, type Sport, type Award, type News, type Sponsor, type TournamentSponsor, type SpecialAward, type AboutContent,
   type MediaYear, type MediaItem, type MediaYearWithItems, type Faq,
   type UpdateTeamRequest, type UpdatePlayerRequest,
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
+import { getStrategy, applyAdjustments } from "./standingsStrategies";
 import { eq, and, sql, desc, asc, isNull } from "drizzle-orm";
 
 export interface IStorage {
@@ -72,6 +74,11 @@ export interface IStorage {
   // Standings
   getStandings(tournamentId: number): Promise<StandingWithTeam[]>;
   recalculateStandings(tournamentId: number): Promise<void>;
+
+  // Standings Adjustments
+  getStandingsAdjustments(tournamentId: number): Promise<StandingsAdjustment[]>;
+  upsertStandingsAdjustment(data: InsertStandingsAdjustment): Promise<StandingsAdjustment>;
+  deleteStandingsAdjustment(id: number): Promise<void>;
 
   // Awards
   getAwards(tournamentId: number): Promise<Award[]>;
@@ -636,11 +643,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async recalculateStandings(tournamentId: number): Promise<void> {
+    const tournament = await db.select().from(tournaments).where(eq(tournaments.id, tournamentId)).then(r => r[0]);
+    const strategy = getStrategy(tournament?.standingsType);
+
     const finalMatches = await db.select().from(matches)
       .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "final"), eq(matches.draft, false)));
 
     const allTeams = await db.select().from(teams)
       .where(and(eq(teams.tournamentId, tournamentId), eq(teams.status, "approved")));
+
+    const adjustmentRows = await db.select().from(standingsAdjustments)
+      .where(eq(standingsAdjustments.tournamentId, tournamentId));
+    const adjMap = new Map<number, StandingsAdjustment>();
+    for (const adj of adjustmentRows) {
+      adjMap.set(adj.teamId, adj);
+    }
 
     await db.delete(standings).where(eq(standings.tournamentId, tournamentId));
 
@@ -688,38 +705,70 @@ export class DatabaseStorage implements IStorage {
       }
 
       if (hs > as_) {
-        if (!homePulled) { home.wins!++; home.points! += 2; }
+        if (!homePulled) { home.wins!++; }
         if (!awayPulled) { away.losses!++; }
       } else if (hs < as_) {
-        if (!awayPulled) { away.wins!++; away.points! += 2; }
+        if (!awayPulled) { away.wins!++; }
         if (!homePulled) { home.losses!++; }
       } else {
-        if (!homePulled) { home.ties!++; home.points! += 1; }
-        if (!awayPulled) { away.ties!++; away.points! += 1; }
+        if (!homePulled) { home.ties!++; }
+        if (!awayPulled) { away.ties!++; }
       }
 
       if (!homePulled) home.goalDifference = home.goalsFor! - home.goalsAgainst!;
       if (!awayPulled) away.goalDifference = away.goalsFor! - away.goalsAgainst!;
     }
 
-    // Insert all standings
-    const standingsArr = Array.from(statsMap.values());
-    // Sort by points then GD for position
-    standingsArr.sort((a, b) => (b.points! - a.points!) || (b.goalDifference! - a.goalDifference!));
+    let standingsArr = Array.from(statsMap.values());
+
+    standingsArr = standingsArr.map(s => {
+      s.points = strategy.calculatePoints(s.wins!, s.losses!, s.ties!);
+      const adj = adjMap.get(s.teamId);
+      return applyAdjustments(s, adj, strategy);
+    });
+
+    standingsArr.sort(strategy.sortStandings);
     
-    // Group by division for per-division positions
     const byDiv = new Map<number, InsertStanding[]>();
     for (const s of standingsArr) {
       if (!byDiv.has(s.divisionId)) byDiv.set(s.divisionId, []);
       byDiv.get(s.divisionId)!.push(s);
     }
     Array.from(byDiv.values()).forEach(divStandings => {
+      divStandings.sort(strategy.sortStandings);
       divStandings.forEach((s: InsertStanding, i: number) => { s.position = i + 1; });
     });
 
     if (standingsArr.length > 0) {
       await db.insert(standings).values(standingsArr);
     }
+  }
+
+  // Standings Adjustments
+  async getStandingsAdjustments(tournamentId: number): Promise<StandingsAdjustment[]> {
+    return await db.select().from(standingsAdjustments)
+      .where(eq(standingsAdjustments.tournamentId, tournamentId));
+  }
+
+  async upsertStandingsAdjustment(data: InsertStandingsAdjustment): Promise<StandingsAdjustment> {
+    const existing = await db.select().from(standingsAdjustments)
+      .where(and(
+        eq(standingsAdjustments.tournamentId, data.tournamentId),
+        eq(standingsAdjustments.teamId, data.teamId)
+      ));
+    if (existing.length > 0) {
+      const [updated] = await db.update(standingsAdjustments)
+        .set(data)
+        .where(eq(standingsAdjustments.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(standingsAdjustments).values(data).returning();
+    return created;
+  }
+
+  async deleteStandingsAdjustment(id: number): Promise<void> {
+    await db.delete(standingsAdjustments).where(eq(standingsAdjustments.id, id));
   }
 
   // Awards

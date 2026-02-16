@@ -14,6 +14,7 @@ import { TournamentNav } from "@/components/TournamentNav";
 import { Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { Division, StandingWithTeam } from "@shared/schema";
+import { getStandingsColumns } from "@shared/standingsConfig";
 
 export default function TournamentStandings() {
   const [, params] = useRoute("/tournaments/:id/standings");
@@ -61,6 +62,8 @@ export default function TournamentStandings() {
   const filteredStandings = (allStandings || [])
     .filter((s: StandingWithTeam) => s.divisionId === Number(selectedDivision))
     .sort((a: StandingWithTeam, b: StandingWithTeam) => (a.position || 0) - (b.position || 0));
+
+  const columns = getStandingsColumns(tournament?.standingsType);
 
   return (
     <MainLayout>
@@ -112,14 +115,9 @@ export default function TournamentStandings() {
                 <TableRow className="border-b-2 border-foreground">
                   <TableHead className="w-12 font-bold text-foreground">Pos</TableHead>
                   <TableHead className="font-bold text-foreground">Team</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">GP</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">W</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">L</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">T</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">GF</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">GA</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">GD</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">PTS</TableHead>
+                  {columns.map((col) => (
+                    <TableHead key={col.key} className={`text-center font-bold text-foreground ${col.key === 'pts' || col.key === 'pct' ? '' : ''}`}>{col.label}</TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -132,14 +130,11 @@ export default function TournamentStandings() {
                         {s.team?.name || `Team #${s.teamId}`}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-center">{s.gamesPlayed}</TableCell>
-                    <TableCell className="text-center">{s.wins}</TableCell>
-                    <TableCell className="text-center">{s.losses}</TableCell>
-                    <TableCell className="text-center">{s.ties}</TableCell>
-                    <TableCell className="text-center">{s.goalsFor}</TableCell>
-                    <TableCell className="text-center">{s.goalsAgainst}</TableCell>
-                    <TableCell className="text-center">{s.goalDifference > 0 ? `+${s.goalDifference}` : s.goalDifference}</TableCell>
-                    <TableCell className="text-center font-bold">{s.points}</TableCell>
+                    {columns.map((col) => (
+                      <TableCell key={col.key} className={`text-center ${col.key === 'pts' || col.key === 'pct' ? 'font-bold' : ''}`}>
+                        {col.getValue(s)}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>

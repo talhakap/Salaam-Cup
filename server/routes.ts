@@ -7,6 +7,7 @@ import { fixSequences } from "./db";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import type { InsertMatch } from "@shared/schema";
+import { insertStandingsAdjustmentSchema } from "@shared/schema";
 import { createCaptainAccount, verifyCaptainCredentials, generatePassword, supabaseAdmin, seedAdminAccounts } from "./supabaseAdmin";
 
 export async function registerRoutes(
@@ -1184,6 +1185,60 @@ export async function registerRoutes(
   app.post(api.standings.recalculate.path, isAuthenticated, async (req, res) => {
     await storage.recalculateStandings(Number(req.params.tournamentId));
     res.json({ message: "Standings recalculated" });
+  });
+
+  // Standings Adjustments
+  app.get("/api/tournaments/:tournamentId/standings/adjustments", isAuthenticated, async (req, res) => {
+    const data = await storage.getStandingsAdjustments(Number(req.params.tournamentId));
+    res.json(data);
+  });
+
+  app.post("/api/tournaments/:tournamentId/standings/adjustments", isAuthenticated, async (req, res) => {
+    try {
+      const tournamentId = Number(req.params.tournamentId);
+      if (isNaN(tournamentId)) return res.status(400).json({ message: "Invalid tournament ID" });
+      const validationSchema = z.object({
+        teamId: z.coerce.number().int().positive(),
+        divisionId: z.coerce.number().int().positive(),
+        pointsAdjustment: z.coerce.number().int().default(0),
+        winsAdjustment: z.coerce.number().int().default(0),
+        lossesAdjustment: z.coerce.number().int().default(0),
+        tiesAdjustment: z.coerce.number().int().default(0),
+        goalsForAdjustment: z.coerce.number().int().default(0),
+        goalsAgainstAdjustment: z.coerce.number().int().default(0),
+        notes: z.string().nullable().optional(),
+      });
+      const parsed = validationSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+      const data = parsed.data;
+      const result = await storage.upsertStandingsAdjustment({
+        tournamentId,
+        divisionId: data.divisionId,
+        teamId: data.teamId,
+        pointsAdjustment: data.pointsAdjustment,
+        winsAdjustment: data.winsAdjustment,
+        lossesAdjustment: data.lossesAdjustment,
+        tiesAdjustment: data.tiesAdjustment,
+        goalsForAdjustment: data.goalsForAdjustment,
+        goalsAgainstAdjustment: data.goalsAgainstAdjustment,
+        notes: data.notes || null,
+      });
+      await storage.recalculateStandings(tournamentId);
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
+    }
+  });
+
+  app.delete("/api/tournaments/:tournamentId/standings/adjustments/:id", isAuthenticated, async (req, res) => {
+    try {
+      const tournamentId = Number(req.params.tournamentId);
+      await storage.deleteStandingsAdjustment(Number(req.params.id));
+      await storage.recalculateStandings(tournamentId);
+      res.json({ message: "Adjustment deleted" });
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
+    }
   });
 
   app.post("/api/tournaments/:tournamentId/matches/publish", isAuthenticated, async (req, res) => {
