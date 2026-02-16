@@ -285,7 +285,14 @@ export default function AdminMatches() {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = "division,homeTeam,awayTeam,date,time,round,matchNumber,status,homeScore,awayScore,venue,fieldLocation\nMen's Open,Team A,Team B,2025-06-15,10:00 AM,Group Stage,1,scheduled,0,0,Paramount Fine Foods Centre,Rink 1";
+    const headers = "division,homeTeam,awayTeam,date,time,round,matchNumber,status,homeScore,awayScore,venue,fieldLocation";
+    const rows = [
+      "Men's Open,Team A,Team B,2025-06-15,10:00 AM,Group Stage,1,scheduled,,,Paramount Fine Foods Centre,Rink 1",
+      "Men's Open,Team C,Team D,2025-06-15,11:30 AM,Group Stage,2,scheduled,,,Paramount Fine Foods Centre,Rink 2",
+      "Women's Open,Team E,Team F,2025-06-16,9:00 AM,Group Stage,1,scheduled,,,Paramount Fine Foods Centre,Rink 1",
+      "Men's Open,Team A,Team C,2025-06-16,1:00 PM,Semi-Final,3,scheduled,,,Paramount Fine Foods Centre,Rink 1",
+    ];
+    const csvContent = [headers, ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
