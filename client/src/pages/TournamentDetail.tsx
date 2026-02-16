@@ -256,7 +256,6 @@ export default function TournamentDetail() {
             </>
             );
           })()}
-          </div>
 
           {sortedTeams.length > 0 && (
             <div className="mb-16">
@@ -299,6 +298,7 @@ export default function TournamentDetail() {
               ))}
             </div>
           )}
+          </div>
         </div>
       </section>
 
