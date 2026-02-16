@@ -259,6 +259,7 @@ function ScheduleMatchRow({ match, divisions, venues }: { match: MatchWithTeams;
           {isFinal && !match.pulled && (match.pulledHomeTeam !== match.pulledAwayTeam) && <span className="text-xs text-muted-foreground uppercase italic">Partial Pull</span>}
           {isScheduled && <span className="text-xs text-muted-foreground uppercase">Scheduled</span>}
         </div>
+        {match.round && <div className="text-[10px] text-muted-foreground mt-0.5">{match.round}</div>}
       </div>
 
       <div className="flex-1 min-w-0">

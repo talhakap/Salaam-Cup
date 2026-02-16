@@ -435,6 +435,7 @@ function MatchRow({ match, divisions, venues }: { match: MatchWithTeams; divisio
           {isFinal && <span className="text-xs text-muted-foreground uppercase">Final</span>}
           {isScheduled && <span className="text-xs text-muted-foreground uppercase">Scheduled</span>}
         </div>
+        {match.round && <div className="text-[10px] text-muted-foreground mt-0.5">{match.round}</div>}
       </div>
 
       <div className="flex-1 min-w-0">
