@@ -1,12 +1,19 @@
-import { useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { TournamentNav } from "@/components/TournamentNav";
-import { useTournament } from "@/hooks/use-tournaments";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Trophy } from "lucide-react";
+import { useRoute, Link } from "wouter";
+import { MainLayout } from "@/components/MainLayout";
 import { SEO } from "@/components/SEO";
-import type { PlayoffSettings, PlayoffMatchWithTeams, Division } from "@shared/schema";
+import { HeroSection } from "@/components/HeroSection";
+import { SponsorBar } from "@/components/SponsorBar";
+import { ReadyToCompete } from "@/components/ReadyToCompete";
+import { FAQSection } from "@/components/FAQSection";
+import { useTournament, useDivisions } from "@/hooks/use-tournaments";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { TournamentNav } from "@/components/TournamentNav";
+import { Trophy, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import type { Division, PlayoffSettings, PlayoffMatchWithTeams } from "@shared/schema";
 
 function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLast?: boolean }) {
   if (match.isBye) {
@@ -23,7 +30,7 @@ function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLas
   return (
     <div
       className={cn(
-        "border border-border rounded-md bg-card overflow-hidden",
+        "border border-border rounded-md bg-card",
         isLast && isFinal && "ring-2 ring-primary"
       )}
       data-testid={`bracket-match-${match.id}`}
@@ -59,29 +66,42 @@ function getRoundName(round: number, totalRounds: number): string {
   return `Round ${round}`;
 }
 
-function DivisionBracket({ tournamentId, division }: { tournamentId: number; division: Division }) {
+function DivisionBracket({ tournamentId, divisionId }: { tournamentId: number; divisionId: string }) {
   const { data: settings } = useQuery<PlayoffSettings | null>({
-    queryKey: [`/api/tournaments/${tournamentId}/divisions/${division.id}/playoffs/settings`],
+    queryKey: ['/api/tournaments', tournamentId, 'divisions', divisionId, 'playoffs', 'settings'],
     queryFn: async () => {
-      const res = await fetch(`/api/tournaments/${tournamentId}/divisions/${division.id}/playoffs/settings`);
+      const res = await fetch(`/api/tournaments/${tournamentId}/divisions/${divisionId}/playoffs/settings`);
       if (!res.ok) return null;
       return res.json();
     },
   });
 
   const { data: matches, isLoading } = useQuery<PlayoffMatchWithTeams[]>({
-    queryKey: [`/api/tournaments/${tournamentId}/divisions/${division.id}/playoffs/matches`],
+    queryKey: ['/api/tournaments', tournamentId, 'divisions', divisionId, 'playoffs', 'matches'],
     queryFn: async () => {
-      const res = await fetch(`/api/tournaments/${tournamentId}/divisions/${division.id}/playoffs/matches`);
+      const res = await fetch(`/api/tournaments/${tournamentId}/divisions/${divisionId}/playoffs/matches`);
       if (!res.ok) return [];
       return res.json();
     },
     enabled: settings?.showBracket === true && settings?.generated === true,
   });
 
-  if (!settings?.showBracket || !settings?.generated) return null;
-  if (isLoading) return <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />;
-  if (!matches || matches.length === 0) return null;
+  if (!settings?.showBracket || !settings?.generated) {
+    return (
+      <div className="text-center py-12 text-muted-foreground" data-testid="no-bracket-division">
+        Playoff bracket is not yet available for this division.
+      </div>
+    );
+  }
+
+  if (isLoading) return <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto my-8" />;
+  if (!matches || matches.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        No playoff matches have been generated yet.
+      </div>
+    );
+  }
 
   const matchesByRound = matches.reduce<Record<number, PlayoffMatchWithTeams[]>>((acc, m) => {
     if (!acc[m.round]) acc[m.round] = [];
@@ -96,9 +116,7 @@ function DivisionBracket({ tournamentId, division }: { tournamentId: number; div
   const champion = finalMatch?.winnerTeam;
 
   return (
-    <div className="space-y-4" data-testid={`division-bracket-${division.id}`}>
-      <h3 className="text-lg font-bold font-display">{division.name}</h3>
-
+    <div className="space-y-6" data-testid={`division-bracket-${divisionId}`}>
       {champion && (
         <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-md" data-testid="champion-banner">
           <Trophy className="h-6 w-6 text-primary" />
@@ -118,7 +136,7 @@ function DivisionBracket({ tournamentId, division }: { tournamentId: number; div
                 {getRoundName(roundNum, totalRounds)}
               </p>
               <div className="space-y-2" style={{ paddingTop: `${(Math.pow(2, roundNum - 1) - 1) * 24}px` }}>
-                {roundMatches.map((match, i) => (
+                {roundMatches.map((match) => (
                   <div key={match.id} style={{ marginBottom: `${(Math.pow(2, roundNum) - 1) * 16}px` }}>
                     <BracketMatchup match={match} isLast={roundNum === totalRounds} />
                   </div>
@@ -133,54 +151,96 @@ function DivisionBracket({ tournamentId, division }: { tournamentId: number; div
 }
 
 export default function TournamentPlayoffs() {
-  const params = useParams<{ id: string }>();
-  const { data: tournament, isLoading } = useTournament(params.id || "");
+  const [, params] = useRoute("/tournaments/:id/playoffs");
+  const tournamentSlug = params?.id || "";
 
-  const { data: allSettings } = useQuery<PlayoffSettings[]>({
-    queryKey: [`/api/tournaments/${params.id}/playoffs/settings`],
-    queryFn: async () => {
-      const res = await fetch(`/api/tournaments/${params.id}/playoffs/settings`);
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: !!params.id,
-  });
+  const { data: tournament, isLoading } = useTournament(tournamentSlug);
+  const numericId = tournament?.id || 0;
+  const { data: divisions } = useDivisions(numericId);
 
-  const hasVisibleBrackets = (allSettings || []).some(s => s.showBracket && s.generated);
+  const divisionTabs = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+
+  useEffect(() => {
+    if (selectedDivision === "" && divisionTabs.length > 0) {
+      setSelectedDivision(divisionTabs[0].id);
+    }
+  }, [divisionTabs, selectedDivision]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <MainLayout>
+        <div className="h-[45vh] bg-muted animate-pulse" />
+        <div className="container mx-auto px-4 py-12">
+          <Skeleton className="h-12 w-64 mb-4" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </MainLayout>
     );
   }
 
-  if (!tournament) return null;
+  if (!tournament) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="text-3xl font-bold font-display mb-4">Tournament Not Found</h1>
+          <Link href="/tournaments">
+            <Button data-testid="link-back-tournaments">Back to Tournaments</Button>
+          </Link>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
-    <>
+    <MainLayout>
       <SEO
         title={`${tournament.name} Playoffs | Salaam Cup`}
-        description={`Playoff brackets for ${tournament.name} - Salaam Cup Toronto`}
+        description={`Playoff brackets for ${tournament.name} - Salaam Cup Toronto. View matchups, scores and champions.`}
+        canonical={`/tournaments/${tournamentSlug}/playoffs`}
+        keywords={`${tournament.name} playoffs, tournament bracket Toronto, Salaam Cup playoffs GTA`}
       />
-      <TournamentNav tournamentId={params.id!} />
-      <div className="container mx-auto px-4 py-8 space-y-8" data-testid="tournament-playoffs-page">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Trophy className="h-6 w-6" />
-          <h1 className="text-2xl font-bold font-display">Playoffs</h1>
+      <HeroSection
+        title={tournament.name.replace("Salaam Cup ", "").toUpperCase()}
+        image={tournament.heroImage || undefined}
+      />
+      <SponsorBar />
+      <TournamentNav tournamentId={tournamentSlug} />
+
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-10" data-testid="text-playoff-heading">
+            Road To The Championship.
+          </h2>
+
+          {divisionTabs.length > 0 && (
+            <div className="flex justify-center mb-10">
+              <div className="flex gap-2 flex-wrap justify-center">
+                {divisionTabs.map((tab) => (
+                  <Button
+                    key={tab.id}
+                    variant={selectedDivision === tab.id ? "default" : "outline"}
+                    className="rounded-full text-xs font-bold uppercase tracking-wider"
+                    onClick={() => setSelectedDivision(tab.id)}
+                    data-testid={`filter-playoff-division-${tab.id}`}
+                  >
+                    {tab.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {selectedDivision && numericId ? (
+            <DivisionBracket tournamentId={numericId} divisionId={selectedDivision} />
+          ) : (
+            <p className="text-muted-foreground text-center py-12">Select a division to view the playoff bracket.</p>
+          )}
         </div>
+      </section>
 
-        {!hasVisibleBrackets && (
-          <div className="text-center py-12 text-muted-foreground" data-testid="no-brackets-message">
-            Playoff brackets are not yet available for this tournament.
-          </div>
-        )}
-
-        {tournament.divisions && tournament.divisions.map((div: Division) => (
-          <DivisionBracket key={div.id} tournamentId={tournament.id} division={div} />
-        ))}
-      </div>
-    </>
+      <ReadyToCompete />
+      <FAQSection />
+    </MainLayout>
   );
 }
