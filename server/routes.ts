@@ -1117,12 +1117,24 @@ export async function registerRoutes(
           const dateStr = row.date.trim();
           const timeStr = (row.time || "").trim();
           try {
-            const parsed = timeStr ? new Date(`${dateStr} ${timeStr}`) : new Date(dateStr);
-            if (isNaN(parsed.getTime())) {
+            const isoStr = timeStr
+              ? `${dateStr}T${timeStr}`
+              : `${dateStr}T00:00:00`;
+            const utcGuess = new Date(isoStr + "Z");
+            if (isNaN(utcGuess.getTime())) {
               errors.push(`Row ${rowNum}: Invalid date/time "${dateStr} ${timeStr}"`);
               continue;
             }
-            startTime = parsed;
+            const parts = new Intl.DateTimeFormat("en-US", {
+              timeZone: "America/Toronto",
+              year: "numeric", month: "2-digit", day: "2-digit",
+              hour: "2-digit", minute: "2-digit", second: "2-digit",
+              hour12: false,
+            }).formatToParts(utcGuess);
+            const g = (t: string) => parts.find(p => p.type === t)?.value || "00";
+            const torontoAtUtc = new Date(`${g("year")}-${g("month")}-${g("day")}T${g("hour")}:${g("minute")}:${g("second")}Z`);
+            const offsetMs = utcGuess.getTime() - torontoAtUtc.getTime();
+            startTime = new Date(utcGuess.getTime() + offsetMs);
           } catch {
             errors.push(`Row ${rowNum}: Invalid date/time "${dateStr} ${timeStr}"`);
             continue;
