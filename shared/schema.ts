@@ -139,6 +139,8 @@ export const matches = pgTable("matches", {
   status: text("status", { enum: ["scheduled", "live", "final", "cancelled"] }).default("scheduled").notNull(),
   round: text("round"),
   matchNumber: integer("match_number"),
+  homePenaltyMinutes: integer("home_penalty_minutes").default(0).notNull(),
+  awayPenaltyMinutes: integer("away_penalty_minutes").default(0).notNull(),
   pulled: boolean("pulled").default(false).notNull(),
   pulledHomeTeam: boolean("pulled_home_team").default(false).notNull(),
   pulledAwayTeam: boolean("pulled_away_team").default(false).notNull(),
@@ -165,6 +167,7 @@ export const standings = pgTable("standings", {
   goalsAgainst: integer("goals_against").default(0).notNull(),
   goalDifference: integer("goal_difference").default(0).notNull(),
   points: integer("points").default(0).notNull(),
+  penaltyMinutes: integer("penalty_minutes").default(0).notNull(),
   position: integer("position").default(0),
 });
 

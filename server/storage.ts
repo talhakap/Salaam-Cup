@@ -634,6 +634,7 @@ export class DatabaseStorage implements IStorage {
           goalsAgainst: 0,
           goalDifference: 0,
           points: 0,
+          penaltyMinutes: 0,
           position: 0,
           team,
         });
