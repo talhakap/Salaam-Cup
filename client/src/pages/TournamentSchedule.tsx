@@ -59,7 +59,7 @@ export default function TournamentSchedule() {
         }
         if (filterRound !== "all") {
           const r = (m.round || "").toLowerCase();
-          const isRoundRobin = r === "" || r === "round robin" || r === "round-robin";
+          const isRoundRobin = r === "" || r === "round robin" || r === "round-robin" || r === "group stage" || r === "group-stage";
           if (filterRound === "round-robin" && !isRoundRobin) return false;
           if (filterRound === "playoffs" && isRoundRobin) return false;
         }
