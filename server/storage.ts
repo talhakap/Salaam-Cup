@@ -1178,6 +1178,17 @@ export class DatabaseStorage implements IStorage {
 
     await this._linkPlaceholderMatches(tournamentId, divisionId, totalRounds);
 
+    const allGenerated = await db.select().from(playoffMatches).where(
+      and(
+        eq(playoffMatches.tournamentId, tournamentId),
+        eq(playoffMatches.divisionId, divisionId),
+        sql`${playoffMatches.linkedMatchId} IS NOT NULL`
+      )
+    );
+    for (const pm of allGenerated) {
+      await this._syncLinkedMatch(pm.id);
+    }
+
     await db.update(playoffSettings).set({ generated: true, locked: true })
       .where(eq(playoffSettings.id, settings.id));
 
@@ -1193,6 +1204,19 @@ export class DatabaseStorage implements IStorage {
       result.push(size + 1 - seed);
     }
     return result;
+  }
+
+  async _syncLinkedMatch(playoffMatchId: number): Promise<void> {
+    const [pm] = await db.select().from(playoffMatches).where(eq(playoffMatches.id, playoffMatchId));
+    if (!pm || !pm.linkedMatchId) return;
+
+    await db.update(matches).set({
+      homeTeamId: pm.homeTeamId,
+      awayTeamId: pm.awayTeamId,
+      homeScore: pm.homeScore,
+      awayScore: pm.awayScore,
+      status: pm.status === "final" ? "final" : pm.status === "live" ? "live" : "scheduled",
+    }).where(eq(matches.id, pm.linkedMatchId));
   }
 
   async _advanceToNextRound(matchId: number, winnerTeamId: number, round: number, matchIndex: number, tournamentId: number, divisionId: number) {
@@ -1214,6 +1238,7 @@ export class DatabaseStorage implements IStorage {
         ? { homeTeamId: winnerTeamId }
         : { awayTeamId: winnerTeamId };
       await db.update(playoffMatches).set(updateData).where(eq(playoffMatches.id, nextMatch.id));
+      await this._syncLinkedMatch(nextMatch.id);
     }
   }
 
@@ -1328,6 +1353,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async resetBracket(tournamentId: number, divisionId: number): Promise<void> {
+    const linkedRows = await db.select({ linkedMatchId: playoffMatches.linkedMatchId })
+      .from(playoffMatches)
+      .where(
+        and(
+          eq(playoffMatches.tournamentId, tournamentId),
+          eq(playoffMatches.divisionId, divisionId),
+          sql`${playoffMatches.linkedMatchId} IS NOT NULL`
+        )
+      );
+    for (const row of linkedRows) {
+      if (row.linkedMatchId) {
+        await db.update(matches).set({
+          homeTeamId: null,
+          awayTeamId: null,
+          homeScore: null,
+          awayScore: null,
+          status: "scheduled",
+        }).where(eq(matches.id, row.linkedMatchId));
+      }
+    }
+
     await db.delete(playoffMatches).where(
       and(eq(playoffMatches.tournamentId, tournamentId), eq(playoffMatches.divisionId, divisionId))
     );
@@ -1339,6 +1385,7 @@ export class DatabaseStorage implements IStorage {
 
   async updatePlayoffMatch(id: number, data: Partial<InsertPlayoffMatch>): Promise<PlayoffMatch> {
     const [match] = await db.update(playoffMatches).set(data).where(eq(playoffMatches.id, id)).returning();
+    await this._syncLinkedMatch(id);
     return match;
   }
 
