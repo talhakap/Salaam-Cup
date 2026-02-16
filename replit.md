@@ -21,7 +21,8 @@ Core features include:
 - Team detail view with roster tab (shows which roster players have registered) and registrations tab (shows self-registered players with match status)
 - Captain dashboard showing teams linked to their account via /api/my-teams
 - Tournament sub-pages: Schedule (with division/date/status filters), Standings (full table with division tabs), Rules (rich text per division, admin-editable via inline Quill editor), Awards (by year/division/category)
-- Tournament sub-navigation bar component (TournamentNav) used on all tournament pages (Home, Schedule, Standings, Rules, Awards)
+- Tournament sub-navigation bar component (TournamentNav) used on all tournament pages (Home, Schedule, Standings, Playoffs, Rules, Awards)
+- Playoffs/Bracket system: playoff_settings table (qualifyCount, bracketMode, seedingSource, reseedEachRound, locked, showBracket, generated) and playoff_matches table (round, matchIndex, seeds, teams, scores, status, venue, isBye); single-elimination bracket auto-generated from standings; proper seed ordering (1v8, 4v5, etc.); byes for non-power-of-2 team counts; winners auto-advance to next round; Admin Playoffs page (/admin/playoffs) for per-division setup with generate/reset; Public playoffs page (/tournaments/:id/playoffs) with bracket visualization per division; champion banner when final winner determined
 - Awards management: awards table with tournamentId, divisionId, year, category (Champions, Runner Up, MVP, etc.), team/player name, logo
 - Admin Awards page for CRUD operations on awards by tournament
 - News system: admin can create news items (headline, image URL, date, optional tournament link); displayed on home page in "Where Stories Become Legacy" section with 3-column card grid and pagination dots
@@ -79,7 +80,7 @@ The project uses a monorepo layout with three top-level code directories:
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
 - **Schema Location**: `shared/schema.ts` (main tables), `shared/models/auth.ts` (auth tables)
 - **Migrations**: Managed via `drizzle-kit push` (`npm run db:push`)
-- **Core Tables**: `sports`, `tournaments`, `divisions`, `teams`, `players`, `matches`, `venues`, `standings`, `standings_adjustments`, `users`, `sessions`
+- **Core Tables**: `sports`, `tournaments`, `divisions`, `teams`, `players`, `matches`, `venues`, `standings`, `standings_adjustments`, `playoff_settings`, `playoff_matches`, `users`, `sessions`
 
 ### Key Design Decisions
 

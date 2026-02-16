@@ -1272,6 +1272,94 @@ export async function registerRoutes(
     }
   });
 
+  // === PLAYOFFS ===
+  app.get("/api/tournaments/:tournamentId/divisions/:divisionId/playoffs/settings", async (req, res) => {
+    const settings = await storage.getPlayoffSettings(Number(req.params.tournamentId), Number(req.params.divisionId));
+    res.json(settings || null);
+  });
+
+  app.get("/api/tournaments/:tournamentId/playoffs/settings", async (req, res) => {
+    const all = await storage.getAllPlayoffSettings(Number(req.params.tournamentId));
+    res.json(all);
+  });
+
+  app.post("/api/tournaments/:tournamentId/divisions/:divisionId/playoffs/settings", isAuthenticated, async (req, res) => {
+    try {
+      const data = {
+        tournamentId: Number(req.params.tournamentId),
+        divisionId: Number(req.params.divisionId),
+        qualifyCount: Math.max(2, Math.min(16, Number(req.body.qualifyCount) || 4)),
+        bracketMode: req.body.bracketMode === "play_in" ? "play_in" as const : "byes" as const,
+        seedingSource: req.body.seedingSource === "manual" ? "manual" as const : "standings" as const,
+        reseedEachRound: Boolean(req.body.reseedEachRound),
+        showBracket: Boolean(req.body.showBracket),
+      };
+      const settings = await storage.upsertPlayoffSettings(data);
+      res.json(settings);
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
+    }
+  });
+
+  app.get("/api/tournaments/:tournamentId/divisions/:divisionId/playoffs/matches", async (req, res) => {
+    const matches = await storage.getPlayoffMatches(Number(req.params.tournamentId), Number(req.params.divisionId));
+    res.json(matches);
+  });
+
+  app.post("/api/tournaments/:tournamentId/divisions/:divisionId/playoffs/generate", isAuthenticated, async (req, res) => {
+    try {
+      const matches = await storage.generateBracket(Number(req.params.tournamentId), Number(req.params.divisionId));
+      res.json(matches);
+    } catch (err) {
+      res.status(400).json({ message: (err as Error).message });
+    }
+  });
+
+  app.post("/api/tournaments/:tournamentId/divisions/:divisionId/playoffs/reset", isAuthenticated, async (req, res) => {
+    try {
+      await storage.resetBracket(Number(req.params.tournamentId), Number(req.params.divisionId));
+      res.json({ message: "Bracket reset" });
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
+    }
+  });
+
+  app.patch("/api/playoffs/matches/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const updateData: any = {};
+      if (req.body.homeScore !== undefined) updateData.homeScore = req.body.homeScore === null ? null : Number(req.body.homeScore);
+      if (req.body.awayScore !== undefined) updateData.awayScore = req.body.awayScore === null ? null : Number(req.body.awayScore);
+      if (req.body.status) updateData.status = req.body.status;
+      if (req.body.winnerTeamId !== undefined) updateData.winnerTeamId = req.body.winnerTeamId;
+      if (req.body.startTime !== undefined) updateData.startTime = req.body.startTime;
+      if (req.body.venueId !== undefined) updateData.venueId = req.body.venueId;
+      if (req.body.fieldLocation !== undefined) updateData.fieldLocation = req.body.fieldLocation;
+      if (req.body.homeTeamId !== undefined) updateData.homeTeamId = req.body.homeTeamId;
+      if (req.body.awayTeamId !== undefined) updateData.awayTeamId = req.body.awayTeamId;
+
+      const match = await storage.updatePlayoffMatch(id, updateData);
+
+      if (match.winnerTeamId && match.status === "final") {
+        try {
+          await storage.advanceWinner(match.id);
+        } catch (_) {}
+      }
+      res.json(match);
+    } catch (err) {
+      res.status(500).json({ message: (err as Error).message });
+    }
+  });
+
+  app.post("/api/playoffs/matches/:id/advance", isAuthenticated, async (req, res) => {
+    try {
+      await storage.advanceWinner(Number(req.params.id));
+      res.json({ message: "Winner advanced" });
+    } catch (err) {
+      res.status(400).json({ message: (err as Error).message });
+    }
+  });
+
   // === AWARDS ===
   app.get("/api/awards", async (_req, res) => {
     const data = await storage.getAllAwards();

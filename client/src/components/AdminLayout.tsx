@@ -50,6 +50,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Players", href: "/admin/players", icon: Users }, // Reusing Users icon
     { label: "Matches", href: "/admin/matches", icon: Calendar },
     { label: "Standings", href: "/admin/standings-adjustments", icon: Settings },
+    { label: "Playoffs", href: "/admin/playoffs", icon: Trophy },
     { label: "Awards", href: "/admin/awards", icon: Award },
     { label: "News", href: "/admin/news", icon: Newspaper },
     { label: "Sponsors", href: "/admin/sponsors", icon: Handshake },

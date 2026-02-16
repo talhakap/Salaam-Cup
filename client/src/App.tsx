@@ -33,10 +33,12 @@ import AdminVenues from "@/pages/AdminVenues";
 import AdminSports from "@/pages/AdminSports";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminStandingsAdjustments from "@/pages/AdminStandingsAdjustments";
+import AdminPlayoffs from "@/pages/AdminPlayoffs";
 import AdminLogin from "@/pages/AdminLogin";
 import Media from "@/pages/Media";
 import Faq from "@/pages/Faq";
 import TournamentAwards from "@/pages/TournamentAwards";
+import TournamentPlayoffs from "@/pages/TournamentPlayoffs";
 import ResetPassword from "@/pages/ResetPassword";
 
 function ScrollToTop() {
@@ -62,6 +64,7 @@ function Router() {
       <Route path="/tournaments/:id/standings" component={TournamentStandings} />
       <Route path="/tournaments/:id/rules" component={TournamentRules} />
       <Route path="/tournaments/:id/awards" component={TournamentAwards} />
+      <Route path="/tournaments/:id/playoffs" component={TournamentPlayoffs} />
       <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/register" component={Register} />
       
@@ -86,6 +89,7 @@ function Router() {
       <Route path="/admin/sports" component={AdminSports} />
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/standings-adjustments" component={AdminStandingsAdjustments} />
+      <Route path="/admin/playoffs" component={AdminPlayoffs} />
 
       <Route path="/media" component={Media} /> 
       <Route path="/faq" component={Faq} />

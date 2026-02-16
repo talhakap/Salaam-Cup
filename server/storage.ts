@@ -1,11 +1,14 @@
 import { db } from "./db";
 import { 
   tournaments, divisions, teams, players, matches, venues, standings, standingsAdjustments, sports, awards, news, sponsors, tournamentSponsors, specialAwards, aboutContent, waiverContent, mediaYears, mediaItems, faqs,
+  playoffSettings, playoffMatches,
   type InsertTournament, type InsertDivision, type InsertTeam, type InsertPlayer, 
   type InsertMatch, type InsertVenue, type InsertStanding, type InsertSport, type InsertAward, type InsertNews, type InsertSponsor, type InsertTournamentSponsor, type InsertSpecialAward, type InsertAboutContent,
   type InsertWaiverContent, type WaiverContent,
   type InsertMediaYear, type InsertMediaItem, type InsertFaq,
   type InsertStandingsAdjustment, type StandingsAdjustment,
+  type InsertPlayoffSettings, type PlayoffSettings,
+  type InsertPlayoffMatch, type PlayoffMatch, type PlayoffMatchWithTeams,
   type Tournament, type Division, type Team, type Player, type Match, type Venue, 
   type Standing, type Sport, type Award, type News, type Sponsor, type TournamentSponsor, type SpecialAward, type AboutContent,
   type MediaYear, type MediaItem, type MediaYearWithItems, type Faq,
@@ -142,6 +145,16 @@ export interface IStorage {
   createFaq(data: InsertFaq): Promise<Faq>;
   updateFaq(id: number, data: Partial<InsertFaq>): Promise<Faq>;
   deleteFaq(id: number): Promise<void>;
+
+  // Playoffs
+  getPlayoffSettings(tournamentId: number, divisionId: number): Promise<PlayoffSettings | undefined>;
+  getAllPlayoffSettings(tournamentId: number): Promise<PlayoffSettings[]>;
+  upsertPlayoffSettings(data: InsertPlayoffSettings): Promise<PlayoffSettings>;
+  getPlayoffMatches(tournamentId: number, divisionId: number): Promise<PlayoffMatchWithTeams[]>;
+  generateBracket(tournamentId: number, divisionId: number): Promise<PlayoffMatchWithTeams[]>;
+  resetBracket(tournamentId: number, divisionId: number): Promise<void>;
+  updatePlayoffMatch(id: number, data: Partial<InsertPlayoffMatch>): Promise<PlayoffMatch>;
+  advanceWinner(matchId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1043,6 +1056,184 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFaq(id: number): Promise<void> {
     await db.delete(faqs).where(eq(faqs.id, id));
+  }
+
+  // Playoffs
+  async getPlayoffSettings(tournamentId: number, divisionId: number): Promise<PlayoffSettings | undefined> {
+    const [settings] = await db.select().from(playoffSettings)
+      .where(and(eq(playoffSettings.tournamentId, tournamentId), eq(playoffSettings.divisionId, divisionId)));
+    return settings;
+  }
+
+  async getAllPlayoffSettings(tournamentId: number): Promise<PlayoffSettings[]> {
+    return await db.select().from(playoffSettings).where(eq(playoffSettings.tournamentId, tournamentId));
+  }
+
+  async upsertPlayoffSettings(data: InsertPlayoffSettings): Promise<PlayoffSettings> {
+    const existing = await this.getPlayoffSettings(data.tournamentId, data.divisionId);
+    if (existing) {
+      const [updated] = await db.update(playoffSettings).set(data).where(eq(playoffSettings.id, existing.id)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(playoffSettings).values(data).returning();
+    return created;
+  }
+
+  async getPlayoffMatches(tournamentId: number, divisionId: number): Promise<PlayoffMatchWithTeams[]> {
+    const rows = await db.select().from(playoffMatches)
+      .where(and(eq(playoffMatches.tournamentId, tournamentId), eq(playoffMatches.divisionId, divisionId)))
+      .orderBy(playoffMatches.round, playoffMatches.matchIndex);
+
+    const enriched: PlayoffMatchWithTeams[] = [];
+    for (const row of rows) {
+      const homeTeam = row.homeTeamId ? (await db.select().from(teams).where(eq(teams.id, row.homeTeamId)))[0] || null : null;
+      const awayTeam = row.awayTeamId ? (await db.select().from(teams).where(eq(teams.id, row.awayTeamId)))[0] || null : null;
+      const winnerTeam = row.winnerTeamId ? (await db.select().from(teams).where(eq(teams.id, row.winnerTeamId)))[0] || null : null;
+      enriched.push({ ...row, homeTeam, awayTeam, winnerTeam });
+    }
+    return enriched;
+  }
+
+  async generateBracket(tournamentId: number, divisionId: number): Promise<PlayoffMatchWithTeams[]> {
+    const settings = await this.getPlayoffSettings(tournamentId, divisionId);
+    if (!settings) throw new Error("Playoff settings not configured for this division");
+
+    await db.delete(playoffMatches).where(
+      and(eq(playoffMatches.tournamentId, tournamentId), eq(playoffMatches.divisionId, divisionId))
+    );
+
+    let seededTeamIds: number[] = [];
+    if (settings.seedingSource === "standings") {
+      const standingsRows = await db.select().from(standings)
+        .where(and(eq(standings.tournamentId, tournamentId), eq(standings.divisionId, divisionId)))
+        .orderBy(standings.position);
+      seededTeamIds = standingsRows.slice(0, settings.qualifyCount).map(s => s.teamId);
+    }
+
+    const n = seededTeamIds.length;
+    if (n < 2) throw new Error("Need at least 2 teams for a bracket");
+
+    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(n)));
+    const totalRounds = Math.ceil(Math.log2(nextPow2));
+    const numByes = nextPow2 - n;
+
+    const seedOrder = this._bracketSeedOrder(nextPow2);
+
+    const bracketMatches: InsertPlayoffMatch[] = [];
+
+    for (let i = 0; i < nextPow2 / 2; i++) {
+      const seed1 = seedOrder[i * 2];
+      const seed2 = seedOrder[i * 2 + 1];
+      const team1Id = seed1 <= n ? seededTeamIds[seed1 - 1] : null;
+      const team2Id = seed2 <= n ? seededTeamIds[seed2 - 1] : null;
+      const isBye = !team1Id || !team2Id;
+
+      bracketMatches.push({
+        tournamentId,
+        divisionId,
+        round: 1,
+        matchIndex: i,
+        homeSeed: seed1 <= n ? seed1 : null,
+        awaySeed: seed2 <= n ? seed2 : null,
+        homeTeamId: team1Id,
+        awayTeamId: team2Id,
+        isBye,
+        status: isBye ? "final" : "pending",
+        winnerTeamId: isBye ? (team1Id || team2Id) : null,
+      });
+    }
+
+    for (let round = 2; round <= totalRounds; round++) {
+      const matchesInRound = nextPow2 / Math.pow(2, round);
+      for (let i = 0; i < matchesInRound; i++) {
+        bracketMatches.push({
+          tournamentId,
+          divisionId,
+          round,
+          matchIndex: i,
+          status: "pending",
+          isBye: false,
+        });
+      }
+    }
+
+    await db.insert(playoffMatches).values(bracketMatches);
+
+    for (const m of bracketMatches) {
+      if (m.isBye && m.winnerTeamId) {
+        const [byeMatch] = await db.select().from(playoffMatches).where(
+          and(
+            eq(playoffMatches.tournamentId, tournamentId),
+            eq(playoffMatches.divisionId, divisionId),
+            eq(playoffMatches.round, 1),
+            eq(playoffMatches.matchIndex, m.matchIndex)
+          )
+        );
+        if (byeMatch) {
+          await this._advanceToNextRound(byeMatch.id, m.winnerTeamId, 1, m.matchIndex, tournamentId, divisionId);
+        }
+      }
+    }
+
+    await db.update(playoffSettings).set({ generated: true, locked: true })
+      .where(eq(playoffSettings.id, settings.id));
+
+    return this.getPlayoffMatches(tournamentId, divisionId);
+  }
+
+  _bracketSeedOrder(size: number): number[] {
+    if (size === 1) return [1];
+    const half = this._bracketSeedOrder(size / 2);
+    const result: number[] = [];
+    for (const seed of half) {
+      result.push(seed);
+      result.push(size + 1 - seed);
+    }
+    return result;
+  }
+
+  async _advanceToNextRound(matchId: number, winnerTeamId: number, round: number, matchIndex: number, tournamentId: number, divisionId: number) {
+    const nextRound = round + 1;
+    const nextMatchIndex = Math.floor(matchIndex / 2);
+    const isHome = matchIndex % 2 === 0;
+
+    const [nextMatch] = await db.select().from(playoffMatches).where(
+      and(
+        eq(playoffMatches.tournamentId, tournamentId),
+        eq(playoffMatches.divisionId, divisionId),
+        eq(playoffMatches.round, nextRound),
+        eq(playoffMatches.matchIndex, nextMatchIndex)
+      )
+    );
+
+    if (nextMatch) {
+      const updateData: Partial<InsertPlayoffMatch> = isHome
+        ? { homeTeamId: winnerTeamId }
+        : { awayTeamId: winnerTeamId };
+      await db.update(playoffMatches).set(updateData).where(eq(playoffMatches.id, nextMatch.id));
+    }
+  }
+
+  async resetBracket(tournamentId: number, divisionId: number): Promise<void> {
+    await db.delete(playoffMatches).where(
+      and(eq(playoffMatches.tournamentId, tournamentId), eq(playoffMatches.divisionId, divisionId))
+    );
+    const settings = await this.getPlayoffSettings(tournamentId, divisionId);
+    if (settings) {
+      await db.update(playoffSettings).set({ generated: false, locked: false }).where(eq(playoffSettings.id, settings.id));
+    }
+  }
+
+  async updatePlayoffMatch(id: number, data: Partial<InsertPlayoffMatch>): Promise<PlayoffMatch> {
+    const [match] = await db.update(playoffMatches).set(data).where(eq(playoffMatches.id, id)).returning();
+    return match;
+  }
+
+  async advanceWinner(matchId: number): Promise<void> {
+    const [match] = await db.select().from(playoffMatches).where(eq(playoffMatches.id, matchId));
+    if (!match || !match.winnerTeamId) throw new Error("Match has no winner set");
+
+    await this._advanceToNextRound(matchId, match.winnerTeamId, match.round, match.matchIndex, match.tournamentId, match.divisionId);
   }
 }
 
