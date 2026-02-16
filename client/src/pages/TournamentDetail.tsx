@@ -23,6 +23,7 @@ import { Users, ArrowRight } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 import type { Division, Team, StandingWithTeam, MatchWithTeams, Venue } from "@shared/schema";
+import { getStandingsColumns } from "@shared/standingsConfig";
 
 export default function TournamentDetail() {
   const [, params] = useRoute("/tournaments/:id");
@@ -188,7 +189,9 @@ export default function TournamentDetail() {
             </div>
           )}
 
-          {!standingsLoading && filteredStandings.length > 0 && (
+          {!standingsLoading && filteredStandings.length > 0 && (() => {
+            const columns = getStandingsColumns(tournament?.standingsType);
+            return (
             <>
               <div className="overflow-x-auto -mx-4 px-4">
               <Table>
@@ -196,34 +199,26 @@ export default function TournamentDetail() {
                   <TableRow className="border-b-2 border-foreground">
                     <TableHead className="w-12 font-bold text-foreground">Pos</TableHead>
                     <TableHead className="font-bold text-foreground">Team</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">GP</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">W</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">L</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">T</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">GF</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">GA</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">GD</TableHead>
-                    <TableHead className="text-center font-bold text-foreground">PTS</TableHead>
+                    {columns.map((col) => (
+                      <TableHead key={col.key} className={`text-center font-bold text-foreground`}>{col.label}</TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredStandings.map((s: StandingWithTeam) => (
+                  {filteredStandings.map((s: StandingWithTeam, index: number) => (
                     <TableRow key={s.id} className="border-b" data-testid={`row-standing-${s.id}`}>
-                      <TableCell className="font-bold">{s.position}</TableCell>
+                      <TableCell className="font-bold">{s.position || index + 1}</TableCell>
                       <TableCell>
-                        <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline  flex items-center gap-2">
+                        <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           {s.team?.name || `Team #${s.teamId}`}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-center">{s.gamesPlayed}</TableCell>
-                      <TableCell className="text-center">{s.wins}</TableCell>
-                      <TableCell className="text-center">{s.losses}</TableCell>
-                      <TableCell className="text-center">{s.ties}</TableCell>
-                      <TableCell className="text-center">{s.goalsFor}</TableCell>
-                      <TableCell className="text-center">{s.goalsAgainst}</TableCell>
-                      <TableCell className="text-center">{s.goalDifference > 0 ? `+${s.goalDifference}` : s.goalDifference}</TableCell>
-                      <TableCell className="text-center font-bold">{s.points}</TableCell>
+                      {columns.map((col) => (
+                        <TableCell key={col.key} className={`text-center ${col.key === 'pts' || col.key === 'pct' ? 'font-bold' : ''}`}>
+                          {col.getValue(s)}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -238,7 +233,8 @@ export default function TournamentDetail() {
                 </Link>
               </div>
             </>
-          )}
+            );
+          })()}
 
           {sortedTeams.length > 0 && (
             <div className="mb-16">
