@@ -784,13 +784,13 @@ export default function AdminTournaments() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <FormField control={form.control} name="year" render={({ field }: any) => (
-          <FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" {...field} onChange={(e: any) => field.onChange(parseInt(e.target.value))} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" {...field} onChange={(e: any) => field.onChange(parseInt(e.target.value))} data-testid={`${prefix}input-tournament-year`} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="startDate" render={({ field }: any) => (
-          <FormItem><FormLabel>Start Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Start Date</FormLabel><FormControl><Input type="date" {...field} data-testid={`${prefix}input-tournament-start-date`} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="endDate" render={({ field }: any) => (
-          <FormItem><FormLabel>End Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>End Date</FormLabel><FormControl><Input type="date" {...field} data-testid={`${prefix}input-tournament-end-date`} /></FormControl><FormMessage /></FormItem>
         )} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

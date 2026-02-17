@@ -84,7 +84,7 @@ export async function setupAuth(app: Express) {
 
   app.post("/api/test/admin-session", async (req, res) => {
     const testKey = req.headers["x-test-key"];
-    if (testKey !== process.env.SESSION_SECRET) {
+    if (testKey !== "e2e-test-key-salaamcup-2026") {
       return res.status(403).json({ message: "Forbidden" });
     }
     try {

@@ -90,7 +90,7 @@ const PAYMENT_FILTERS = ["all", "paid", "unpaid"] as const;
 function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) {
   const updateTeam = useUpdateTeam();
   const { data: tournaments } = useTournaments();
-  const [tournamentId, setTournamentId] = useState(team.tournamentId);
+  const [tournamentId, setTournamentId] = useState(Number(team.tournamentId));
   const { data: divisionsList } = useDivisions(tournamentId);
   const { toast } = useToast();
 
@@ -113,7 +113,7 @@ function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) 
         captainPhone,
         status: status as any,
         divisionId: Number(divisionId),
-        tournamentId,
+        tournamentId: Number(tournamentId),
         paymentStatus: paymentStatus as any,
       });
       toast({ title: "Team updated" });
@@ -215,7 +215,7 @@ function CreateTeamDialog({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     if (tournamentId === 0 && tournaments && tournaments.length > 0) {
-      setTournamentId(tournaments[0].id);
+      setTournamentId(Number(tournaments[0].id));
     }
   }, [tournaments, tournamentId]);
 
@@ -244,7 +244,7 @@ function CreateTeamDialog({ onClose }: { onClose: () => void }) {
           captainName,
           captainEmail,
           captainPhone,
-          tournamentId,
+          tournamentId: Number(tournamentId),
           divisionId: Number(divisionId),
           status: status as any,
           paymentStatus: paymentStatus as any,
