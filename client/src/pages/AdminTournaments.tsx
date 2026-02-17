@@ -399,33 +399,6 @@ function TournamentSponsorManager({ tournamentId: rawTournamentId }: { tournamen
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const editFileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadFile, isUploading } = useUpload({
-    folder: "tournament-sponsors",
-    onSuccess: (response) => {
-      if (editItem) {
-        setLogoUrl(response.objectPath);
-      } else {
-        setLogoUrl(response.objectPath);
-      }
-      toast({ title: "Logo uploaded" });
-    },
-    onError: (error) => {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast({ title: "Please select an image file", variant: "destructive" });
-      return;
-    }
-    await uploadFile(file);
-  };
-
   const resetForm = () => {
     setName("");
     setLogoUrl("");
@@ -503,19 +476,7 @@ function TournamentSponsorManager({ tournamentId: rawTournamentId }: { tournamen
               </div>
               <div>
                 <label className="text-sm font-medium">Logo *</label>
-                {logoUrl && (
-                  <div className="bg-muted rounded-md p-3 flex items-center justify-center mb-2">
-                    <img src={logoUrl} alt="Preview" className="max-h-16 object-contain" />
-                  </div>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                    {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-                    {isUploading ? "Uploading..." : "Upload Logo"}
-                  </Button>
-                </div>
-                <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="Or paste logo URL" className="mt-2" data-testid="input-tsponsor-logo" />
+                <ImageUploadField label="Logo" value={logoUrl} onChange={setLogoUrl} testIdPrefix="tsponsor-logo" />
               </div>
               <div>
                 <label className="text-sm font-medium">Website URL</label>
@@ -574,19 +535,7 @@ function TournamentSponsorManager({ tournamentId: rawTournamentId }: { tournamen
             </div>
             <div>
               <label className="text-sm font-medium">Logo *</label>
-              {logoUrl && (
-                <div className="bg-muted rounded-md p-3 flex items-center justify-center mb-2">
-                  <img src={logoUrl} alt="Preview" className="max-h-16 object-contain" />
-                </div>
-              )}
-              <input ref={editFileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => editFileInputRef.current?.click()} disabled={isUploading}>
-                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-                  {isUploading ? "Uploading..." : "Upload Logo"}
-                </Button>
-              </div>
-              <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="Or paste logo URL" className="mt-2" />
+              <ImageUploadField label="Logo" value={logoUrl} onChange={setLogoUrl} testIdPrefix="edit-tsponsor-logo" />
             </div>
             <div>
               <label className="text-sm font-medium">Website URL</label>
