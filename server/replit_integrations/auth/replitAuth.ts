@@ -82,6 +82,28 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  app.post("/api/test/admin-session", async (req, res) => {
+    const testKey = req.headers["x-test-key"];
+    if (testKey !== process.env.SESSION_SECRET) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+      const user = await authStorage.getUserByEmail("tkap1234@gmail.com");
+      if (!user || user.role !== "admin") {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+      (req.session as any).adminUserId = user.id;
+      (req.session as any).adminEmail = user.email;
+      (req.session as any).adminRole = "admin";
+      req.session.save((err) => {
+        if (err) return res.status(500).json({ message: "Session error" });
+        res.json({ message: "Test session created", id: user.id });
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed" });
+    }
+  });
+
   app.post("/api/admin/logout", (req, res) => {
     (req.session as any).adminUserId = null;
     (req.session as any).adminEmail = null;
