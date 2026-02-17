@@ -46,7 +46,12 @@ function MatchFormDialog({
   const [divisionId, setDivisionId] = useState<string>(match ? String(match.divisionId) : (divisions[0] ? String(divisions[0].id) : ""));
   const [homeTeamId, setHomeTeamId] = useState<string>(match?.homeTeamId ? String(match.homeTeamId) : "");
   const [awayTeamId, setAwayTeamId] = useState<string>(match?.awayTeamId ? String(match.awayTeamId) : "");
-  const [startTime, setStartTime] = useState(match?.startTime ? new Date(match.startTime).toISOString().slice(0, 16) : "");
+  const [startTime, setStartTime] = useState(() => {
+    if (!match?.startTime) return "";
+    const d = new Date(match.startTime);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
   const [homeScore, setHomeScore] = useState(match?.homeScore ?? 0);
   const [awayScore, setAwayScore] = useState(match?.awayScore ?? 0);
   const [homePenaltyMinutes, setHomePenaltyMinutes] = useState(match?.homePenaltyMinutes ?? 0);
