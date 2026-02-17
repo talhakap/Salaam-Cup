@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useRef, useMemo, useEffect } from "react";
-import { Loader2, Plus, Pencil, Trash2, Calendar, Upload, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Calendar, Upload, Download, AlertTriangle, CheckCircle2, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import Papa from "papaparse";
@@ -236,6 +236,8 @@ export default function AdminMatches() {
   const publishMatches = usePublishMatches();
   const { toast } = useToast();
   const [filterDivision, setFilterDivision] = useState<string>("all");
+  const [filterTeam, setFilterTeam] = useState<string>("all");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [createOpen, setCreateOpen] = useState(false);
   const [editMatch, setEditMatch] = useState<MatchWithTeams | null>(null);
   const [deleteMatchState, setDeleteMatchState] = useState<MatchWithTeams | null>(null);
@@ -252,12 +254,16 @@ export default function AdminMatches() {
     if (filterDivision !== "all") {
       filtered = filtered.filter(m => m.divisionId === Number(filterDivision));
     }
+    if (filterTeam !== "all") {
+      const teamId = Number(filterTeam);
+      filtered = filtered.filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId);
+    }
     return [...filtered].sort((a, b) => {
       const timeA = a.startTime ? new Date(a.startTime).getTime() : Infinity;
       const timeB = b.startTime ? new Date(b.startTime).getTime() : Infinity;
-      return timeA - timeB;
+      return sortDirection === "asc" ? timeA - timeB : timeB - timeA;
     });
-  }, [matches, filterDivision]);
+  }, [matches, filterDivision, filterTeam, sortDirection]);
 
   const togglePull = useUpdateMatch();
 
@@ -405,7 +411,7 @@ export default function AdminMatches() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div>
           <label className="text-sm font-medium block mb-1">Tournament</label>
           {tournamentsLoading ? (
@@ -413,7 +419,7 @@ export default function AdminMatches() {
           ) : (
             <Select
               value={String(activeTournamentId)}
-              onValueChange={v => { setSelectedTournamentId(Number(v)); setFilterDivision("all"); }}
+              onValueChange={v => { setSelectedTournamentId(Number(v)); setFilterDivision("all"); setFilterTeam("all"); }}
             >
               <SelectTrigger className="w-full" data-testid="select-admin-tournament">
                 <SelectValue placeholder="Select tournament" />
@@ -428,7 +434,7 @@ export default function AdminMatches() {
         </div>
         <div>
           <label className="text-sm font-medium block mb-1">Division</label>
-          <Select value={filterDivision} onValueChange={setFilterDivision}>
+          <Select value={filterDivision} onValueChange={(v) => { setFilterDivision(v); setFilterTeam("all"); }}>
             <SelectTrigger className="w-full" data-testid="select-admin-division-filter">
               <SelectValue placeholder="All Divisions" />
             </SelectTrigger>
@@ -440,6 +446,34 @@ export default function AdminMatches() {
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <label className="text-sm font-medium block mb-1">Team</label>
+          <Select value={filterTeam} onValueChange={setFilterTeam}>
+            <SelectTrigger className="w-full" data-testid="select-admin-team-filter">
+              <SelectValue placeholder="All Teams" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Teams</SelectItem>
+              {tournamentTeams
+                .filter(t => filterDivision === "all" || t.divisionId === Number(filterDivision))
+                .map(t => (
+                  <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-sm font-medium block mb-1">Sort by Date</label>
+          <Button
+            variant="outline"
+            className="w-full justify-between gap-2"
+            onClick={() => setSortDirection(d => d === "asc" ? "desc" : "asc")}
+            data-testid="button-sort-date"
+          >
+            {sortDirection === "asc" ? "Earliest First" : "Latest First"}
+            <ArrowUpDown className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {matchesLoading ? (
@@ -450,7 +484,7 @@ export default function AdminMatches() {
         <div className="text-center py-20 text-muted-foreground">
           <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium">No matches found</p>
-          <p className="text-sm mt-1">{matches && matches.length > 0 ? "Try changing the division filter." : "Create your first match to get started."}</p>
+          <p className="text-sm mt-1">{matches && matches.length > 0 ? "Try changing the division or team filter." : "Create your first match to get started."}</p>
         </div>
       ) : (
         <div className="space-y-3">
