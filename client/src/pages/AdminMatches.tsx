@@ -222,7 +222,7 @@ export default function AdminMatches() {
 
   useEffect(() => {
     if (selectedTournamentId === null && tournaments && tournaments.length > 0) {
-      setSelectedTournamentId(tournaments[0].id);
+      setSelectedTournamentId(Number(tournaments[0].id));
     }
   }, [tournaments, selectedTournamentId]);
 
@@ -246,7 +246,7 @@ export default function AdminMatches() {
   const [importResult, setImportResult] = useState<{ created: number; errors: string[]; total: number; createdDivisions?: string[]; createdTeams?: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const tournamentTeams = allTeams?.filter(t => t.tournamentId === activeTournamentId && t.status === "approved") || [];
+  const tournamentTeams = allTeams?.filter(t => Number(t.tournamentId) === activeTournamentId && t.status === "approved") || [];
 
   const sortedFilteredMatches = useMemo(() => {
     if (!matches) return [];
@@ -454,7 +454,7 @@ export default function AdminMatches() {
             <SelectContent>
               <SelectItem value="all">All Teams</SelectItem>
               {tournamentTeams
-                .filter(t => filterDivision === "all" || t.divisionId === Number(filterDivision))
+                .filter(t => filterDivision === "all" || String(t.divisionId) === filterDivision)
                 .map(t => (
                   <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
                 ))}
