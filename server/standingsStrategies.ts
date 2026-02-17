@@ -11,15 +11,16 @@ function hockeyStandard(): StandingsStrategy {
     calculatePoints: (wins, _losses, ties) => wins * 2 + ties * 1,
     sortStandings: (a, b) => (b.points! - a.points!) || (b.goalDifference! - a.goalDifference!),
     sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
+      const pointCounts = new Map<number, number>();
+      for (const s of divStandings) {
+        pointCounts.set(s.points!, (pointCounts.get(s.points!) || 0) + 1);
+      }
       divStandings.sort((a, b) => {
         const ptsDiff = b.points! - a.points!;
         if (ptsDiff !== 0) return ptsDiff;
 
-        const tiedTeamIds = divStandings
-          .filter(s => s.points === a.points)
-          .map(s => s.teamId);
-
-        if (tiedTeamIds.length === 2) {
+        const tiedCount = pointCounts.get(a.points!) || 0;
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -68,15 +69,16 @@ function soccerStandard(): StandingsStrategy {
     calculatePoints: (wins, _losses, ties) => wins * 3 + ties * 1,
     sortStandings: (a, b) => (b.points! - a.points!) || (b.goalDifference! - a.goalDifference!),
     sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
+      const pointCounts = new Map<number, number>();
+      for (const s of divStandings) {
+        pointCounts.set(s.points!, (pointCounts.get(s.points!) || 0) + 1);
+      }
       divStandings.sort((a, b) => {
         const ptsDiff = b.points! - a.points!;
         if (ptsDiff !== 0) return ptsDiff;
 
-        const tiedTeamIds = divStandings
-          .filter(s => s.points === a.points)
-          .map(s => s.teamId);
-
-        if (tiedTeamIds.length === 2) {
+        const tiedCount = pointCounts.get(a.points!) || 0;
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -104,15 +106,16 @@ function basketballStandard(): StandingsStrategy {
     calculatePoints: (wins, _losses, _ties) => wins * 2,
     sortStandings: (a, b) => (b.points! - a.points!) || (b.goalDifference! - a.goalDifference!),
     sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
+      const pointCounts = new Map<number, number>();
+      for (const s of divStandings) {
+        pointCounts.set(s.points!, (pointCounts.get(s.points!) || 0) + 1);
+      }
       divStandings.sort((a, b) => {
         const ptsDiff = b.points! - a.points!;
         if (ptsDiff !== 0) return ptsDiff;
 
-        const tiedTeamIds = divStandings
-          .filter(s => s.points === a.points)
-          .map(s => s.teamId);
-
-        if (tiedTeamIds.length === 2) {
+        const tiedCount = pointCounts.get(a.points!) || 0;
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -140,13 +143,18 @@ function softballStandard(): StandingsStrategy {
     calculatePoints: (wins, _losses, ties) => wins * 2 + ties,
     sortStandings: (a, b) => (softballWinPct(b) - softballWinPct(a)) || ((b.cappedRunDifferential ?? 0) - (a.cappedRunDifferential ?? 0)),
     sortDivisionStandings(divStandings: InsertStanding[], matches: Match[]) {
+      const pctGroups = new Map<string, number>();
+      for (const s of divStandings) {
+        const pctKey = softballWinPct(s).toFixed(4);
+        pctGroups.set(pctKey, (pctGroups.get(pctKey) || 0) + 1);
+      }
       divStandings.sort((a, b) => {
         const pctDiff = softballWinPct(b) - softballWinPct(a);
         if (Math.abs(pctDiff) > 0.0001) return pctDiff;
 
-        const tiedTeams = divStandings.filter(s => Math.abs(softballWinPct(s) - softballWinPct(a)) < 0.0001);
+        const tiedCount = pctGroups.get(softballWinPct(a).toFixed(4)) || 0;
 
-        if (tiedTeams.length === 2) {
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
