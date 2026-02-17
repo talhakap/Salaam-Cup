@@ -349,15 +349,15 @@ export default function AdminPlayers() {
       if (!c.email || !captainTeamsMap.has(c.email.trim().toLowerCase())) return false;
       if (tournamentFilter !== "all") {
         const teams = captainTeamsMap.get(c.email!.trim().toLowerCase()) || [];
-        if (!teams.some(t => t.tournamentId === Number(tournamentFilter))) return false;
+        if (!teams.some(t => String(t.tournamentId) === String(tournamentFilter))) return false;
       }
       if (divisionFilter !== "all") {
         const teams = captainTeamsMap.get(c.email!.trim().toLowerCase()) || [];
-        if (!teams.some(t => t.divisionId === Number(divisionFilter))) return false;
+        if (!teams.some(t => String(t.divisionId) === String(divisionFilter))) return false;
       }
       if (teamFilter !== "all") {
         const teams = captainTeamsMap.get(c.email!.trim().toLowerCase()) || [];
-        if (!teams.some(t => t.id === Number(teamFilter))) return false;
+        if (!teams.some(t => String(t.id) === String(teamFilter))) return false;
       }
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
