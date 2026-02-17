@@ -328,20 +328,37 @@ export default function AdminPlayers() {
     });
   }, [players, statusFilter, typeFilter, tournamentFilter, divisionFilter, teamFilter, searchQuery]);
 
-  const approvedCaptainEmails = useMemo(() => {
-    if (!allTeams) return new Set<string>();
-    return new Set(
-      allTeams
-        .filter((t) => t.status === "approved" && t.captainEmail)
-        .map((t) => t.captainEmail!.trim().toLowerCase())
-    );
+  const captainTeamsMap = useMemo(() => {
+    if (!allTeams) return new Map<string, Team[]>();
+    const map = new Map<string, Team[]>();
+    allTeams
+      .filter((t) => t.status === "approved" && t.captainEmail)
+      .forEach((t) => {
+        const email = t.captainEmail!.trim().toLowerCase();
+        if (!map.has(email)) map.set(email, []);
+        map.get(email)!.push(t);
+      });
+    return map;
   }, [allTeams]);
 
   const filteredCaptains = useMemo(() => {
     if (!captainUsers) return [];
     if (typeFilter !== "all" && typeFilter !== "captains") return [];
+    if (statusFilter !== "all" && statusFilter !== "confirmed") return [];
     return captainUsers.filter((c) => {
-      if (!c.email || !approvedCaptainEmails.has(c.email.trim().toLowerCase())) return false;
+      if (!c.email || !captainTeamsMap.has(c.email.trim().toLowerCase())) return false;
+      if (tournamentFilter !== "all") {
+        const teams = captainTeamsMap.get(c.email!.trim().toLowerCase()) || [];
+        if (!teams.some(t => t.tournamentId === Number(tournamentFilter))) return false;
+      }
+      if (divisionFilter !== "all") {
+        const teams = captainTeamsMap.get(c.email!.trim().toLowerCase()) || [];
+        if (!teams.some(t => t.divisionId === Number(divisionFilter))) return false;
+      }
+      if (teamFilter !== "all") {
+        const teams = captainTeamsMap.get(c.email!.trim().toLowerCase()) || [];
+        if (!teams.some(t => t.id === Number(teamFilter))) return false;
+      }
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const fullName = `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase();
@@ -350,11 +367,11 @@ export default function AdminPlayers() {
       }
       return true;
     });
-  }, [captainUsers, typeFilter, searchQuery, approvedCaptainEmails]);
+  }, [captainUsers, typeFilter, statusFilter, tournamentFilter, divisionFilter, teamFilter, searchQuery, captainTeamsMap]);
 
   const { paginatedItems: paginatedPlayers, ...paginationProps } = usePagination(filteredPlayers, 25);
 
-  const showCaptains = typeFilter === "captains";
+  const showCaptains = (typeFilter === "all" || typeFilter === "captains") && (statusFilter === "all" || statusFilter === "confirmed");
   const showPlayers = typeFilter !== "captains";
 
   const handleDelete = async () => {
@@ -490,7 +507,10 @@ export default function AdminPlayers() {
         <div className="space-y-3">
           {showCaptains && filteredCaptains.length > 0 && (
             <>
-              {filteredCaptains.map((captain) => (
+              {filteredCaptains.map((captain) => {
+                const captainTeams = captain.email ? captainTeamsMap.get(captain.email.trim().toLowerCase()) || [] : [];
+                const getTournamentName = (tid: number | string) => tournaments?.find(t => String(t.id) === String(tid))?.name || "";
+                return (
                 <Card key={`captain-${captain.id}`} data-testid={`card-captain-${captain.id}`}>
                   <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -508,6 +528,15 @@ export default function AdminPlayers() {
                             <Badge variant="secondary" data-testid={`badge-captain-role-${captain.id}`}>Captain</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground truncate">{captain.email}</p>
+                          {captainTeams.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {captainTeams.map((team) => (
+                                <span key={team.id} className="text-xs text-muted-foreground">
+                                  {getTournamentName(team.tournamentId)} &middot; {team.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
@@ -551,16 +580,29 @@ export default function AdminPlayers() {
                             <span className="font-medium">{captain.createdAt ? format(new Date(captain.createdAt), "MMM d, yyyy") : "N/A"}</span>
                           </div>
                         </div>
+                        {captainTeams.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-border">
+                            <p className="text-sm font-medium mb-2">Teams</p>
+                            <div className="space-y-2">
+                              {captainTeams.map((team) => (
+                                <div key={team.id} className="flex flex-wrap items-center gap-2 text-sm">
+                                  <span className="font-medium">{team.name}</span>
+                                  <span className="text-muted-foreground">&middot;</span>
+                                  <span className="text-muted-foreground">{getTournamentName(team.tournamentId)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
                 </Card>
-              ))}
+              );})}
             </>
           )}
           {showPlayers && filteredPlayers.length > 0 && (
             <>
-              {typeFilter === "all" && <p className="text-sm font-medium text-muted-foreground pt-2">Players</p>}
           {paginatedPlayers?.map((player) => (
             <Card key={player.id} data-testid={`card-player-${player.id}`}>
               <CardContent className="p-4">
