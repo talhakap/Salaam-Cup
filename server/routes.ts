@@ -857,7 +857,7 @@ export async function registerRoutes(
           }
         }
       }
-      const player = await storage.registerPlayerWithMatching(input);
+      const player = await storage.registerPlayerWithMatching({ ...input, waiverSigned: true });
       res.status(201).json(player);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
