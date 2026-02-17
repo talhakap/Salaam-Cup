@@ -20,7 +20,7 @@ function hockeyStandard(): StandingsStrategy {
         if (ptsDiff !== 0) return ptsDiff;
 
         const tiedCount = pointCounts.get(a.points!) || 0;
-        if (tiedCount >= 2) {
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -80,7 +80,7 @@ function soccerStandard(): StandingsStrategy {
         if (ptsDiff !== 0) return ptsDiff;
 
         const tiedCount = pointCounts.get(a.points!) || 0;
-        if (tiedCount >= 2) {
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -117,7 +117,7 @@ function basketballStandard(): StandingsStrategy {
         if (ptsDiff !== 0) return ptsDiff;
 
         const tiedCount = pointCounts.get(a.points!) || 0;
-        if (tiedCount >= 2) {
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -156,7 +156,7 @@ function softballStandard(): StandingsStrategy {
 
         const tiedCount = pctGroups.get(softballWinPct(a).toFixed(4)) || 0;
 
-        if (tiedCount >= 2) {
+        if (tiedCount === 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
