@@ -354,7 +354,7 @@ export default function AdminPlayers() {
 
   const { paginatedItems: paginatedPlayers, ...paginationProps } = usePagination(filteredPlayers, 25);
 
-  const showCaptains = typeFilter === "all" || typeFilter === "captains";
+  const showCaptains = typeFilter === "captains";
   const showPlayers = typeFilter !== "captains";
 
   const handleDelete = async () => {
@@ -490,7 +490,6 @@ export default function AdminPlayers() {
         <div className="space-y-3">
           {showCaptains && filteredCaptains.length > 0 && (
             <>
-              {typeFilter === "all" && <p className="text-sm font-medium text-muted-foreground pt-2">Captains</p>}
               {filteredCaptains.map((captain) => (
                 <Card key={`captain-${captain.id}`} data-testid={`card-captain-${captain.id}`}>
                   <CardContent className="p-4">
