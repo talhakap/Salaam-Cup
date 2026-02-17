@@ -255,8 +255,7 @@ export default function AdminMatches() {
       filtered = filtered.filter(m => m.divisionId === Number(filterDivision));
     }
     if (filterTeam !== "all") {
-      const teamId = Number(filterTeam);
-      filtered = filtered.filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId);
+      filtered = filtered.filter(m => String(m.homeTeamId) === filterTeam || String(m.awayTeamId) === filterTeam);
     }
     return [...filtered].sort((a, b) => {
       const timeA = a.startTime ? new Date(a.startTime).getTime() : Infinity;
