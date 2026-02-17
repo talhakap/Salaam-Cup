@@ -73,6 +73,9 @@ export async function registerRoutes(
   app.post("/api/captain/logout", (req, res) => {
     (req.session as any).captainUserId = null;
     (req.session as any).captainEmail = null;
+    (req.session as any).adminUserId = null;
+    (req.session as any).adminEmail = null;
+    (req.session as any).adminRole = null;
     req.session.save(() => {
       res.json({ message: "Logged out" });
     });

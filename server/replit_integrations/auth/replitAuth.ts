@@ -92,6 +92,8 @@ export async function setupAuth(app: Express) {
       if (!user || user.role !== "admin") {
         return res.status(404).json({ message: "Admin user not found" });
       }
+      (req.session as any).captainUserId = null;
+      (req.session as any).captainEmail = null;
       (req.session as any).adminUserId = user.id;
       (req.session as any).adminEmail = user.email;
       (req.session as any).adminRole = "admin";
@@ -108,6 +110,8 @@ export async function setupAuth(app: Express) {
     (req.session as any).adminUserId = null;
     (req.session as any).adminEmail = null;
     (req.session as any).adminRole = null;
+    (req.session as any).captainUserId = null;
+    (req.session as any).captainEmail = null;
     req.session.save(() => {
       res.json({ message: "Logged out" });
     });
@@ -133,6 +137,8 @@ export async function setupAuth(app: Express) {
     (req.session as any).adminUserId = null;
     (req.session as any).adminEmail = null;
     (req.session as any).adminRole = null;
+    (req.session as any).captainUserId = null;
+    (req.session as any).captainEmail = null;
     req.session.save(() => {
       res.redirect("/");
     });
