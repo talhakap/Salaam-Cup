@@ -781,7 +781,7 @@ export class DatabaseStorage implements IStorage {
 
     standingsArr = standingsArr.map(s => {
       s.points = strategy.calculatePoints(s.wins!, s.losses!, s.ties!);
-      const adj = adjMap.get(s.teamId);
+      const adj = adjMap.get(Number(s.teamId));
       return applyAdjustments(s, adj, strategy);
     });
 

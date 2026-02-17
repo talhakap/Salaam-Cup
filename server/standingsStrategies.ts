@@ -20,7 +20,7 @@ function hockeyStandard(): StandingsStrategy {
         if (ptsDiff !== 0) return ptsDiff;
 
         const tiedCount = pointCounts.get(a.points!) || 0;
-        if (tiedCount === 2) {
+        if (tiedCount >= 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -40,21 +40,23 @@ function hockeyStandard(): StandingsStrategy {
   };
 }
 
-function getHeadToHead(teamAId: number, teamBId: number, matches: Match[]): number {
+function getHeadToHead(teamAId: number | string, teamBId: number | string, matches: Match[]): number {
+  const a_id = Number(teamAId);
+  const b_id = Number(teamBId);
   let aWins = 0;
   let bWins = 0;
   for (const m of matches) {
     if (m.status !== "final" || m.draft) continue;
     if (m.pulled || m.pulledHomeTeam || m.pulledAwayTeam) continue;
     const hId = Number(m.homeTeamId);
-    const aId = Number(m.awayTeamId);
+    const awId = Number(m.awayTeamId);
     const hs = m.homeScore ?? 0;
     const as_ = m.awayScore ?? 0;
 
-    if (hId === teamAId && aId === teamBId) {
+    if (hId === a_id && awId === b_id) {
       if (hs > as_) aWins++;
       else if (as_ > hs) bWins++;
-    } else if (hId === teamBId && aId === teamAId) {
+    } else if (hId === b_id && awId === a_id) {
       if (hs > as_) bWins++;
       else if (as_ > hs) aWins++;
     }
@@ -78,7 +80,7 @@ function soccerStandard(): StandingsStrategy {
         if (ptsDiff !== 0) return ptsDiff;
 
         const tiedCount = pointCounts.get(a.points!) || 0;
-        if (tiedCount === 2) {
+        if (tiedCount >= 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -115,7 +117,7 @@ function basketballStandard(): StandingsStrategy {
         if (ptsDiff !== 0) return ptsDiff;
 
         const tiedCount = pointCounts.get(a.points!) || 0;
-        if (tiedCount === 2) {
+        if (tiedCount >= 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
@@ -154,7 +156,7 @@ function softballStandard(): StandingsStrategy {
 
         const tiedCount = pctGroups.get(softballWinPct(a).toFixed(4)) || 0;
 
-        if (tiedCount === 2) {
+        if (tiedCount >= 2) {
           const h2h = getHeadToHead(a.teamId, b.teamId, matches);
           if (h2h !== 0) return h2h;
         }
