@@ -114,19 +114,6 @@ To get a Gmail App Password:
 2. Go to https://myaccount.google.com/apppasswords
 3. Generate an app password for "Mail"
 
-### Option B: Mailgun
-| Secret Name | Value |
-|---|---|
-| `MAILGUN_API_KEY` | Your Mailgun API key |
-| `MAILGUN_DOMAIN` | Your Mailgun sending domain |
-
-### Option C: Mailjet
-| Secret Name | Value |
-|---|---|
-| `MJ_APIKEY_PUBLIC` | Your Mailjet public API key |
-| `MJ_APIKEY_PRIVATE` | Your Mailjet private API key |
-| `MJ_SENDER_EMAIL` | The verified sender email in Mailjet |
-
 **Note:** Email is optional. The app will still work without it, but automated emails (team rejection notices, captain credentials) won't be sent.
 
 ---
@@ -183,11 +170,6 @@ Or use the "Start application" workflow which runs `npm run dev`.
 | `ADMIN_PASSWORD` | Recommended | Password for admin accounts |
 | `GMAIL_USER` | Optional | Gmail address for sending emails |
 | `GMAIL_APP_PASSWORD` | Optional | Gmail app password |
-| `MAILGUN_API_KEY` | Optional | Mailgun API key |
-| `MAILGUN_DOMAIN` | Optional | Mailgun sending domain |
-| `MJ_APIKEY_PUBLIC` | Optional | Mailjet public key |
-| `MJ_APIKEY_PRIVATE` | Optional | Mailjet private key |
-| `MJ_SENDER_EMAIL` | Optional | Mailjet sender email |
 
 ### Environment Variables (Non-sensitive - Add via Environment Variables)
 
