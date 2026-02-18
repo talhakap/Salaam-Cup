@@ -16,7 +16,7 @@ import {
   type StandingWithTeam, type MatchWithTeams,
 } from "@shared/schema";
 import { getStrategy, applyAdjustments } from "./standingsStrategies";
-import { eq, and, sql, desc, asc, isNull } from "drizzle-orm";
+import { eq, and, or, sql, desc, asc, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Sports
@@ -1273,8 +1273,10 @@ export class DatabaseStorage implements IStorage {
       and(
         eq(matches.tournamentId, tournamentId),
         eq(matches.divisionId, divisionId),
-        isNull(matches.homeTeamId),
-        isNull(matches.awayTeamId)
+        or(
+          isNull(matches.homeTeamId),
+          isNull(matches.awayTeamId)
+        )
       )
     ).orderBy(asc(matches.matchNumber));
 
@@ -1309,9 +1311,11 @@ export class DatabaseStorage implements IStorage {
 
     const normalizeRound = (name: string): string => {
       const lower = name.toLowerCase().replace(/[^a-z0-9]/g, "");
-      if (lower.includes("final") || lower.includes("championship")) return "final";
-      if (lower.includes("semi")) return "semi";
+      if (lower.includes("wildcard") || lower.includes("wild")) return "wildcard";
+      if (lower.includes("roundof16") || lower.includes("round16")) return "round16";
       if (lower.includes("quarter")) return "quarter";
+      if (lower.includes("semi")) return "semi";
+      if (lower.includes("final") || lower.includes("championship")) return "final";
       return lower;
     };
 
@@ -1319,6 +1323,8 @@ export class DatabaseStorage implements IStorage {
       "final": 0,
       "semi": 1,
       "quarter": 2,
+      "round16": 3,
+      "wildcard": 4,
     };
 
     const linked = new Set<number>();
