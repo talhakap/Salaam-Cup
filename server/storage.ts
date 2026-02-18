@@ -1119,8 +1119,23 @@ export class DatabaseStorage implements IStorage {
 
     const n = seededTeamIds.length;
     if (n < 2) throw new Error("Need at least 2 teams for a bracket");
+    if (n < settings.qualifyCount) {
+      throw new Error(`Only ${n} teams in standings but ${settings.qualifyCount} are configured to qualify. Add more teams or reduce the qualifying count.`);
+    }
 
-    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(n)));
+    const configuredByeCount = settings.byeCount || 0;
+    let nextPow2: number;
+    if (configuredByeCount > 0) {
+      const desiredSize = n + configuredByeCount;
+      const isPow2 = desiredSize > 0 && (desiredSize & (desiredSize - 1)) === 0;
+      if (isPow2) {
+        nextPow2 = desiredSize;
+      } else {
+        throw new Error(`Bracket size ${desiredSize} (${n} teams + ${configuredByeCount} byes) is not a power of 2. Update the bracket size in settings.`);
+      }
+    } else {
+      nextPow2 = Math.pow(2, Math.ceil(Math.log2(n)));
+    }
     const totalRounds = Math.ceil(Math.log2(nextPow2));
     const numByes = nextPow2 - n;
 

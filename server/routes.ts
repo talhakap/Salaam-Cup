@@ -1343,10 +1343,18 @@ export async function registerRoutes(
 
   app.post("/api/tournaments/:tournamentId/divisions/:divisionId/playoffs/settings", isAuthenticated, async (req, res) => {
     try {
+      const qualifyCount = Math.max(2, Math.min(64, Number(req.body.qualifyCount) || 4));
+      const byeCount = Math.max(0, Math.min(62, Number(req.body.byeCount) || 0));
+      const bracketSize = qualifyCount + byeCount;
+      const isPow2 = bracketSize > 0 && (bracketSize & (bracketSize - 1)) === 0;
+      if (byeCount > 0 && !isPow2) {
+        return res.status(400).json({ message: `Invalid bracket size: ${qualifyCount} teams + ${byeCount} byes = ${bracketSize}, which is not a power of 2` });
+      }
       const data = {
         tournamentId: Number(req.params.tournamentId),
         divisionId: Number(req.params.divisionId),
-        qualifyCount: Math.max(2, Math.min(64, Number(req.body.qualifyCount) || 4)),
+        qualifyCount,
+        byeCount,
         bracketMode: req.body.bracketMode === "play_in" ? "play_in" as const : "byes" as const,
         seedingSource: req.body.seedingSource === "manual" ? "manual" as const : "standings" as const,
         reseedEachRound: Boolean(req.body.reseedEachRound),

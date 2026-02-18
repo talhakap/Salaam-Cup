@@ -165,6 +165,7 @@ export default function AdminPlayoffs() {
   const { toast } = useToast();
 
   const [qualifyCount, setQualifyCount] = useState(4);
+  const [byeCount, setByeCount] = useState(0);
   const [showBracket, setShowBracket] = useState(false);
 
   useEffect(() => {
@@ -208,9 +209,11 @@ export default function AdminPlayoffs() {
   useEffect(() => {
     if (settings) {
       setQualifyCount(settings.qualifyCount);
+      setByeCount(settings.byeCount || 0);
       setShowBracket(settings.showBracket);
     } else {
       setQualifyCount(4);
+      setByeCount(0);
       setShowBracket(false);
     }
   }, [settings]);
@@ -219,6 +222,7 @@ export default function AdminPlayoffs() {
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/tournaments/${selectedTournamentId}/divisions/${selectedDivisionId}/playoffs/settings`, {
         qualifyCount,
+        byeCount,
         showBracket,
         bracketMode: "byes",
         seedingSource: "standings",
@@ -347,10 +351,37 @@ export default function AdminPlayoffs() {
                     min={2}
                     max={64}
                     value={qualifyCount}
-                    onChange={(e) => setQualifyCount(parseInt(e.target.value) || 4)}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 4;
+                      setQualifyCount(val);
+                      const autoPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(2, val))));
+                      setByeCount(autoPow2 - val);
+                    }}
                     disabled={settings?.locked}
                     data-testid="input-qualify-count"
                   />
+                </div>
+                <div className="w-48">
+                  <Label>Bracket Size</Label>
+                  <Select
+                    value={String(qualifyCount + byeCount)}
+                    onValueChange={(val) => setByeCount(Number(val) - qualifyCount)}
+                    disabled={settings?.locked}
+                  >
+                    <SelectTrigger data-testid="select-bracket-size">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[4, 8, 16, 32, 64].filter(s => s >= qualifyCount).map(s => (
+                        <SelectItem key={s} value={String(s)}>
+                          {s} slots ({s - qualifyCount} byes)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {byeCount > 0 ? `Top ${byeCount} seeds get a first-round bye` : "No byes — all teams play round 1"}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 pt-5">
                   <Switch
