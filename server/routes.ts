@@ -1346,7 +1346,7 @@ export async function registerRoutes(
       const data = {
         tournamentId: Number(req.params.tournamentId),
         divisionId: Number(req.params.divisionId),
-        qualifyCount: Math.max(2, Math.min(16, Number(req.body.qualifyCount) || 4)),
+        qualifyCount: Math.max(2, Math.min(64, Number(req.body.qualifyCount) || 4)),
         bracketMode: req.body.bracketMode === "play_in" ? "play_in" as const : "byes" as const,
         seedingSource: req.body.seedingSource === "manual" ? "manual" as const : "standings" as const,
         reseedEachRound: Boolean(req.body.reseedEachRound),
