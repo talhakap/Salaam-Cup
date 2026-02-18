@@ -1230,6 +1230,11 @@ export class DatabaseStorage implements IStorage {
     const nextMatchIndex = Math.floor(matchIndex / 2);
     const isHome = matchIndex % 2 === 0;
 
+    const [currentMatch] = await db.select().from(playoffMatches).where(eq(playoffMatches.id, matchId));
+    const winnerSeed = currentMatch?.winnerTeamId === currentMatch?.homeTeamId
+      ? currentMatch?.homeSeed
+      : currentMatch?.awaySeed;
+
     const [nextMatch] = await db.select().from(playoffMatches).where(
       and(
         eq(playoffMatches.tournamentId, tournamentId),
@@ -1241,8 +1246,8 @@ export class DatabaseStorage implements IStorage {
 
     if (nextMatch) {
       const updateData: Partial<InsertPlayoffMatch> = isHome
-        ? { homeTeamId: winnerTeamId }
-        : { awayTeamId: winnerTeamId };
+        ? { homeTeamId: winnerTeamId, homeSeed: winnerSeed ?? null }
+        : { awayTeamId: winnerTeamId, awaySeed: winnerSeed ?? null };
       await db.update(playoffMatches).set(updateData).where(eq(playoffMatches.id, nextMatch.id));
       await this._syncLinkedMatch(nextMatch.id);
     }

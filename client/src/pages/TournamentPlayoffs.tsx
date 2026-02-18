@@ -10,18 +10,26 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { TournamentNav } from "@/components/TournamentNav";
-import { Trophy, Loader2, MapPin, Clock } from "lucide-react";
+import { Trophy, Loader2, MapPin, Clock, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { Division, PlayoffSettings, PlayoffMatchWithTeams } from "@shared/schema";
 
 function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLast?: boolean }) {
+  const byeTeam = match.homeTeam || match.awayTeam;
   if (match.isBye) {
     return (
       <div className="border border-border rounded-md p-2 opacity-50 bg-card" data-testid={`bracket-match-bye-${match.id}`}>
-        <div className="text-sm font-medium">{match.homeTeam?.name || match.awayTeam?.name || "TBD"}</div>
-        <div className="text-xs text-muted-foreground">BYE</div>
+        <div className="flex items-center gap-2">
+          {byeTeam?.logoUrl ? (
+            <img src={byeTeam.logoUrl} alt="" className="w-5 h-5 object-contain rounded-full shrink-0" />
+          ) : (
+            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+          )}
+          <span className="text-sm font-medium">{byeTeam?.name || "TBD"}</span>
+        </div>
+        <div className="text-xs text-muted-foreground ml-7">BYE</div>
       </div>
     );
   }
@@ -40,8 +48,13 @@ function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLas
         "flex items-center gap-2 px-3 py-2 border-b border-border",
         isFinal && match.winnerTeamId === match.homeTeamId && "bg-primary/5 font-bold"
       )}>
-        {match.homeSeed && (
-          <span className="text-xs text-muted-foreground w-5 text-right">{match.homeSeed}</span>
+        {match.homeSeed != null && (
+          <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{match.homeSeed}</span>
+        )}
+        {match.homeTeam?.logoUrl ? (
+          <img src={match.homeTeam.logoUrl} alt="" className="w-5 h-5 object-contain rounded-full shrink-0" />
+        ) : (
+          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
         )}
         <span className="text-sm flex-1 min-w-0 truncate">{match.homeTeam?.name || "TBD"}</span>
         <span className="text-sm font-mono w-6 text-center">{match.homeScore ?? "-"}</span>
@@ -51,8 +64,13 @@ function BracketMatchup({ match, isLast }: { match: PlayoffMatchWithTeams; isLas
         isFinal && match.winnerTeamId === match.awayTeamId && "bg-primary/5 font-bold",
         (match.startTime || match.venue || match.fieldLocation) ? "" : "rounded-b-md"
       )}>
-        {match.awaySeed && (
-          <span className="text-xs text-muted-foreground w-5 text-right">{match.awaySeed}</span>
+        {match.awaySeed != null && (
+          <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{match.awaySeed}</span>
+        )}
+        {match.awayTeam?.logoUrl ? (
+          <img src={match.awayTeam.logoUrl} alt="" className="w-5 h-5 object-contain rounded-full shrink-0" />
+        ) : (
+          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
         )}
         <span className="text-sm flex-1 min-w-0 truncate">{match.awayTeam?.name || "TBD"}</span>
         <span className="text-sm font-mono w-6 text-center">{match.awayScore ?? "-"}</span>
@@ -139,7 +157,12 @@ function DivisionBracket({ tournamentId, divisionId }: { tournamentId: number; d
     <div className="space-y-6" data-testid={`division-bracket-${divisionId}`}>
       {champion && (
         <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-md" data-testid="champion-banner">
-          <Trophy className="h-6 w-6 text-primary" />
+          <Trophy className="h-6 w-6 text-primary shrink-0" />
+          {champion.logoUrl ? (
+            <img src={champion.logoUrl} alt="" className="w-8 h-8 object-contain rounded-full shrink-0" />
+          ) : (
+            <Users className="h-6 w-6 text-muted-foreground shrink-0" />
+          )}
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Champion</p>
             <p className="text-lg font-bold font-display">{champion.name}</p>
