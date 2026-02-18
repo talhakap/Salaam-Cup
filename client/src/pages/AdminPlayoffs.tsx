@@ -345,7 +345,7 @@ export default function AdminPlayoffs() {
                   <Input
                     type="number"
                     min={2}
-                    max={16}
+                    max={64}
                     value={qualifyCount}
                     onChange={(e) => setQualifyCount(parseInt(e.target.value) || 4)}
                     disabled={settings?.locked}
