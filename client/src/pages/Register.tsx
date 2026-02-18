@@ -169,60 +169,62 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
           </FormItem>
         )} />
 
-        <FormField control={form.control} name="name" render={({ field }) => (
-          <FormItem>
-            <FormLabel>Team Name*</FormLabel>
-            <FormControl><Input placeholder="e.g. Toronto Eagles" {...field} data-testid="input-team-name" /></FormControl>
-            <FormMessage />
-          </FormItem>
-        )} />
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-start">
+          <FormField control={form.control} name="name" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Team Name*</FormLabel>
+              <FormControl><Input placeholder="e.g. Toronto Eagles" {...field} data-testid="input-team-name" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-        <FormField control={form.control} name="logoUrl" render={({ field }) => (
-          <FormItem>
-            <FormLabel>Team Logo (optional)</FormLabel>
-            <FormControl>
-              <div>
-                {field.value ? (
-                  <div className="flex items-center gap-3">
-                    <img src={field.value} alt="Team logo" className="w-16 h-16 object-contain rounded-md border bg-muted" data-testid="img-team-logo-preview" />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => { form.setValue("logoUrl", ""); }}
-                      data-testid="button-remove-logo"
-                    >
-                      <X className="h-4 w-4 mr-1" /> Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                      data-testid="input-team-logo-file"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={logoUploading}
-                      data-testid="button-upload-logo"
-                    >
-                      {logoUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                      {logoUploading ? "Uploading..." : "Upload Logo"}
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG or SVG. Max 2MB.</p>
-                  </div>
-                )}
-              </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )} />
+          <FormField control={form.control} name="logoUrl" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Team Logo</FormLabel>
+              <FormControl>
+                <div>
+                  {field.value ? (
+                    <div className="flex items-center gap-2">
+                      <img src={field.value} alt="Team logo" className="w-9 h-9 object-contain rounded-md border bg-muted" data-testid="img-team-logo-preview" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { form.setValue("logoUrl", ""); }}
+                        data-testid="button-remove-logo"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                        data-testid="input-team-logo-file"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={logoUploading}
+                        data-testid="button-upload-logo"
+                      >
+                        {logoUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                        {logoUploading ? "Uploading..." : "Upload Logo"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG or SVG. Max 2MB.</p>
+                    </div>
+                  )}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
 
         <FormField control={form.control} name="tournamentId" render={({ field }) => (
           <FormItem>
