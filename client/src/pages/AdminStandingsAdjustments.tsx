@@ -98,10 +98,10 @@ export default function AdminStandingsAdjustments() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold font-display mb-6" data-testid="text-standings-reorder-title">Reorder Standings</h1>
+      <div className="p-3 md:p-6 max-w-5xl mx-auto">
+        <h1 className="text-xl md:text-2xl font-bold font-display mb-4 md:mb-6" data-testid="text-standings-reorder-title">Reorder Standings</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 md:mb-6">
           <div>
             <label className="text-sm font-medium mb-2 block">Tournament</label>
             <Select
@@ -157,57 +157,103 @@ export default function AdminStandingsAdjustments() {
             )}
 
             {localOrder.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-b-2 border-foreground">
-                      <TableHead className="w-16 font-bold text-foreground">Pos</TableHead>
-                      <TableHead className="w-20 font-bold text-foreground">Move</TableHead>
-                      <TableHead className="font-bold text-foreground">Team</TableHead>
-                      {columns.map((col) => (
-                        <TableHead key={col.key} className="text-center font-bold text-foreground">{col.label}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {localOrder.map((s: StandingWithTeam, index: number) => (
-                      <TableRow key={`${s.divisionId}-${s.teamId}`} className="border-b" data-testid={`row-reorder-${s.teamId}`}>
-                        <TableCell className="font-bold text-lg">{index + 1}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6"
-                              disabled={index === 0}
-                              onClick={() => moveTeam(index, "up")}
-                              data-testid={`button-move-up-${s.teamId}`}
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6"
-                              disabled={index === localOrder.length - 1}
-                              onClick={() => moveTeam(index, "down")}
-                              data-testid={`button-move-down-${s.teamId}`}
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">{s.team?.name || `Team #${s.teamId}`}</TableCell>
+              <>
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b-2 border-foreground">
+                        <TableHead className="w-16 font-bold text-foreground">Pos</TableHead>
+                        <TableHead className="w-20 font-bold text-foreground">Move</TableHead>
+                        <TableHead className="font-bold text-foreground">Team</TableHead>
                         {columns.map((col) => (
-                          <TableCell key={col.key} className={`text-center ${col.key === 'pts' || col.key === 'pct' ? 'font-bold' : ''}`}>
-                            {col.getValue(s)}
-                          </TableCell>
+                          <TableHead key={col.key} className="text-center font-bold text-foreground">{col.label}</TableHead>
                         ))}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {localOrder.map((s: StandingWithTeam, index: number) => (
+                        <TableRow key={`${s.divisionId}-${s.teamId}`} className="border-b" data-testid={`row-reorder-${s.teamId}`}>
+                          <TableCell className="font-bold text-lg">{index + 1}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6"
+                                disabled={index === 0}
+                                onClick={() => moveTeam(index, "up")}
+                                data-testid={`button-move-up-${s.teamId}`}
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6"
+                                disabled={index === localOrder.length - 1}
+                                onClick={() => moveTeam(index, "down")}
+                                data-testid={`button-move-down-${s.teamId}`}
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">{s.team?.name || `Team #${s.teamId}`}</TableCell>
+                          {columns.map((col) => (
+                            <TableCell key={col.key} className={`text-center ${col.key === 'pts' || col.key === 'pct' ? 'font-bold' : ''}`}>
+                              {col.getValue(s)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="md:hidden space-y-2">
+                  {localOrder.map((s: StandingWithTeam, index: number) => (
+                    <div
+                      key={`${s.divisionId}-${s.teamId}`}
+                      className="flex items-center gap-2 border border-border rounded-md p-3 bg-card"
+                      data-testid={`row-reorder-mobile-${s.teamId}`}
+                    >
+                      <span className="text-lg font-bold w-7 shrink-0 text-center">{index + 1}</span>
+                      <div className="flex flex-col shrink-0">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          disabled={index === 0}
+                          onClick={() => moveTeam(index, "up")}
+                          data-testid={`button-move-up-mobile-${s.teamId}`}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          disabled={index === localOrder.length - 1}
+                          onClick={() => moveTeam(index, "down")}
+                          data-testid={`button-move-down-mobile-${s.teamId}`}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{s.team?.name || `Team #${s.teamId}`}</p>
+                        <div className="flex gap-3 flex-wrap text-xs text-muted-foreground mt-1">
+                          {columns.slice(0, 4).map((col) => (
+                            <span key={col.key} className={col.key === 'pts' || col.key === 'pct' ? 'font-bold text-foreground' : ''}>
+                              {col.label}: {col.getValue(s)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <p className="text-muted-foreground text-center py-12">No standings available for this division yet.</p>
             )}

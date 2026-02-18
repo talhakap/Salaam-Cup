@@ -478,7 +478,7 @@ function DetailBracket({ tournamentId, divisionId, tournamentSlug }: { tournamen
         </div>
       )}
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="hidden md:flex gap-4 overflow-x-auto pb-4">
         {rounds.map(([round, roundMatches]) => {
           const roundNum = Number(round);
           return (
@@ -543,6 +543,78 @@ function DetailBracket({ tournamentId, divisionId, tournamentSlug }: { tournamen
                               </div>
                             </div>
                           )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="md:hidden space-y-6">
+        {rounds.map(([round, roundMatches]) => {
+          const roundNum = Number(round);
+          return (
+            <div key={round} className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-1">
+                {getBracketRoundName(roundNum, totalRounds)}
+              </p>
+              <div className="space-y-2">
+                {roundMatches.map((match) => {
+                  const isFinal = match.status === "final";
+                  return match.isBye ? (
+                    <div key={match.id} className="border border-border rounded-md p-2 opacity-50 bg-card">
+                      <div className="flex items-center gap-2">
+                        {(match.homeTeam || match.awayTeam)?.logoUrl ? (
+                          <img src={(match.homeTeam || match.awayTeam)!.logoUrl!} alt="" className="w-5 h-5 object-contain rounded-full shrink-0" />
+                        ) : (
+                          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="text-sm font-medium">{match.homeTeam?.name || match.awayTeam?.name || "TBD"}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground ml-7">BYE</div>
+                    </div>
+                  ) : (
+                    <div key={match.id} className={cn("border border-border rounded-md bg-card", roundNum === totalRounds && isFinal && "ring-2 ring-primary")}>
+                      <div className={cn("flex items-center gap-2 px-3 py-2 border-b border-border", isFinal && match.winnerTeamId === match.homeTeamId && "bg-primary/5 font-bold")}>
+                        {match.homeSeed != null && <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{match.homeSeed}</span>}
+                        {match.homeTeam?.logoUrl ? (
+                          <img src={match.homeTeam.logoUrl} alt="" className="w-5 h-5 object-contain rounded-full shrink-0" />
+                        ) : (
+                          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="text-sm flex-1 min-w-0 truncate">{match.homeTeam?.name || "TBD"}</span>
+                        <span className="text-sm font-mono w-6 text-center">{match.homeScore ?? "-"}</span>
+                      </div>
+                      <div className={cn("flex items-center gap-2 px-3 py-2", isFinal && match.winnerTeamId === match.awayTeamId && "bg-primary/5 font-bold")}>
+                        {match.awaySeed != null && <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{match.awaySeed}</span>}
+                        {match.awayTeam?.logoUrl ? (
+                          <img src={match.awayTeam.logoUrl} alt="" className="w-5 h-5 object-contain rounded-full shrink-0" />
+                        ) : (
+                          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="text-sm flex-1 min-w-0 truncate">{match.awayTeam?.name || "TBD"}</span>
+                        <span className="text-sm font-mono w-6 text-center">{match.awayScore ?? "-"}</span>
+                      </div>
+                      {(match.startTime || match.venue || match.fieldLocation) && (
+                        <div className="px-3 py-1.5 border-t border-border bg-muted/30 rounded-b-md">
+                          <div className="flex items-center gap-3 flex-wrap text-[10px] text-muted-foreground">
+                            {match.startTime && (
+                              <span className="flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" />
+                                {format(new Date(match.startTime), "MMM d, h:mm a")}
+                              </span>
+                            )}
+                            {(match.venue || match.fieldLocation) && (
+                              <span className="flex items-center gap-0.5">
+                                <MapPin className="h-2.5 w-2.5" />
+                                {[match.venue?.name, match.fieldLocation].filter(Boolean).join(" — ")}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

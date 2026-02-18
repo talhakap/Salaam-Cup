@@ -294,14 +294,14 @@ export default function AdminPlayoffs() {
 
   return (
     <AdminLayout>
-      <div className="p-6 space-y-6" data-testid="admin-playoffs-page">
+      <div className="p-3 md:p-6 space-y-4 md:space-y-6" data-testid="admin-playoffs-page">
         <div className="flex items-center gap-3 flex-wrap">
           <Trophy className="h-6 w-6" />
-          <h1 className="text-2xl font-bold font-display">Playoff Brackets</h1>
+          <h1 className="text-xl md:text-2xl font-bold font-display">Playoff Brackets</h1>
         </div>
 
         <div className="flex gap-4 flex-wrap">
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <Label>Tournament</Label>
             <Select
               value={selectedTournamentId?.toString() || ""}
@@ -318,7 +318,7 @@ export default function AdminPlayoffs() {
             </Select>
           </div>
           {divisions && divisions.length > 0 && (
-            <div className="w-64">
+            <div className="w-full sm:w-64">
               <Label>Division</Label>
               <Select
                 value={selectedDivisionId?.toString() || ""}
@@ -343,8 +343,8 @@ export default function AdminPlayoffs() {
               <CardTitle className="text-lg">Playoff Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="w-48">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
+                <div className="w-full sm:w-48">
                   <Label>Teams Qualifying</Label>
                   <Input
                     type="number"
@@ -361,7 +361,7 @@ export default function AdminPlayoffs() {
                     data-testid="input-qualify-count"
                   />
                 </div>
-                <div className="w-48">
+                <div className="w-full sm:w-48">
                   <Label>Bracket Size</Label>
                   <Select
                     value={String(qualifyCount + byeCount)}
@@ -448,12 +448,30 @@ export default function AdminPlayoffs() {
         {!matchesLoading && Object.keys(matchesByRound).length > 0 && (
           <div className="space-y-6" data-testid="admin-bracket-view">
             <h2 className="text-lg font-bold font-display">Bracket</h2>
-            <div className="flex gap-6 overflow-x-auto pb-4">
+            <div className="hidden md:flex gap-6 overflow-x-auto pb-4">
               {Object.entries(matchesByRound)
                 .sort(([a], [b]) => Number(a) - Number(b))
                 .map(([round, roundMatches]) => (
                   <div key={round} className="min-w-[250px] space-y-3 flex-shrink-0">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      {getRoundName(Number(round), totalRounds)}
+                    </h3>
+                    {roundMatches.map((match) => (
+                      <PlayoffMatchCard
+                        key={match.id}
+                        match={match}
+                        onUpdate={(id, data) => updateMatchMutation.mutate({ id, data })}
+                      />
+                    ))}
+                  </div>
+                ))}
+            </div>
+            <div className="md:hidden space-y-6">
+              {Object.entries(matchesByRound)
+                .sort(([a], [b]) => Number(a) - Number(b))
+                .map(([round, roundMatches]) => (
+                  <div key={round} className="space-y-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-1">
                       {getRoundName(Number(round), totalRounds)}
                     </h3>
                     {roundMatches.map((match) => (

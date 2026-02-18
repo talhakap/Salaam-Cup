@@ -170,7 +170,7 @@ function DivisionBracket({ tournamentId, divisionId }: { tournamentId: number; d
         </div>
       )}
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="hidden md:flex gap-4 overflow-x-auto pb-4">
         {rounds.map(([round, roundMatches]) => {
           const roundNum = Number(round);
           return (
@@ -183,6 +183,24 @@ function DivisionBracket({ tournamentId, divisionId }: { tournamentId: number; d
                   <div key={match.id} style={{ marginBottom: `${(Math.pow(2, roundNum) - 1) * 16}px` }}>
                     <BracketMatchup match={match} isLast={roundNum === totalRounds} />
                   </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="md:hidden space-y-6">
+        {rounds.map(([round, roundMatches]) => {
+          const roundNum = Number(round);
+          return (
+            <div key={round} className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-1">
+                {getRoundName(roundNum, totalRounds)}
+              </p>
+              <div className="space-y-2">
+                {roundMatches.map((match) => (
+                  <BracketMatchup key={match.id} match={match} isLast={roundNum === totalRounds} />
                 ))}
               </div>
             </div>
