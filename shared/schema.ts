@@ -477,6 +477,7 @@ export const playoffSettings = pgTable("playoff_settings", {
   tournamentId: integer("tournament_id").references(() => tournaments.id).notNull(),
   divisionId: integer("division_id").references(() => divisions.id).notNull(),
   qualifyCount: integer("qualify_count").default(4).notNull(),
+  byeCount: integer("bye_count").default(0).notNull(),
   bracketMode: text("bracket_mode", { enum: ["byes", "play_in"] }).default("byes").notNull(),
   seedingSource: text("seeding_source", { enum: ["standings", "manual"] }).default("standings").notNull(),
   reseedEachRound: boolean("reseed_each_round").default(false).notNull(),
