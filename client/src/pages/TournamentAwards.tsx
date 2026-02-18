@@ -9,7 +9,7 @@ import { useAwards } from "@/hooks/use-awards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Division, Award } from "@shared/schema";
 
 export default function TournamentAwards() {
@@ -21,7 +21,7 @@ export default function TournamentAwards() {
   const { data: divisions } = useDivisions(numericId);
   const { data: allAwards } = useAwards(numericId);
 
-  const [selectedDivision, setSelectedDivision] = useState<string>("all");
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
 
   if (isLoading) {
     return (
@@ -50,8 +50,14 @@ export default function TournamentAwards() {
 
   const divisionTabs = divisions?.map((d: Division) => ({ id: String(d.id), label: d.name })) || [];
 
+  useEffect(() => {
+    if (!selectedDivision && divisionTabs.length > 0) {
+      setSelectedDivision(divisionTabs[0].id);
+    }
+  }, [divisionTabs.length]);
+
   const filteredAwards = (allAwards || []).filter(
-    (a: Award) => selectedDivision === "all" || a.divisionId === Number(selectedDivision)
+    (a: Award) => !selectedDivision || a.divisionId === Number(selectedDivision)
   );
 
   const awardsByCategory = filteredAwards.reduce((acc: Record<string, Award[]>, award: Award) => {
@@ -91,14 +97,6 @@ export default function TournamentAwards() {
           {divisionTabs.length > 0 && (
             <div className="flex justify-center mb-10">
               <div className="flex gap-2 flex-wrap justify-center">
-                <Button
-                  variant={selectedDivision === "all" ? "default" : "outline"}
-                  className="rounded-full text-xs font-bold uppercase tracking-wider"
-                  onClick={() => setSelectedDivision("all")}
-                  data-testid="filter-awards-all"
-                >
-                  All
-                </Button>
                 {divisionTabs.map((tab) => (
                   <Button
                     key={tab.id}

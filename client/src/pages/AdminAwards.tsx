@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { useAllAwards, useCreateAward, useUpdateAward, useDeleteAward } from "@/hooks/use-awards";
 import { useTournaments, useDivisions } from "@/hooks/use-tournaments";
@@ -306,30 +305,18 @@ export default function AdminAwards() {
   const [editingAward, setEditingAward] = useState<Award | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<Award | null>(null);
 
-  const [filterTournament, setFilterTournament] = useState<string>("");
-  const [filterDivision, setFilterDivision] = useState<string>("");
-  const [filterYear, setFilterYear] = useState<string>("");
+  const [filterTournament, setFilterTournament] = useState<string>("all");
+  const [filterDivision, setFilterDivision] = useState<string>("all");
+  const [filterYear, setFilterYear] = useState<string>("all");
 
   const tournamentNames = Array.from(new Set((awards || []).map((a) => a.tournamentName).filter(Boolean))).sort();
   const divisionNames = Array.from(new Set((awards || []).map((a) => a.divisionName).filter(Boolean))).sort();
   const years = Array.from(new Set((awards || []).map((a) => a.year))).sort((a, b) => b - a);
 
-  useEffect(() => {
-    if (!filterTournament && tournamentNames.length > 0) setFilterTournament(tournamentNames[0]!);
-  }, [tournamentNames.length]);
-
-  useEffect(() => {
-    if (!filterDivision && divisionNames.length > 0) setFilterDivision(divisionNames[0]!);
-  }, [divisionNames.length]);
-
-  useEffect(() => {
-    if (!filterYear && years.length > 0) setFilterYear(String(years[0]));
-  }, [years.length]);
-
   const filteredAwards = (awards || []).filter((a) => {
-    if (filterTournament && a.tournamentName !== filterTournament) return false;
-    if (filterDivision && a.divisionName !== filterDivision) return false;
-    if (filterYear && a.year !== Number(filterYear)) return false;
+    if (filterTournament !== "all" && a.tournamentName !== filterTournament) return false;
+    if (filterDivision !== "all" && a.divisionName !== filterDivision) return false;
+    if (filterYear !== "all" && a.year !== Number(filterYear)) return false;
     return true;
   });
 
@@ -372,6 +359,7 @@ gap-2" data-testid="button-create-award">
             <SelectValue placeholder="Tournament" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Tournaments</SelectItem>
             {tournamentNames.map((name) => (
               <SelectItem key={name} value={name!}>{name}</SelectItem>
             ))}
@@ -382,6 +370,7 @@ gap-2" data-testid="button-create-award">
             <SelectValue placeholder="Division" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Divisions</SelectItem>
             {divisionNames.map((name) => (
               <SelectItem key={name} value={name!}>{name}</SelectItem>
             ))}
@@ -392,6 +381,7 @@ gap-2" data-testid="button-create-award">
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Years</SelectItem>
             {years.map((y) => (
               <SelectItem key={y} value={String(y)}>{y}</SelectItem>
             ))}
