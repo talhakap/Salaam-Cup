@@ -231,7 +231,11 @@ export default function TournamentDetail() {
                       <TableCell className="font-bold">{s.position || index + 1}</TableCell>
                       <TableCell>
                         <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {s.team?.logoUrl ? (
+                            <img src={s.team.logoUrl} alt="" className="w-5 h-5 object-contain rounded-full" />
+                          ) : (
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                          )}
                           {s.team?.name || `Team #${s.teamId}`}
                         </Link>
                       </TableCell>
@@ -558,8 +562,13 @@ function MatchRow({ match, divisions, venues }: { match: MatchWithTeams; divisio
       </div>
 
       <div className="flex-1 text-right min-w-0">
-        <Link href={match.homeTeam ? `/teams/${match.homeTeamId}` : "#"}>
+        <Link href={match.homeTeam ? `/teams/${match.homeTeamId}` : "#"} className="inline-flex items-center justify-end gap-2">
           <span className="font-bold text-sm md:text-base hover:underline">{match.homeTeam?.name || "TBD"}</span>
+          {match.homeTeam?.logoUrl ? (
+            <img src={match.homeTeam.logoUrl} alt="" className="w-6 h-6 object-contain rounded-full shrink-0" />
+          ) : (
+            <Users className="h-5 w-5 text-muted-foreground shrink-0" />
+          )}
         </Link>
       </div>
 
@@ -578,7 +587,12 @@ function MatchRow({ match, divisions, venues }: { match: MatchWithTeams; divisio
       </div>
 
       <div className="flex-1 min-w-0">
-        <Link href={match.awayTeam ? `/teams/${match.awayTeamId}` : "#"}>
+        <Link href={match.awayTeam ? `/teams/${match.awayTeamId}` : "#"} className="inline-flex items-center gap-2">
+          {match.awayTeam?.logoUrl ? (
+            <img src={match.awayTeam.logoUrl} alt="" className="w-6 h-6 object-contain rounded-full shrink-0" />
+          ) : (
+            <Users className="h-5 w-5 text-muted-foreground shrink-0" />
+          )}
           <span className="font-bold text-sm md:text-base hover:underline">{match.awayTeam?.name || "TBD"}</span>
         </Link>
       </div>
