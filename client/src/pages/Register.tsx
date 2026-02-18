@@ -30,10 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, Upload, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { useRef } from "react";
 import heroImg from "/images/tournament-hero-home.png";
 
 type RegistrationType = "team" | "player" | "free_agent";
@@ -84,6 +85,8 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
   const createTeam = useCreateTeam();
   const [waiverRead, setWaiverRead] = useState(false);
   const [waiverOpen, setWaiverOpen] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof teamRegistrationSchema>>({
     resolver: zodResolver(teamRegistrationSchema),
@@ -97,6 +100,36 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
       waiverAgreed: false,
     },
   });
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Logo must be under 2MB", variant: "destructive" });
+      return;
+    }
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/uploads/team-logo", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Upload failed");
+      }
+      const data = await res.json();
+      form.setValue("logoUrl", data.objectPath);
+    } catch (err) {
+      toast({ title: "Upload failed", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setLogoUploading(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  }
 
   async function onSubmit(data: z.infer<typeof teamRegistrationSchema>) {
     try {
@@ -140,6 +173,53 @@ function TeamRegistrationForm({ onSuccess }: { onSuccess: () => void }) {
           <FormItem>
             <FormLabel>Team Name*</FormLabel>
             <FormControl><Input placeholder="e.g. Toronto Eagles" {...field} data-testid="input-team-name" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="logoUrl" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Team Logo (optional)</FormLabel>
+            <FormControl>
+              <div>
+                {field.value ? (
+                  <div className="flex items-center gap-3">
+                    <img src={field.value} alt="Team logo" className="w-16 h-16 object-contain rounded-md border bg-muted" data-testid="img-team-logo-preview" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { form.setValue("logoUrl", ""); }}
+                      data-testid="button-remove-logo"
+                    >
+                      <X className="h-4 w-4 mr-1" /> Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      data-testid="input-team-logo-file"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={logoUploading}
+                      data-testid="button-upload-logo"
+                    >
+                      {logoUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                      {logoUploading ? "Uploading..." : "Upload Logo"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG or SVG. Max 2MB.</p>
+                  </div>
+                )}
+              </div>
+            </FormControl>
             <FormMessage />
           </FormItem>
         )} />

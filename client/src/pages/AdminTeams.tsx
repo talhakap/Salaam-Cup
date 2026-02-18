@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, Eye, Pencil, Trash2, Copy, Key, Plus } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, Pencil, Trash2, Copy, Key, Plus, Users } from "lucide-react";
 import { Pagination, usePagination } from "@/components/Pagination";
 import { Link } from "wouter";
 import { queryClient } from "@/lib/queryClient";
@@ -551,7 +551,15 @@ export default function AdminTeams() {
           {paginatedTeams?.map((team) => (
             <Card key={team.id} data-testid={`card-team-${team.id}`}>
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                    {team.logoUrl ? (
+                      <img src={team.logoUrl} alt={team.name} className="w-8 h-8 object-contain rounded-full" data-testid={`img-team-logo-${team.id}`} />
+                    ) : (
+                      <Users className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
                   <div className="flex items-center flex-wrap gap-2 mb-1">
                     <h3 className="font-bold text-lg truncate" data-testid={`text-team-name-${team.id}`}>{team.name}</h3>
                     <Badge variant={statusBadgeVariant(team.status)} data-testid={`badge-team-status-${team.id}`}>
@@ -564,6 +572,7 @@ export default function AdminTeams() {
                     <p>Captain: {team.captainName} ({team.captainEmail})</p>
                     {team.captainPhone && <p>Phone: {team.captainPhone}</p>}
                   </div>
+                </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
                   {team.status === "pending" && (

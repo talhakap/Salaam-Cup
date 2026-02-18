@@ -126,7 +126,13 @@ export default function TournamentStandings() {
                     <TableCell className="font-bold">{s.position || index + 1}</TableCell>
                     <TableCell>
                       <Link href={`/teams/${s.teamId}`} className="font-medium hover:underline flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          {s.team?.logoUrl ? (
+                            <img src={s.team.logoUrl} alt="" className="w-5 h-5 object-contain rounded-full" />
+                          ) : (
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
                         {s.team?.name || `Team #${s.teamId}`}
                       </Link>
                     </TableCell>
