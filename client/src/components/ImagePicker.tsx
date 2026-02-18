@@ -104,7 +104,10 @@ export function ImagePicker({ open, onClose, onSelect, currentImage }: ImagePick
                         if (parent && !parent.querySelector(".fallback-icon")) {
                           const div = document.createElement("div");
                           div.className = "fallback-icon absolute inset-0 flex items-center justify-center bg-muted";
-                          div.innerHTML = `<span class="text-xs text-muted-foreground text-center px-1 break-all">${filename}</span>`;
+                          const span = document.createElement("span");
+                          span.className = "text-xs text-muted-foreground text-center px-1 break-all";
+                          span.textContent = filename;
+                          div.appendChild(span);
                           parent.appendChild(div);
                         }
                       }}
