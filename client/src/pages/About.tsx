@@ -301,10 +301,10 @@ export default function About() {
                 The first Salaam Cup was held with just a handful of teams and a dream to create something bigger. That dream has become a reality.
               </p>
             </div>
-             <div data-testid="section-beginnings">
+             <div data-testid="section-beginnings-image">
               <img src={momentsImages[0]} className="w-full h-full object-cover" />
             </div>
-            <div data-testid="section-how-we-grew">
+            <div data-testid="section-how-we-grew-image">
               <img src={momentsImages[1]} className="w-full h-full object-cover" />
             </div>
             <div data-testid="section-how-we-grew">
