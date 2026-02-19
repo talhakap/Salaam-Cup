@@ -325,7 +325,7 @@ export default function About() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-4" data-testid="text-values-title">
-              Anyone Can Play. Few Compete.
+              4 SPORTS. 7 TOURNAMENTS. THERE CAN ONLY BE ONE
             </h2>
             <p className="text-muted-foreground">
               Join athletes who don't just show up to play. They show up to dominate and build legacy.

@@ -299,7 +299,7 @@ function TournamentAccordionItem({ tournament }: { tournament: Tournament }) {
                 </div>
                 <div className="flex items-end justify-between gap-2 flex-wrap">
                   <div>
-                    <p className="text-xs text-gray-500">Location</p>
+                    <p className="text-xs text-gray-500">DIVISION</p>
                     <h3 className="text-base md:text-xl font-bold font-display text-white">{div.name}</h3>
                   </div>
                   <Link
@@ -396,13 +396,13 @@ export default function Home() {
         </div>
         <div className="relative z-10 text-center px-4 flex flex-col items-center">
           <p className="text-sm md:text-base italic text-gray-300 tracking-wide mb-4" data-testid="text-hero-tagline">
-            Play More. Compete Harder. Win Together.&trade;
+            THERE CAN ONLY BE ONE.&trade;
           </p>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display text-white uppercase leading-[1.05] tracking-tight max-w-4xl mx-auto" data-testid="text-hero-title">
-            Best Muslim Tournaments In The World
+            Leader in Highly Competetive Muslim Athletics
           </h1>
           <p className="mt-5 text-base md:text-lg text-gray-300 max-w-xl mx-auto italic" data-testid="text-hero-subtitle">
-            For those still chasing greatness, we got you.
+            It Just Means More.
           </p>
 
           <div className="flex items-center gap-4 mt-8">
@@ -435,7 +435,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <h2 className="text-3xl md:text-5xl font-bold font-display uppercase mb-4" data-testid="text-values-title">
-              Anyone Can Play. Few Compete.
+              4 SPORTS. 7 TOURNAMENTS. THERE CAN ONLY BE ONE
             </h2>
             <p className="text-muted-foreground">
               Join athletes who don't just show up to play. They show up to dominate and build legacy.
@@ -474,7 +474,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-2 text-center">Tournaments</p>
           <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-play-with-us">
-            Play With Us
+            OUR TOURNAMENTS
           </h2>
 
           <div className="max-w-5xl mx-auto">
@@ -494,7 +494,7 @@ export default function Home() {
       <section className="py-20 bg-background border-t">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-5xl font-bold font-display uppercase text-center mb-12" data-testid="text-legacy">
-            Where Stories Become Legacy.
+            CHAMPIONS
           </h2>
           <div className="max-w-5xl mx-auto">
             <div className="mb-6">
