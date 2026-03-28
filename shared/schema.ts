@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, date, varchar, numeric } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -94,6 +94,7 @@ export const teams = pgTable("teams", {
   logoUrl: text("logo_url"),
   teamColor: text("team_color"),
   description: text("description"),
+  amountOwed: numeric("amount_owed", { precision: 10, scale: 2 }).default("0").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

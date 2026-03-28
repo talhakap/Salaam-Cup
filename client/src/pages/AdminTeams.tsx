@@ -101,6 +101,7 @@ function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) 
   const [status, setStatus] = useState<string>(team.status);
   const [divisionId, setDivisionId] = useState(String(team.divisionId));
   const [paymentStatus, setPaymentStatus] = useState<string>(team.paymentStatus);
+  const [amountOwed, setAmountOwed] = useState(String(team.amountOwed ?? "0"));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +116,7 @@ function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) 
         divisionId: Number(divisionId),
         tournamentId: Number(tournamentId),
         paymentStatus: paymentStatus as any,
+        amountOwed: amountOwed,
       });
       toast({ title: "Team updated" });
       onClose();
@@ -194,6 +196,17 @@ function EditTeamDialog({ team, onClose }: { team: Team; onClose: () => void }) 
               <SelectItem value="paid">Paid</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Amount Owed ($)</label>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={amountOwed}
+            onChange={e => setAmountOwed(e.target.value)}
+            data-testid="input-edit-team-amount-owed"
+          />
         </div>
         <DialogFooter>
           <Button type="submit" disabled={updateTeam.isPending} data-testid="button-save-team">

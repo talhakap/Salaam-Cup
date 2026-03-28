@@ -23,7 +23,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, AlertCircle, LogIn, Trash2, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, LogIn, Trash2, ChevronDown, ChevronUp, CheckCircle, DollarSign } from "lucide-react";
 import { Fragment } from "react";
 import type { Player } from "@shared/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -342,9 +342,17 @@ function TeamCard({ team }: { team: Team & { tournamentName?: string; divisionNa
                 <span className="text-muted-foreground">Email</span>
                 <span className="font-medium text-sm">{team.captainEmail}</span>
               </div>
-              <div className="flex justify-between items-center pt-2">
+              <div className="flex justify-between items-center border-b pb-2">
                 <span className="text-muted-foreground">Status</span>
                 <Badge variant={statusVariant} data-testid="badge-team-status">{team.status}</Badge>
+              </div>
+              <div className={`flex justify-between items-center pt-2 rounded-md px-3 py-2 ${Number(team.amountOwed) > 0 ? "bg-red-50 border border-red-200" : "bg-green-50 border border-green-200"}`}>
+                <span className="flex items-center gap-1 font-medium text-sm">
+                  <DollarSign className="h-4 w-4" /> Amount Owed
+                </span>
+                <span className={`font-bold text-lg ${Number(team.amountOwed) > 0 ? "text-red-600" : "text-green-600"}`} data-testid="text-team-amount-owed">
+                  ${Number(team.amountOwed ?? 0).toFixed(2)}
+                </span>
               </div>
             </CardContent>
           </Card>
