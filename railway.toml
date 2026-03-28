@@ -1,0 +1,11 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm start"
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 3
+
+# Railway injects PORT automatically — the app reads process.env.PORT
+# Mount a Railway Volume at /app/attached_assets/uploads to persist uploaded images
+# across deploys. Without a Volume, uploads reset on every redeploy.

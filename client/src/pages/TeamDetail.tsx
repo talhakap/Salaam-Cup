@@ -204,7 +204,7 @@ export default function TeamDetail() {
         </section>
       )}
 
-      <SponsorBar variant="dark" />
+      <SponsorBar />
     </MainLayout>
   );
 }

@@ -123,6 +123,11 @@ export function registerObjectStorageRoutes(app: Express): void {
 
   app.use("/objects", async (req, res, next) => {
     if (req.method !== "GET") return next();
+    // GCS not configured — return 404 so browsers treat these as missing images,
+    // not server errors. Existing Replit-era /objects/ URLs degrade gracefully.
+    if (!process.env.PUBLIC_OBJECT_SEARCH_PATHS) {
+      return res.status(404).json({ error: "Object not found" });
+    }
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.originalUrl);
       await objectStorageService.downloadObject(objectFile, res);

@@ -27,11 +27,11 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     pool: pool,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
-  const isProduction = process.env.NODE_ENV === "production" || !!process.env.REPL_ID;
+  const isProduction = process.env.NODE_ENV === "production";
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,

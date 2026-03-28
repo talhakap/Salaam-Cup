@@ -399,7 +399,7 @@ export default function Home() {
             THERE CAN ONLY BE ONE.&trade;
           </p>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display text-white uppercase leading-[1.05] tracking-tight max-w-4xl mx-auto" data-testid="text-hero-title">
-            Leader in Highly Competetive Muslim Athletics
+            Leader in Highly Competitive Muslim Athletics
           </h1>
           <p className="mt-5 text-base md:text-lg text-gray-300 max-w-xl mx-auto italic" data-testid="text-hero-subtitle">
             It Just Means More.
